@@ -91,7 +91,7 @@ button.active * { color:#ffffff !important; }
 body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:first-child{opacity:.55}.readonlyNote{background:#fff4d9;border:1px solid #e4c873;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.86rem}
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v44. Sign in with an authorised Google account.</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v45. Sign in with an authorised Google account.</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -202,9 +202,9 @@ function selectLeaveButton(btn){document.querySelectorAll(".leaveBtns button[dat
 function chooseStatus(type,btn){selectedStatus=type;selectLeaveButton(btn);let duty=(type==="od"||type==="special"),box=E("dutyDurationBox");box.classList.toggle("disabledBox",!duty);if(!duty){selectedDuration="";document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyFrom").value="";E("dutyTo").value="";E("durationHelp").textContent=type==="full"?"Full Leave applies to the whole day.":type==="vacant"?"Vacant Position applies to the whole day.":"Half Leave applies to P5–P8."}else{E("durationHelp").textContent="Choose Full Day, Half Day or Custom Period Range.";E("dutyFrom").disabled=true;E("dutyTo").disabled=true}}
 function chooseDutyDuration(type,btn){if(!(selectedStatus==="od"||selectedStatus==="special"))return;selectedDuration=type;document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");let custom=type==="custom";E("dutyFrom").disabled=!custom;E("dutyTo").disabled=!custom;if(!custom){E("dutyFrom").value="";E("dutyTo").value=""}E("durationHelp").textContent=type==="full"?"Whole day selected. Period range is disabled.":type==="half"?"Half day selected: P5–P8. Period range is disabled.":"Select both From Period and To Period."}
 function clearStatusForm(){selectedStatus="";selectedDuration="";E("leaveTeacher").value="";E("dutyFrom").value="";E("dutyTo").value="";E("dutyNote").value="";E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyDurationBox").classList.add("disabledBox");document.querySelectorAll(".leaveBtns button[data-leave-type],.durationBtns button").forEach(x=>x.classList.remove("active"));E("durationHelp").textContent="Choose On Duty or Special Assignment first.";E("statusMsg").textContent="Form cleared. Saved records were not deleted."}
-function saveStatusRecord(){let c=E("leaveTeacher").value;if(!c){E("statusMsg").textContent="Select a teacher.";return}if(!selectedStatus){E("statusMsg").textContent="Select Leave, On Duty, Special Assignment or Vacant Position.";return}let rec={code:c,type:selectedStatus,date:todayKey(),day:todayName()},note=E("dutyNote").value.trim();if(selectedStatus==="od"||selectedStatus==="special"){if(!selectedDuration){E("statusMsg").textContent="Select Full Day, Half Day or Custom Period Range.";return}if(selectedDuration==="half"){rec.from=5;rec.to=8;rec.duration="half"}else if(selectedDuration==="custom"){let f=Number(E("dutyFrom").value||0),t=Number(E("dutyTo").value||0);if(!f||!t){E("statusMsg").textContent="Select both From and To periods.";return}if(f>t){E("statusMsg").textContent="From Period cannot be later than To Period.";return}rec.from=f;rec.to=t;rec.duration="custom"}else{rec.from=0;rec.to=0;rec.duration="full"}rec.note=note}let a=leaveData().filter(x=>x.code!==c);a.push(rec);localStorage.setItem("vkvLeave2_"+todayKey(),JSON.stringify(a));saveSnapshot();renderLeave();proxyPeriod=firstProxyPeriod();renderProxyPeriod();E("statusMsg").textContent="Saved.";clearStatusForm();let n=proxyRows().filter(r=>r.code===c).length;E("statusMsg").textContent=`Saved successfully. ${n} affected timetable entr${n===1?"y":"ies"} found today.`;renderProxyPeriod()}
-function deleteSelectedStatus(){let c=E("leaveTeacher").value;if(!c){E("statusMsg").textContent="Select the teacher whose saved record you want to delete.";return}let t=DATA.teachers.find(x=>x.code===c),a=leaveData();if(!a.some(x=>x.code===c)){E("statusMsg").textContent="No saved record found for this teacher.";return}if(!confirm(`Delete today's saved record for ${t?t.name:c}?`))return;a=a.filter(x=>x.code!==c);localStorage.setItem("vkvLeave2_"+todayKey(),JSON.stringify(a));saveSnapshot();renderLeave();proxyPeriod=firstProxyPeriod();renderProxyPeriod();clearStatusForm();E("statusMsg").textContent="Record deleted."}
-function deleteTodayStatuses(){if(!confirm("Delete all Leave / OD / Special Assignment records saved for today?"))return;localStorage.removeItem("vkvLeave2_"+todayKey());saveSnapshot();renderLeave();proxyPeriod=1;renderProxyPeriod();clearStatusForm();E("statusMsg").textContent="Today’s saved status records deleted."}
+function saveStatusRecord(){if(window.__vkvRole&&!['admin','manager'].includes(window.__vkvRole)){alert('This account cannot change Leave / OD / Special Assignment / Vacant Position records.');return;}let c=E("leaveTeacher").value;if(!c){E("statusMsg").textContent="Select a teacher.";return}if(!selectedStatus){E("statusMsg").textContent="Select Leave, On Duty, Special Assignment or Vacant Position.";return}let rec={code:c,type:selectedStatus,date:todayKey(),day:todayName()},note=E("dutyNote").value.trim();if(selectedStatus==="od"||selectedStatus==="special"){if(!selectedDuration){E("statusMsg").textContent="Select Full Day, Half Day or Custom Period Range.";return}if(selectedDuration==="half"){rec.from=5;rec.to=8;rec.duration="half"}else if(selectedDuration==="custom"){let f=Number(E("dutyFrom").value||0),t=Number(E("dutyTo").value||0);if(!f||!t){E("statusMsg").textContent="Select both From and To periods.";return}if(f>t){E("statusMsg").textContent="From Period cannot be later than To Period.";return}rec.from=f;rec.to=t;rec.duration="custom"}else{rec.from=0;rec.to=0;rec.duration="full"}rec.note=note}let a=leaveData().filter(x=>x.code!==c);a.push(rec);localStorage.setItem("vkvLeave2_"+todayKey(),JSON.stringify(a));saveSnapshot();renderLeave();proxyPeriod=firstProxyPeriod();renderProxyPeriod();E("statusMsg").textContent="Saved.";clearStatusForm();let n=proxyRows().filter(r=>r.code===c).length;E("statusMsg").textContent=`Saved successfully. ${n} affected timetable entr${n===1?"y":"ies"} found today.`;renderProxyPeriod()}
+function deleteSelectedStatus(){if(window.__vkvRole&&!['admin','manager'].includes(window.__vkvRole)){alert('This account cannot change Leave / OD / Special Assignment / Vacant Position records.');return;}let c=E("leaveTeacher").value;if(!c){E("statusMsg").textContent="Select the teacher whose saved record you want to delete.";return}let t=DATA.teachers.find(x=>x.code===c),a=leaveData();if(!a.some(x=>x.code===c)){E("statusMsg").textContent="No saved record found for this teacher.";return}if(!confirm(`Delete today's saved record for ${t?t.name:c}?`))return;a=a.filter(x=>x.code!==c);localStorage.setItem("vkvLeave2_"+todayKey(),JSON.stringify(a));saveSnapshot();renderLeave();proxyPeriod=firstProxyPeriod();renderProxyPeriod();clearStatusForm();E("statusMsg").textContent="Record deleted."}
+function deleteTodayStatuses(){if(window.__vkvRole&&!['admin','manager'].includes(window.__vkvRole)){alert('This account cannot change Leave / OD / Special Assignment / Vacant Position records.');return;}if(!confirm("Delete all Leave / OD / Special Assignment records saved for today?"))return;localStorage.removeItem("vkvLeave2_"+todayKey());saveSnapshot();renderLeave();proxyPeriod=1;renderProxyPeriod();clearStatusForm();E("statusMsg").textContent="Today’s saved status records deleted."}
 function clearLeave(){localStorage.removeItem("vkvLeave2_"+todayKey());saveSnapshot();document.querySelectorAll(".leaveBtns button[data-leave-type]").forEach(x=>x.classList.remove("active"));renderLeave()}
 function todayName(){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()]}
 function activeLeaveAt(o,p){if(o.type==="full"||o.type==="vacant")return true;if(o.type==="half")return p>=5;if(o.type==="od"||o.type==="special"){if(!o.from&&!o.to)return true;let f=Number(o.from||1),t=Number(o.to||8);return p>=f&&p<=t}return false}
@@ -324,15 +324,15 @@ function showEmergencyForNeed(btn){
  h+='</select><button type="button" class="emergencyBtn" data-pick="'+btn.dataset.target+'Pick" data-key="'+encodeURIComponent(k)+'" data-period="'+p+'" onclick="assignEmergencyFromButton(this)">Assign Emergency Supervision</button></div>';
  area.innerHTML=h;
 }
-function assignEmergencyFromButton(btn){let sel=E(btn.dataset.pick),v=sel?sel.value:"";if(!v){alert("Please select an engaged teacher.");return}allotEmergency(btn.dataset.key,v,Number(btn.dataset.period))}
-function allotEmergency(encKey,code,p){
+function assignEmergencyFromButton(btn){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let sel=E(btn.dataset.pick),v=sel?sel.value:"";if(!v){alert("Please select an engaged teacher.");return}allotEmergency(btn.dataset.key,v,Number(btn.dataset.period))}
+function allotEmergency(encKey,code,p){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}
  const k=decodeURIComponent(encKey),t=DATA.teachers.find(x=>x.code===code);if(!t)return;
  if(!confirm("Emergency Supervision assigns an additional adjacent-class supervision duty to a teacher who is already teaching in this period. Continue?"))return;
  const d=supervisionData(),ec=emergencyCandidates(p,k).find(x=>x.code===code);
  d[k]={key:k,code:code,name:t.name,period:Number(p),time:DATA.times[p],day:todayName(),regular:dailyRegularLoad(code,todayName()),proxy:proxyCount(code),supervisionNumber:supervisionCount(code)+1,engagedClasses:ec?ec.classes:[]};
  saveSupervisionData(d);showAllProxyNeeds();renderLeave();
 }
-function removeEmergency(encKey){let k=decodeURIComponent(encKey),d=supervisionData();delete d[k];saveSupervisionData(d);showAllProxyNeeds();renderLeave()}
+function removeEmergency(encKey){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let k=decodeURIComponent(encKey),d=supervisionData();delete d[k];saveSupervisionData(d);showAllProxyNeeds();renderLeave()}
 function candidateList(p,key){
  const day=todayName(), statuses=leaveData(), allot=allotData();
  return DATA.teachers.filter(t=>{
@@ -354,8 +354,8 @@ function renderProxyPeriod(){
  let list=assigned?"":`<div><div class="proxyhead">Available teachers — lowest current load first</div>${cands.map(t=>`<div class="candidate"><div><b>${esc(t.name)}</b> (${t.code})<div class="loadpill">Regular ${t.regular} + Proxy ${t.proxies} = Total ${t.total}</div>${t.warn?`<div class="warn">${t.warn} · warning only</div>`:""}</div><button onclick="attemptProxy('${encodeURIComponent(k)}','${t.code}',${p})">Allot${t.warn?" Anyway":""}</button></div>`).join("")||"<p>No free teacher available.</p>"}</div>`;
  return `<div class="needcard ${assigned?"done":""}">${info}${list}</div>`}).join("");
 }
-function attemptProxy(encKey,code,p){let k=decodeURIComponent(encKey),t=DATA.teachers.find(x=>x.code===code);if(!t)return;let warn=continuousWarning(code,p);if(warn&&!confirm(warn+"\\n\\nThis is an advisory warning. Allot anyway?"))return;let a=allotData(),regular=dailyRegularLoad(code,todayName()),before=proxyCount(code);a[k]={key:k,code,name:t.name,period:p,time:DATA.times[p],day:todayName(),regular,proxyNumber:before+1,total:regular+before+1,warn};saveAllotData(a);renderProxyPeriod();renderLeave()}
-function removeProxy(encKey){let k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);renderProxyPeriod();renderLeave()}
+function attemptProxy(encKey,code,p){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let k=decodeURIComponent(encKey),t=DATA.teachers.find(x=>x.code===code);if(!t)return;let warn=continuousWarning(code,p);if(warn&&!confirm(warn+"\\n\\nThis is an advisory warning. Allot anyway?"))return;let a=allotData(),regular=dailyRegularLoad(code,todayName()),before=proxyCount(code);a[k]={key:k,code,name:t.name,period:p,time:DATA.times[p],day:todayName(),regular,proxyNumber:before+1,total:regular+before+1,warn};saveAllotData(a);renderProxyPeriod();renderLeave()}
+function removeProxy(encKey){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);renderProxyPeriod();renderLeave()}
 function showAllProxyNeeds(){
  try{
    const rows=proxyRows(), out=E("allotResult");
@@ -391,7 +391,7 @@ function showAllProxyNeeds(){
    const out=E("allotResult");if(out)out.innerHTML='<div class="warn"><b>Proxy screen error:</b> '+esc(err&&err.message?err.message:String(err))+'</div>';
  }
 }
-function allotProxySimple(i,encKey,p){
+function allotProxySimple(i,encKey,p){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}
  const sel=E("proxyPick"+i),code=sel?sel.value:"";if(!code){alert("Please select a teacher.");return}
  const t=DATA.teachers.find(x=>x.code===code);if(!t){alert("Teacher code not found.");return}
  const warn=continuousWarning(code,p);if(warn&&!confirm(warn+"\n\nThis is an advisory warning. Allot anyway?"))return;
@@ -399,9 +399,9 @@ function allotProxySimple(i,encKey,p){
  a[k]={key:k,code:code,name:t.name,period:p,time:DATA.times[p],day:todayName(),regular:regular,proxyNumber:before+1,total:regular+before+1,warn:warn};
  saveAllotData(a);showAllProxyNeeds();renderLeave();
 }
-function removeProxySimple(encKey){const k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);showAllProxyNeeds();renderLeave()}
-function attemptProxyFromAll(encKey,code,p){let k=decodeURIComponent(encKey),t=DATA.teachers.find(x=>x.code===code);if(!t)return;let warn=continuousWarning(code,p);if(warn&&!confirm(warn+"\\n\\nThis is an advisory warning. Allot anyway?"))return;let a=allotData(),regular=dailyRegularLoad(code,todayName()),before=proxyCount(code);a[k]={key:k,code,name:t.name,period:p,time:DATA.times[p],day:todayName(),regular,proxyNumber:before+1,total:regular+before+1,warn};saveAllotData(a);showAllProxyNeeds();renderLeave()}
-function removeProxyAndShowAll(encKey){let k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);showAllProxyNeeds();renderLeave()}
+function removeProxySimple(encKey){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}const k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);showAllProxyNeeds();renderLeave()}
+function attemptProxyFromAll(encKey,code,p){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let k=decodeURIComponent(encKey),t=DATA.teachers.find(x=>x.code===code);if(!t)return;let warn=continuousWarning(code,p);if(warn&&!confirm(warn+"\\n\\nThis is an advisory warning. Allot anyway?"))return;let a=allotData(),regular=dailyRegularLoad(code,todayName()),before=proxyCount(code);a[k]={key:k,code,name:t.name,period:p,time:DATA.times[p],day:todayName(),regular,proxyNumber:before+1,total:regular+before+1,warn};saveAllotData(a);showAllProxyNeeds();renderLeave()}
+function removeProxyAndShowAll(encKey){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);showAllProxyNeeds();renderLeave()}
 function proxyReasonForNeed(r){
  const o=leaveData().find(x=>x.code===r.code&&activeLeaveAt(x,Number(r.period)));
  if(!o)return "Unavailable";
@@ -518,8 +518,12 @@ const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomai
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSignOut=document.getElementById('cloudSignOut');
 let currentUser=null,currentProfile=null,todayPollTimer=null,cloudHydrating=false,syncTimer=null,coreWrapped=false;
-const editorRoles=new Set(['admin','manager']);
-const isEditor=()=>currentProfile&&editorRoles.has(currentProfile.role),isAdmin=()=>currentProfile&&currentProfile.role==='admin';
+const statusEditorRoles=new Set(['admin','manager']);
+const proxyRoles=new Set(['admin','manager','proxy_manager']);
+const isAdmin=()=>currentProfile&&currentProfile.role==='admin';
+const canEditStatus=()=>currentProfile&&statusEditorRoles.has(currentProfile.role);
+const canManageProxy=()=>currentProfile&&proxyRoles.has(currentProfile.role);
+const canWriteDaily=()=>canEditStatus()||canManageProxy();
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const withTimeout=(promise,ms,label)=>Promise.race([
  promise,
@@ -546,6 +550,12 @@ function populateMasterSelectors(){
  fill('dayClass','All',cItems);
 }
 function dailyLocalPayload(){return {date:todayKey(),dayName:todayName(),statuses:leaveData(),allotments:allotData(),supervisions:supervisionData()}}
+function dailyCloudWritePayload(){
+ const p=dailyLocalPayload();
+ if(canEditStatus())return p;
+ if(canManageProxy())return {date:p.date,dayName:p.dayName,allotments:p.allotments,supervisions:p.supervisions};
+ return null;
+}
 function hydrateDaily(data,date=todayKey()){
  cloudHydrating=true;
  try{
@@ -556,14 +566,14 @@ function hydrateDaily(data,date=todayKey()){
  }finally{cloudHydrating=false}
  if(window.__vkvCoreInitialized){try{renderLeave();renderProxyPeriod();const allot=document.getElementById('allot');if(allot&&allot.classList.contains('active'))showAllProxyNeeds()}catch(e){console.warn(e)}}
 }
-async function pushToday(){if(!currentUser||!isEditor()||cloudHydrating)return;cloudSync.textContent='Saving…';const p=dailyLocalPayload();await setDoc(doc(db,'dailyRecords',p.date),{...p,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});cloudSync.textContent='Synced'}
-function queueTodaySync(){if(!currentUser||!isEditor()||cloudHydrating)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushToday().catch(e=>{console.error(e);cloudSync.textContent='Sync failed'}),300)}
+async function pushToday(){if(!currentUser||!canWriteDaily()||cloudHydrating)return;const p=dailyCloudWritePayload();if(!p)return;cloudSync.textContent='Saving…';await setDoc(doc(db,'dailyRecords',p.date),{...p,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});cloudSync.textContent='Synced'}
+function queueTodaySync(){if(!currentUser||!canWriteDaily()||cloudHydrating)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushToday().catch(e=>{console.error(e);cloudSync.textContent='Sync failed'}),300)}
 function wrapSaveSnapshot(){if(coreWrapped)return;coreWrapped=true;const original=window.saveSnapshot;window.saveSnapshot=function(...args){const r=original.apply(this,args);queueTodaySync();return r}}
 async function loadTodayAndListen(){
  const ref=doc(db,'dailyRecords',todayKey());
  const first=await getDoc(ref);
  if(first.exists())hydrateDaily(first.data());
- else if(isEditor())await setDoc(ref,{...dailyLocalPayload(),updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});
+ else if(canWriteDaily()){const p=dailyCloudWritePayload();if(p)await setDoc(ref,{...p,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});}
  if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
  let lastCloudStamp='';
  const poll=async()=>{
@@ -587,11 +597,73 @@ async function loadTodayAndListen(){
  todayPollTimer=setInterval(poll,5000);
 }
 function applyRoleUI(){
- document.body.classList.toggle('readOnly',!isEditor());
- if(!isEditor()){
-   document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const oc=b.getAttribute('onclick')||'';const blocked=['saveStatusRecord','deleteSelectedStatus','deleteTodayStatuses','attemptProxy(','allotProxySimple','removeProxy(','removeProxySimple','assignEmergencyFromButton','allotEmergency','removeEmergency','deleteAllHistory'];if(blocked.some(x=>oc.includes(x))){e.preventDefault();e.stopImmediatePropagation();alert('This account has read-only Teacher access. Administrative changes require an Admin/Manager account.')}},true);
-   const title=document.querySelector('.opsTitle');if(title&&!document.getElementById('readonlyNote'))title.insertAdjacentHTML('afterend','<div id="readonlyNote" class="readonlyNote">Teacher access: timetable and proxy information are view-only. Administrative changes are disabled.</div>');
+ window.__vkvRole=String(currentProfile&&currentProfile.role||'teacher');
+
+ const role=window.__vkvRole;
+ const statusAllowed=canEditStatus();
+ const proxyAllowed=canManageProxy();
+
+ // Leave/OD/Vacant form is editable only by Admin/Manager.
+ const leaveControls=[
+   ...document.querySelectorAll('[data-leave-type]'),
+   ...document.querySelectorAll('[data-duration]'),
+   document.getElementById('leaveTeacher'),
+   document.getElementById('dutyFrom'),
+   document.getElementById('dutyTo'),
+   document.getElementById('dutyNote')
+ ].filter(Boolean);
+ leaveControls.forEach(el=>{el.disabled=!statusAllowed});
+ const recordActions=document.querySelector('.recordActions');
+ if(recordActions)recordActions.style.display=statusAllowed?'flex':'none';
+
+ // Archived-history deletion is Admin only.
+ document.querySelectorAll('button[onclick*="deleteAllHistory"]').forEach(b=>{
+   b.style.display=isAdmin()?'inline-block':'none';
+ });
+
+ // Clear prior role note and show the current permission level.
+ const oldNote=document.getElementById('rolePermissionNote');
+ if(oldNote)oldNote.remove();
+ const title=document.querySelector('.opsTitle');
+ if(title){
+   let text='';
+   if(role==='proxy_manager')text='Proxy Manager access: you can allot/change today’s proxies and emergency supervision, review, copy/share and print the proxy list. Leave/OD records, archived-history deletion and master data remain locked.';
+   else if(role==='teacher')text='Teacher access: timetable, current leave/OD information and proxy information are view-only.';
+   else if(role==='admin')text='Admin access: full operational rights.';
+   else if(role==='manager')text='Manager access: daily operational editing is enabled; archived-history deletion and master administration remain Admin-only.';
+   if(text)title.insertAdjacentHTML('afterend','<div id="rolePermissionNote" class="readonlyNote">'+safe(text)+'</div>');
  }
+
+ // Guard write buttons in the UI. Firestore rules independently enforce the same boundary.
+ if(!window.__vkvRoleGuardInstalled){
+   window.__vkvRoleGuardInstalled=true;
+   document.addEventListener('click',e=>{
+     const b=e.target.closest('button');
+     if(!b)return;
+     const oc=b.getAttribute('onclick')||'';
+
+     const statusActions=['saveStatusRecord','deleteSelectedStatus','deleteTodayStatuses','chooseStatus(','chooseDutyDuration('];
+     const proxyActions=['attemptProxy(','attemptProxyFromAll','allotProxySimple','removeProxy(','removeProxySimple','removeProxyAndShowAll','assignEmergencyFromButton','allotEmergency','removeEmergency'];
+
+     if(statusActions.some(x=>oc.includes(x)) && !canEditStatus()){
+       e.preventDefault();e.stopImmediatePropagation();
+       alert('This account cannot change Leave / OD / Special Assignment / Vacant Position records.');
+       return;
+     }
+     if(proxyActions.some(x=>oc.includes(x)) && !canManageProxy()){
+       e.preventDefault();e.stopImmediatePropagation();
+       alert('This account has view-only proxy access.');
+       return;
+     }
+     if(oc.includes('deleteAllHistory') && !isAdmin()){
+       e.preventDefault();e.stopImmediatePropagation();
+       alert('Only the Admin can delete archived history.');
+     }
+   },true);
+ }
+
+ // For ordinary Teachers, visually disable the proxy allotment mutation buttons after they render.
+ document.body.classList.toggle('readOnly',role==='teacher');
 }
 async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;populateMasterSelectors();return true}
 async function cloudHistoryRender(){
