@@ -32,7 +32,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 <div id="app">
   <div class="card">
     <h2>Viewer Access · Teachers</h2>
-    <div class="help">Paste the teachers’ Google email addresses. One per line is easiest, but commas and semicolons also work. Viewer accounts can see the timetable, daily information and the finalised proxy list, but cannot edit anything.</div>
+    <div class="help">Paste the teachers’ Google email addresses. One per line is easiest, but commas and semicolons also work. Viewer accounts can see the timetable and finalised proxy list, but cannot edit anything. Use Temporarily Disable when someone should lose access for a period without removing the account.</div>
     <label>Teacher Google emails</label>
     <textarea id="viewerInput" placeholder="REMOVED_EMAIL&#10;REMOVED_EMAIL&#10;REMOVED_EMAIL"></textarea>
     <div class="actions"><button class="primary" id="addViewers">Add Viewer Accounts</button><button id="refreshViewers">Refresh List</button></div>
@@ -42,7 +42,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 
   <div class="card">
     <h2>Privileged Accounts</h2>
-    <div class="help">Use this only for Admin / Proxy Manager / Manager accounts. These require the person’s Firebase UID. Normal teachers should be added in the Viewer section above.</div>
+    <div class="help">Use this only for Admin / Proxy Manager / Manager accounts. These require the person’s Firebase UID. Normal teachers should be added in the Viewer section above. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
     <div class="grid">
       <div><label>Firebase UID</label><input id="privUid" placeholder="Paste Firebase UID"></div>
       <div><label>Name</label><input id="privName" placeholder="Teacher name"></div>
@@ -51,18 +51,19 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
     </div>
     <div class="actions"><button class="green" id="savePriv">Add / Update Privileged Account</button><button id="refreshPriv">Refresh List</button></div>
     <div id="privMsg" class="status" style="display:none"></div>
-    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
   </div>
 </div>
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('Auth persistence:',e));
 
 const $=id=>document.getElementById(id);
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -100,7 +101,7 @@ async function verifyAdmin(user){
    $('gateMsg').textContent='Could not verify Admin access: '+(e.message||e);
  }
 }
-$('signInBtn').onclick=()=>signInWithPopup(auth,provider);
+$('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 onAuthStateChanged(auth,verifyAdmin);
 
 async function loadViewers(){
@@ -108,7 +109,7 @@ async function loadViewers(){
  try{
    const qs=await getDocs(collection(db,'viewerEmails'));
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>a.id.localeCompare(b.id));
-   body.innerHTML=rows.length?rows.map(x=>`<tr><td>${safe(x.email||x.id)}</td><td><span class="pill">${x.active===false?'Inactive':'Active Viewer'}</span></td><td><button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`).join(''):'<tr><td colspan="3">No Viewer accounts yet.</td></tr>';
+   body.innerHTML=rows.length?rows.map(x=>`<tr><td>${safe(x.email||x.id)}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active Viewer'}</span></td><td><button data-toggle-viewer="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`).join(''):'<tr><td colspan="3">No Viewer accounts yet.</td></tr>';
  }catch(e){body.innerHTML='<tr><td colspan="3">Could not load viewers: '+safe(e.message||e)+'</td></tr>'}
 }
 $('addViewers').onclick=async()=>{
@@ -137,9 +138,9 @@ async function loadPrivileged(){
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>(a.name||a.email||a.id).localeCompare(b.name||b.email||b.id));
    body.innerHTML=rows.length?rows.map(x=>{
      const self=x.id===currentUser.uid;
-     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td><span class="pill">${safe(x.role||'')}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin</span>':`<button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
-   }).join(''):'<tr><td colspan="5">No privileged accounts found.</td></tr>';
- }catch(e){body.innerHTML='<tr><td colspan="5">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
+     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td><span class="pill">${safe(x.role||'')}</span></td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
+   }).join(''):'<tr><td colspan="6">No privileged accounts found.</td></tr>';
+ }catch(e){body.innerHTML='<tr><td colspan="6">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
 }
 $('savePriv').onclick=async()=>{
  const uid=$('privUid').value.trim(),name=$('privName').value.trim(),email=$('privEmail').value.trim().toLowerCase(),role=$('privRole').value;
@@ -155,6 +156,26 @@ $('savePriv').onclick=async()=>{
 $('refreshPriv').onclick=loadPrivileged;
 
 document.addEventListener('click',async e=>{
+ const tv=e.target.closest('[data-toggle-viewer]');
+ if(tv){
+   const email=tv.dataset.toggleViewer,active=tv.dataset.nextActive==='true';
+   try{
+     await setDoc(doc(db,'viewerEmails',email),{active},{merge:true});
+     await loadViewers();
+     showMsg('viewerMsg',(active?'Viewer access enabled for ':'Viewer access temporarily disabled for ')+email+'.','ok');
+   }catch(err){showMsg('viewerMsg','Could not change Viewer access: '+(err.message||err),'warn')}
+   return;
+ }
+ const tp=e.target.closest('[data-toggle-priv]');
+ if(tp){
+   const uid=tp.dataset.togglePriv,active=tp.dataset.nextActive==='true';
+   try{
+     await setDoc(doc(db,'authorizedUsers',uid),{active},{merge:true});
+     await loadPrivileged();
+     showMsg('privMsg',active?'Privileged account enabled.':'Privileged account temporarily disabled.','ok');
+   }catch(err){showMsg('privMsg','Could not change account status: '+(err.message||err),'warn')}
+   return;
+ }
  const vb=e.target.closest('[data-remove-viewer]');
  if(vb){
    const email=vb.dataset.removeViewer;
