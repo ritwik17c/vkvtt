@@ -105,7 +105,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v48. Sign in with an authorised Google account.</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v49. Sign in with an authorised Google account.</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -618,13 +618,14 @@ window.initializeVKVCore=function(){
 };
 </script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, FieldPath, deleteField } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
+setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('Auth persistence:',e));
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSignOut=document.getElementById('cloudSignOut');
-let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
+let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,accessCheckTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
 const statusEditorRoles=new Set(['admin','manager']);
 const proxyRoles=new Set(['admin','manager','proxy_manager']);
 const isAdmin=()=>currentProfile&&currentProfile.role==='admin';
@@ -639,7 +640,7 @@ const withTimeout=(promise,ms,label)=>Promise.race([
 function setMessage(text,kind='info'){msg.className=kind==='error'?'authError':'authInfo';msg.innerHTML=text}
 function showGate(){gate.classList.remove('hidden');cloudBar.classList.remove('show')}
 function openApp(){gate.classList.add('hidden');cloudBar.classList.add('show')}
-async function doSignIn(){setMessage('Opening Google sign-in…');try{await signInWithPopup(auth,provider)}catch(e){if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(e.code)){await signInWithRedirect(auth,provider)}else setMessage('<b>Sign-in error:</b> '+safe(e.message||e),'error')}}
+async function doSignIn(){setMessage('Opening Google sign-in…');try{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)}catch(e){if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(e.code)){await setPersistence(auth,browserLocalPersistence);await signInWithRedirect(auth,provider)}else setMessage('<b>Sign-in error:</b> '+safe(e.message||e),'error')}}
 loginBtn.addEventListener('click',doSignIn);signOutBtn.addEventListener('click',()=>signOut(auth));cloudSignOut.addEventListener('click',()=>signOut(auth));
 copyUidBtn.addEventListener('click',async()=>{if(!currentUser)return;try{await navigator.clipboard.writeText(currentUser.uid);copyUidBtn.textContent='UID copied ✓'}catch(e){prompt('Copy this Firebase UID:',currentUser.uid)}});
 function pendingAccess(user,extra=''){
@@ -752,6 +753,7 @@ async function loadTodayAndListen(){
  else if(canWriteDaily()){const p=dailyCloudWritePayload();if(p)await setDoc(ref,{...p,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});}
  if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
  if(publishedPollTimer){clearInterval(publishedPollTimer);publishedPollTimer=null}
+ if(accessCheckTimer){clearInterval(accessCheckTimer);accessCheckTimer=null}
  let lastCloudStamp='';
  const poll=async()=>{
    if(!currentUser||cloudWriting)return;
@@ -791,6 +793,37 @@ async function loadPublishedProxyAndListen(){
  await loadOnce();
  if(publishedPollTimer){clearInterval(publishedPollTimer);publishedPollTimer=null}
  publishedPollTimer=setInterval(loadOnce,5000);
+}
+
+
+async function checkAccessStillActive(){
+ if(!currentUser||!currentProfile)return;
+ try{
+   let allowed=false;
+   if(currentProfile.emailViewer){
+     const email=String(currentUser.email||'').trim().toLowerCase();
+     if(email){
+       const snap=await getDoc(doc(db,'viewerEmails',email));
+       allowed=snap.exists()&&snap.data().active===true;
+     }
+   }else{
+     const snap=await getDoc(doc(db,'authorizedUsers',currentUser.uid));
+     allowed=snap.exists()&&snap.data().active===true;
+   }
+   if(!allowed){
+     if(accessCheckTimer){clearInterval(accessCheckTimer);accessCheckTimer=null}
+     showGate();
+     setMessage('<b>Access temporarily disabled.</b><br>Please contact the administrator if access should be restored.','error');
+     try{await signOut(auth)}catch(e){}
+   }
+ }catch(e){
+   // A temporary network failure must never sign a user out.
+   console.warn('Access re-check skipped:',e);
+ }
+}
+function startAccessHeartbeat(){
+ if(accessCheckTimer){clearInterval(accessCheckTimer);accessCheckTimer=null}
+ accessCheckTimer=setInterval(checkAccessStillActive,60000);
 }
 
 function applyRoleUI(){
@@ -968,6 +1001,7 @@ onAuthStateChanged(auth,async user=>{
    // Daily cloud synchronisation must never block access to the app.
    openApp();
    cloudSync.textContent='App ready · starting cloud sync…';
+   startAccessHeartbeat();
 
    loadPublishedProxyAndListen().catch(e=>console.error('Published proxy sync:',e));
    if(currentProfile.emailViewer){
