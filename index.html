@@ -512,12 +512,12 @@ window.initializeVKVCore=function(){
 </script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSignOut=document.getElementById('cloudSignOut');
-let currentUser=null,currentProfile=null,unsubToday=null,cloudHydrating=false,syncTimer=null,coreWrapped=false;
+let currentUser=null,currentProfile=null,todayPollTimer=null,cloudHydrating=false,syncTimer=null,coreWrapped=false;
 const editorRoles=new Set(['admin','manager']);
 const isEditor=()=>currentProfile&&editorRoles.has(currentProfile.role),isAdmin=()=>currentProfile&&currentProfile.role==='admin';
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -556,10 +556,31 @@ async function pushToday(){if(!currentUser||!isEditor()||cloudHydrating)return;c
 function queueTodaySync(){if(!currentUser||!isEditor()||cloudHydrating)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushToday().catch(e=>{console.error(e);cloudSync.textContent='Sync failed'}),300)}
 function wrapSaveSnapshot(){if(coreWrapped)return;coreWrapped=true;const original=window.saveSnapshot;window.saveSnapshot=function(...args){const r=original.apply(this,args);queueTodaySync();return r}}
 async function loadTodayAndListen(){
- const ref=doc(db,'dailyRecords',todayKey()),snap=await getDoc(ref);
- if(snap.exists())hydrateDaily(snap.data());
+ const ref=doc(db,'dailyRecords',todayKey());
+ const first=await getDoc(ref);
+ if(first.exists())hydrateDaily(first.data());
  else if(isEditor())await setDoc(ref,{...dailyLocalPayload(),updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});
- if(unsubToday)unsubToday();unsubToday=onSnapshot(ref,s=>{if(s.exists())hydrateDaily(s.data())},e=>{console.error(e);cloudSync.textContent='Live sync unavailable'});
+ if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
+ let lastCloudStamp='';
+ const poll=async()=>{
+   if(!currentUser)return;
+   try{
+     const snap=await getDoc(ref);
+     if(!snap.exists())return;
+     const data=snap.data();
+     const stamp=data.updatedAt&&typeof data.updatedAt.toMillis==='function'?String(data.updatedAt.toMillis()):JSON.stringify([data.updatedBy,data.statuses,data.allotments,data.supervisions]);
+     if(stamp!==lastCloudStamp){
+       lastCloudStamp=stamp;
+       hydrateDaily(data);
+     }
+     cloudSync.textContent='Synced';
+   }catch(e){
+     console.error(e);
+     cloudSync.textContent='Sync retrying…';
+   }
+ };
+ await poll();
+ todayPollTimer=setInterval(poll,5000);
 }
 function applyRoleUI(){
  document.body.classList.toggle('readOnly',!isEditor());
@@ -579,10 +600,10 @@ window.deleteAllHistory=async function(){if(!isAdmin()){alert('Only an Admin can
 
 onAuthStateChanged(auth,async user=>{
  currentUser=user;currentProfile=null;loginBtn.style.display='inline-block';copyUidBtn.style.display='none';signOutBtn.style.display='none';
- if(unsubToday){unsubToday();unsubToday=null}
+ if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
  if(!user){showGate();setMessage('Private school application. Sign in with an authorised Google account.');return}
  loginBtn.style.display='none';signOutBtn.style.display='inline-block';setMessage('Verifying authorisation…');
- let profSnap;try{profSnap=await getDoc(doc(db,'authorizedUsers',user.uid))}catch(e){pendingAccess(user,'<br><br><b>Security setup is not complete yet.</b> Firestore denied the authorisation check.');return}
+ let profSnap;try{profSnap=await getDoc(doc(db,'authorizedUsers',user.uid))}catch(e){showGate();loginBtn.style.display='none';copyUidBtn.style.display='inline-block';signOutBtn.style.display='inline-block';setMessage('<b>Could not connect to Firestore.</b><br>'+safe(e.message||e)+'<br><br>Please refresh once. If the problem continues, the app will need its network connection checked.','error');return}
  if(!profSnap.exists()||profSnap.data().active!==true){pendingAccess(user);return}
  currentProfile=profSnap.data();cloudUser.textContent=(user.displayName||user.email||'User')+' · '+String(currentProfile.role||'teacher').toUpperCase();cloudSync.textContent='Loading school data…';
  let ok;try{ok=await loadMaster()}catch(e){setMessage('<b>Master timetable cannot be loaded.</b><br>'+safe(e.message||e),'error');showGate();return}
