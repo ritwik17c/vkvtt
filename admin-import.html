@@ -1,9 +1,39 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VKV Nalbari Timetable – Admin Importer</title><style>*{box-sizing:border-box}body{margin:0;background:#edf6f1;color:#18364e;font-family:system-ui,Segoe UI,Arial;padding:24px}.card{max-width:720px;margin:30px auto;background:#fff;border:1px solid #cbdce5;border-radius:20px;padding:24px;box-shadow:0 8px 28px #17324d18}button,input{font:inherit;padding:11px;border:1px solid #b9ced9;border-radius:10px}button{font-weight:700;background:#e7f2f7;color:#18364e;cursor:pointer}.box{margin:14px 0;padding:13px;background:#eef7fb;border-radius:11px;line-height:1.5}.warn{background:#fff1d6;border:1px solid #e4b75c;color:#785515}.ok{background:#e7f6ea;border:1px solid #9bc9a5;color:#246a35}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.uid{font-family:monospace;word-break:break-all}</style></head><body><div class="card"><h1>VKV Nalbari Timetable</h1><h2>Admin Master Timetable Importer</h2><div id="status" class="box">Checking sign-in…</div><div id="tools" hidden><p>Select the private seed JSON file from your computer. The file is read locally and uploaded directly to your Firestore project; it does not need to be placed on GitHub.</p><div class="row"><input id="file" type="file" accept="application/json,.json"><button id="upload">Upload Master Timetable</button></div><div id="summary" class="box">No file selected.</div><p><a href="index.html">Return to timetable app</a></p></div></div>
 <script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),status=document.getElementById('status'),tools=document.getElementById('tools'),file=document.getElementById('file'),summary=document.getElementById('summary');let user=null,master=null;
 const esc=x=>String(x??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-onAuthStateChanged(auth,async u=>{user=u;if(!u){status.innerHTML='You are not signed in. <button id="signin">Sign in with Google</button>';document.getElementById('signin').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());return}let p;try{p=await getDoc(doc(db,'authorizedUsers',u.uid))}catch(e){status.className='box warn';status.textContent='Firestore security rules are not ready: '+e.message;return}if(!p.exists()||p.data().active!==true||p.data().role!=='admin'){status.className='box warn';status.innerHTML='<b>Admin access required.</b><br>Email: '+esc(u.email)+'<br>UID: <span class="uid">'+esc(u.uid)+'</span>';return}status.className='box ok';status.textContent='Admin verified: '+(u.displayName||u.email);tools.hidden=false});
+async function verifyAdmin(u){
+ user=u;
+ status.className='box';
+ status.textContent='Checking Admin access…';
+ let p;
+ try{
+   p=await getDoc(doc(db,'authorizedUsers',u.uid));
+ }catch(e){
+   status.className='box warn';
+   status.innerHTML='<b>Could not connect to Firestore.</b><br>'+esc(e.message||e)+'<br><br><button id="retry">Retry connection</button>';
+   document.getElementById('retry').onclick=()=>verifyAdmin(u);
+   return;
+ }
+ if(!p.exists()||p.data().active!==true||p.data().role!=='admin'){
+   status.className='box warn';
+   status.innerHTML='<b>Admin access required.</b><br>Email: '+esc(u.email)+'<br>UID: <span class="uid">'+esc(u.uid)+'</span>';
+   return;
+ }
+ status.className='box ok';
+ status.textContent='Admin verified: '+(u.displayName||u.email);
+ tools.hidden=false;
+}
+onAuthStateChanged(auth,async u=>{
+ user=u;
+ if(!u){
+   status.innerHTML='You are not signed in. <button id="signin">Sign in with Google</button>';
+   document.getElementById('signin').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());
+   return;
+ }
+ await verifyAdmin(u);
+});
 file.onchange=async()=>{master=null;const f=file.files[0];if(!f){summary.textContent='No file selected.';return}try{const d=JSON.parse(await f.text());for(const k of ['classes','patterns','times','records','teachers'])if(!d[k])throw new Error('Missing '+k);master=d;summary.className='box ok';summary.textContent=`Ready: ${d.teachers.length} teachers, ${d.classes.length} classes/sections, ${d.records.length} timetable entries.`}catch(e){summary.className='box warn';summary.textContent='Invalid seed file: '+e.message}};
 document.getElementById('upload').onclick=async()=>{if(!user||!master){alert('Select a valid master timetable seed JSON first.');return}if(!confirm('Upload this master timetable to Firestore? This will replace the current master timetable data.'))return;status.className='box';status.textContent='Uploading master timetable…';try{await setDoc(doc(db,'master','current'),{data:master,session:'2026-27',updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''});status.className='box ok';status.innerHTML='<b>Master timetable uploaded successfully.</b><br>You can now return to the timetable app.'}catch(e){status.className='box warn';status.textContent='Upload failed: '+e.message}};
 </script></body></html>
