@@ -105,7 +105,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v50. Sign in with an authorised Google account.</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v51. Sign in with an authorised Google account.</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -219,6 +219,7 @@ function leaveData(){try{
  return [];
 }catch(e){return[]}}
 let selectedStatus="",selectedDuration="";
+let proxyPeriod=1;
 function selectLeaveButton(btn){document.querySelectorAll(".leaveBtns button[data-leave-type]").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active")}
 function chooseStatus(type,btn){selectedStatus=type;selectLeaveButton(btn);let duty=(type==="od"||type==="special"),box=E("dutyDurationBox");box.classList.toggle("disabledBox",!duty);if(!duty){selectedDuration="";document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyFrom").value="";E("dutyTo").value="";E("durationHelp").textContent=type==="full"?"Full Leave applies to the whole day.":type==="vacant"?"Vacant Position applies to the whole day.":"Half Leave applies to P5–P8."}else{E("durationHelp").textContent="Choose Full Day, Half Day or Custom Period Range.";E("dutyFrom").disabled=true;E("dutyTo").disabled=true}}
 function chooseDutyDuration(type,btn){if(!(selectedStatus==="od"||selectedStatus==="special"))return;selectedDuration=type;document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");let custom=type==="custom";E("dutyFrom").disabled=!custom;E("dutyTo").disabled=!custom;if(!custom){E("dutyFrom").value="";E("dutyTo").value=""}E("durationHelp").textContent=type==="full"?"Whole day selected. Period range is disabled.":type==="half"?"Half day selected: P5–P8. Period range is disabled.":"Select both From Period and To Period."}
