@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VKV Nalbari · Admin User Access</title>
+<style>
+:root{--ink:#18364e;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;--green:#2d7d46}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Segoe UI,Arial;color:#24394b}
+header{background:#1d5e89;color:#fff;padding:16px}.wrap{max-width:980px;margin:auto;padding:0 14px}
+h1{font-size:1.35rem;margin:0}.sub{opacity:.9;font-size:.88rem;margin-top:3px}
+main{padding:18px 0 50px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d10}
+h2{color:var(--ink);margin:0 0 8px;font-size:1.15rem}.help{font-size:.88rem;color:#5f7180;line-height:1.45;margin-bottom:12px}
+label{display:block;font-size:.83rem;color:#667987;margin:9px 0 5px}
+input,textarea,select{width:100%;padding:11px;border:1px solid #c7d5de;border-radius:10px;background:#fbfefd;font:inherit}
+textarea{min-height:150px;resize:vertical}
+button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #b9ced9;border-radius:11px;padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none}
+.primary{background:var(--deep);color:#fff;border-color:var(--deep)}.green{background:#e7f6ea;border-color:#a8d1b1;color:#245c34}
+.danger{background:#fbe8e8;color:#8c2525;border-color:#e5b7b7}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.status{padding:10px 12px;border-radius:11px;background:#eef7fb;margin:12px 0;line-height:1.4}.ok{background:#e7f6ea;color:#245c34}.warn{background:#fff1d6;color:#785515}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.tablewrap{overflow:auto;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:680px}th,td{border:1px solid #e0e9ee;padding:8px;text-align:left;font-size:.88rem}th{background:#edf5f9}
+.code{font-family:ui-monospace,Consolas,monospace;font-size:.8rem;word-break:break-all}.pill{display:inline-block;padding:3px 7px;border-radius:999px;background:#e9f3f7;font-size:.78rem}
+#app{display:none}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>VKV Nalbari · Admin User Access</h1><div class="sub">Viewer email access and privileged role management</div></div></header>
+<main class="wrap">
+<div id="gate" class="card"><h2>Checking Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><a class="btn" href="index.html">← Back to Timetable</a></div></div>
+
+<div id="app">
+  <div class="card">
+    <h2>Viewer Access · Teachers</h2>
+    <div class="help">Paste the teachers’ Google email addresses. One per line is easiest, but commas and semicolons also work. Viewer accounts can see the timetable, daily information and the finalised proxy list, but cannot edit anything.</div>
+    <label>Teacher Google emails</label>
+    <textarea id="viewerInput" placeholder="teacher1@gmail.com&#10;teacher2@gmail.com&#10;teacher3@gmail.com"></textarea>
+    <div class="actions"><button class="primary" id="addViewers">Add Viewer Accounts</button><button id="refreshViewers">Refresh List</button></div>
+    <div id="viewerMsg" class="status" style="display:none"></div>
+    <div class="tablewrap"><table><thead><tr><th>Email</th><th>Status</th><th>Action</th></tr></thead><tbody id="viewerRows"><tr><td colspan="3">Loading…</td></tr></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>Privileged Accounts</h2>
+    <div class="help">Use this only for Admin / Proxy Manager / Manager accounts. These require the person’s Firebase UID. Normal teachers should be added in the Viewer section above.</div>
+    <div class="grid">
+      <div><label>Firebase UID</label><input id="privUid" placeholder="Paste Firebase UID"></div>
+      <div><label>Name</label><input id="privName" placeholder="Teacher name"></div>
+      <div><label>Google email</label><input id="privEmail" type="email" placeholder="teacher@gmail.com"></div>
+      <div><label>Role</label><select id="privRole"><option value="proxy_manager">Proxy Manager</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>
+    </div>
+    <div class="actions"><button class="green" id="savePriv">Add / Update Privileged Account</button><button id="refreshPriv">Refresh List</button></div>
+    <div id="privMsg" class="status" style="display:none"></div>
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+  </div>
+</div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
+
+const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
+const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+
+const $=id=>document.getElementById(id);
+const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let currentUser=null;
+
+function showMsg(id,text,kind='ok'){
+ const el=$(id);el.style.display='block';el.className='status '+kind;el.textContent=text;
+}
+function parseEmails(text){
+ const matches=String(text||'').toLowerCase().match(/[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+/g)||[];
+ return [...new Set(matches)];
+}
+async function verifyAdmin(user){
+ currentUser=user;
+ if(!user){
+   $('gateMsg').textContent='Sign in with the Admin Google account.';
+   $('signInBtn').style.display='inline-block';
+   return;
+ }
+ $('signInBtn').style.display='none';
+ $('gateMsg').textContent='Verifying Admin role…';
+ try{
+   const snap=await getDoc(doc(db,'authorizedUsers',user.uid));
+   if(!snap.exists()||snap.data().active!==true||snap.data().role!=='admin'){
+     $('gateMsg').className='status warn';
+     $('gateMsg').innerHTML='<b>Admin access required.</b><br>'+safe(user.email||'')+'<br><span class="code">'+safe(user.uid)+'</span>';
+     return;
+   }
+   $('gateMsg').className='status ok';
+   $('gateMsg').textContent='Admin verified: '+(user.displayName||user.email);
+   $('app').style.display='block';
+   await Promise.all([loadViewers(),loadPrivileged()]);
+ }catch(e){
+   $('gateMsg').className='status warn';
+   $('gateMsg').textContent='Could not verify Admin access: '+(e.message||e);
+ }
+}
+$('signInBtn').onclick=()=>signInWithPopup(auth,provider);
+onAuthStateChanged(auth,verifyAdmin);
+
+async function loadViewers(){
+ const body=$('viewerRows');body.innerHTML='<tr><td colspan="3">Loading…</td></tr>';
+ try{
+   const qs=await getDocs(collection(db,'viewerEmails'));
+   const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>a.id.localeCompare(b.id));
+   body.innerHTML=rows.length?rows.map(x=>`<tr><td>${safe(x.email||x.id)}</td><td><span class="pill">${x.active===false?'Inactive':'Active Viewer'}</span></td><td><button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`).join(''):'<tr><td colspan="3">No Viewer accounts yet.</td></tr>';
+ }catch(e){body.innerHTML='<tr><td colspan="3">Could not load viewers: '+safe(e.message||e)+'</td></tr>'}
+}
+$('addViewers').onclick=async()=>{
+ const emails=parseEmails($('viewerInput').value);
+ if(!emails.length){showMsg('viewerMsg','No valid email addresses found.','warn');return}
+ $('addViewers').disabled=true;showMsg('viewerMsg','Adding '+emails.length+' Viewer account(s)…','ok');
+ try{
+   let done=0;
+   for(const email of emails){
+     await setDoc(doc(db,'viewerEmails',email),{email,active:true,role:'teacher',addedBy:currentUser.uid,addedAt:serverTimestamp()},{merge:true});
+     done++;
+     showMsg('viewerMsg','Adding Viewer accounts… '+done+' of '+emails.length,'ok');
+   }
+   $('viewerInput').value='';
+   showMsg('viewerMsg',emails.length+' Viewer account(s) added successfully.','ok');
+   await loadViewers();
+ }catch(e){showMsg('viewerMsg','Could not add viewers: '+(e.message||e),'warn')}
+ finally{$('addViewers').disabled=false}
+};
+$('refreshViewers').onclick=loadViewers;
+
+async function loadPrivileged(){
+ const body=$('privRows');body.innerHTML='<tr><td colspan="5">Loading…</td></tr>';
+ try{
+   const qs=await getDocs(collection(db,'authorizedUsers'));
+   const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>(a.name||a.email||a.id).localeCompare(b.name||b.email||b.id));
+   body.innerHTML=rows.length?rows.map(x=>{
+     const self=x.id===currentUser.uid;
+     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td><span class="pill">${safe(x.role||'')}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin</span>':`<button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
+   }).join(''):'<tr><td colspan="5">No privileged accounts found.</td></tr>';
+ }catch(e){body.innerHTML='<tr><td colspan="5">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
+}
+$('savePriv').onclick=async()=>{
+ const uid=$('privUid').value.trim(),name=$('privName').value.trim(),email=$('privEmail').value.trim().toLowerCase(),role=$('privRole').value;
+ if(!uid||!email||!name){showMsg('privMsg','UID, name and email are required.','warn');return}
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('privMsg','Please enter a valid email address.','warn');return}
+ try{
+   await setDoc(doc(db,'authorizedUsers',uid),{active:true,email,name,role},{merge:true});
+   showMsg('privMsg','Privileged account saved successfully.','ok');
+   $('privUid').value='';$('privName').value='';$('privEmail').value='';$('privRole').value='proxy_manager';
+   await loadPrivileged();
+ }catch(e){showMsg('privMsg','Could not save account: '+(e.message||e),'warn')}
+};
+$('refreshPriv').onclick=loadPrivileged;
+
+document.addEventListener('click',async e=>{
+ const vb=e.target.closest('[data-remove-viewer]');
+ if(vb){
+   const email=vb.dataset.removeViewer;
+   if(confirm('Remove Viewer access for '+email+'?')){
+     try{await deleteDoc(doc(db,'viewerEmails',email));await loadViewers();showMsg('viewerMsg','Viewer access removed for '+email+'.','ok')}
+     catch(err){showMsg('viewerMsg','Could not remove viewer: '+(err.message||err),'warn')}
+   }
+   return;
+ }
+ const pb=e.target.closest('[data-remove-priv]');
+ if(pb){
+   const uid=pb.dataset.removePriv;
+   if(confirm('Remove this privileged account?')){
+     try{await deleteDoc(doc(db,'authorizedUsers',uid));await loadPrivileged();showMsg('privMsg','Privileged account removed.','ok')}
+     catch(err){showMsg('privMsg','Could not remove account: '+(err.message||err),'warn')}
+   }
+ }
+});
+</script>
+</body></html>
