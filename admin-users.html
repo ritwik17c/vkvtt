@@ -27,7 +27,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 <body>
 <header><div class="wrap"><h1>VKV Nalbari · Admin User Access</h1><div class="sub">Viewer email access and privileged role management</div></div></header>
 <main class="wrap">
-<div id="gate" class="card"><h2>Checking Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><a class="btn" href="index.html">← Back to Timetable</a></div></div>
+<div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">This page opens separately so returning does not reload the timetable session.</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToTimetable">← Close & Return to Timetable</button></div></div>
 
 <div id="app">
   <div class="card">
@@ -63,7 +63,6 @@ import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, serv
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
-setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('Auth persistence:',e));
 
 const $=id=>document.getElementById(id);
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -102,6 +101,22 @@ async function verifyAdmin(user){
  }
 }
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
+
+$('backToTimetable').onclick=()=>{
+ try{
+   if(window.opener && !window.opener.closed){
+     window.opener.focus();
+     window.close();
+     return;
+   }
+ }catch(e){}
+ if(history.length>1){
+   history.back();
+ }else{
+   location.replace('index.html');
+ }
+};
+
 onAuthStateChanged(auth,verifyAdmin);
 
 async function loadViewers(){
