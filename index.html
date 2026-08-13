@@ -2,7 +2,7 @@
 <title>VKV Nalbari Timetable</title><style>
 :root{--ink:#18364e;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Segoe UI,Arial;color:#24394b}
 header{background:#1d5e89;color:white;padding:16px}.wrap{max-width:1050px;margin:auto}.head{display:flex;gap:12px;align-items:center}.logo{width:62px;height:62px;object-fit:contain;background:white;border-radius:50%;padding:3px}h1{font-size:1.35rem;margin:0}header small{opacity:.9}
-main{padding:16px 12px 45px}.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}button{font:inherit;font-weight:700;border:1px solid #b9ced9;border-radius:12px;padding:12px;background:#e7f2f7;color:var(--ink)}button:nth-child(2n){background:#edf6e9}button:nth-child(3n){background:#fff4d9}button.active{background:var(--deep);color:white}.quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.opsTitle{font-weight:800;color:var(--ink);margin:16px 0 8px}.opsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}.opsGrid button{background:#e7f2f7}.opsGrid button:nth-child(2){background:#edf6e9}.opsGrid button:nth-child(3){background:#fff4d9}.opsGrid button:nth-child(4){background:#f1eafb}@media(max-width:700px){.opsGrid{grid-template-columns:1fr 1fr}}
+main{padding:16px 12px 45px}.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}button{font:inherit;font-weight:700;border:1px solid #b9ced9;border-radius:12px;padding:12px;background:#e7f2f7;color:var(--ink)}button:nth-child(2n){background:#edf6e9}button:nth-child(3n){background:#fff4d9}button.active{background:var(--deep);color:white}.quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.opsTitle{font-weight:800;color:var(--ink);margin:16px 0 8px}.opsGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:12px}.opsGrid button{background:#e7f2f7}.opsGrid button:nth-child(2){background:#edf6e9}.opsGrid button:nth-child(3){background:#fff4d9}.opsGrid button:nth-child(4){background:#f1eafb}@media(max-width:700px){.opsGrid{grid-template-columns:1fr 1fr}}
 .view{display:none;background:white;border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 4px 16px #17324d10}.view.active{display:block}h2{margin:0 0 12px;color:var(--ink)}.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}label{font-size:.82rem;color:#687887}select,input{width:100%;padding:12px;border:1px solid #c8d6df;border-radius:10px;background:#fbfefd;font-size:1rem}.result{margin-top:14px;padding:14px;background:#eef7fb;border-radius:12px;min-height:55px}.table{overflow:auto;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{padding:8px;border:1px solid #e1e9ee;text-align:left}th{background:#edf5f9}.tag{display:inline-block;padding:4px 8px;margin:3px;background:#e9f3f7;border-radius:999px;font-size:.78rem}
 .leaveBtns,.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.proxycard{margin-top:12px;padding:12px;border:1px solid #d6e3e9;border-radius:12px;background:#fff}.proxyhead{font-weight:800;color:var(--ink);margin-bottom:8px}.small{font-size:.8rem;color:#6b7c89}.copymsg{font-size:.8rem;margin-left:6px;color:#456}.teacherpick{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px;margin:7px 0;border:1px solid #d5e2e8;border-radius:11px;background:#fbfefd}.teacherpick button{padding:7px 10px}.load{font-size:.82rem;color:#637785}.assigned{background:#d9ecf7!important;border-color:#75a8c6!important}@media(max-width:700px){.nav{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}}
 
@@ -89,9 +89,23 @@ button.active * { color:#ffffff !important; }
 #authGate.hidden{display:none}.authCard{width:min(560px,100%);background:#fff;border:1px solid #cbdce5;border-radius:20px;padding:26px;box-shadow:0 12px 35px #17324d22}.authCard h2{margin:0 0 8px}.authCard p{line-height:1.5}.authInfo{background:#eef7fb;border-radius:12px;padding:12px;margin:12px 0}.authError{background:#fff1d6;border:1px solid #e4b75c;color:#785515;border-radius:12px;padding:12px;margin:12px 0}.uidBox{font-family:ui-monospace,Consolas,monospace;word-break:break-all;background:#f4f7f8;border-radius:9px;padding:9px;margin-top:6px}.authActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 #cloudBar{display:none;background:#f8fbfd;border-bottom:1px solid #cbdce5;padding:8px 12px;color:#294b60;font-size:.85rem}#cloudBar.show{display:block}.cloudInner{max-width:1250px;margin:auto;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}.cloudBadge{display:inline-block;padding:3px 8px;border-radius:999px;background:#e7f6ea;color:#246a35;font-weight:700}.cloudSync{color:#627885}.cloudBtn{padding:6px 9px;border-radius:9px;font-size:.82rem}
 body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:first-child{opacity:.55}.readonlyNote{background:#fff4d9;border:1px solid #e4c873;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.86rem}
+#publishedProxyBtn{background:#e7f6ea!important;border-color:#a8d1b1!important}
+#publishedProxyBtn.active{background:#2d7d46!important;color:#fff!important;border-color:#2d7d46!important}
+.publishedMeta{background:#e7f6ea;border:1px solid #a8d1b1;color:#245c34;border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.draftNote{background:#fff8e8;border:1px solid #e4c873;color:#6b5618;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:.86rem}
+.adminOnlyLink{display:none}
+@media print{
+ body.printPublishedMode #allot{display:none!important}
+ body.printPublishedMode #publishedProxy{display:block!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important;width:100%!important}
+ body.printPublishedMode #publishedProxy>*{display:none!important}
+ body.printPublishedMode #publishedProxy #publishedProxyResult{display:block!important;margin:0!important;padding:0!important;background:#fff!important}
+ body.printPublishedMode #publishedProxyResult>*{display:none!important}
+ body.printPublishedMode #publishedProxyResult .printSheet{display:block!important;margin:0!important;padding:0!important;width:100%!important;background:#fff!important;color:#000!important}
+}
+
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v47. Sign in with an authorised Google account.</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v48. Sign in with an authorised Google account.</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -100,11 +114,12 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <main class="wrap"><div class="small" style="margin:0 0 10px"><b>Roster verified:</b> 40 teachers. Teacher names and codes have been standardised for timetable, leave/OD, free-teacher and proxy calculations.</div>
 <div class="nav">
 <button onclick="show('teacher',this)">👨‍🏫 Teacher Wise</button><button onclick="show('class',this)">🏫 Class Wise</button><button onclick="show('day',this)">📅 Day Wise</button>
-</div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button onclick="show('history',this);renderHistory()">📚 History</button></div>
+</div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button id="historyBtn" onclick="show('history',this);renderHistory()">📚 History</button><button id="adminUserAccessBtn" class="adminOnlyLink" onclick="location.href='admin-users.html'">🔐 Admin User Access</button></div>
 <div class="opsTitle">Daily Management</div>
 <div class="opsGrid">
-<button onclick="show('leave',this)">📝 Leave / OD / Special / Vacant</button>
-<button onclick="openProxyAllotment(this)">👥 Proxy Allotment</button>
+<button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / OD / Special / Vacant</button>
+<button id="proxyWorkBtn" onclick="openProxyAllotment(this)">👥 Proxy Allotment</button>
+<button id="publishedProxyBtn" style="display:none" onclick="openPublishedProxy(this)">✅ Today's Proxy Allotment</button>
 <button onclick="show('free',this)">🕐 Free Teachers</button>
 <button onclick="show('now',this)">📍 Where Now?</button>
 </div>
@@ -137,7 +152,13 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </div>
 <div class="controls"><div><label>Jump to Period</label><select id="allotPeriod" onchange="jumpProxyPeriod()"><option value="">Select…</option><option value="1">1st Period · 8:35–9:25</option><option value="2">2nd Period · 9:25–10:05</option><option value="3">3rd Period · 10:05–10:45</option><option value="4">4th Period · 10:45–11:25</option><option value="5">5th Period · 11:55–12:35</option><option value="6">6th Period · 12:35–1:15</option><option value="7">7th Period · 1:15–1:45 Jr / 1:55 Sr</option><option value="8">8th Period · 1:55–2:35</option></select></div></div>
 <div id="allotResult" class="result">Today's proxy requirements will appear period by period.</div>
-<div class="actions"><button onclick="showAllProxyNeeds()">📋 Show All Required Proxies</button><button onclick="reviewProxies()">✓ Review & Finalise</button><button onclick="copyAllotments()">📋 Copy</button><button onclick="shareAllotments()">↗ Share</button><button onclick="printProxy()">🖨 Print</button><span id="allotMsg" class="copymsg"></span></div><div id="allotReview" class="result" style="display:none"></div>
+<div id="publishedDraftNote" class="draftNote" style="display:none">A final proxy list has already been published for today. Any changes made here remain a draft until you click <b>Review &amp; Finalise</b> again.</div>
+<div class="actions"><button onclick="showAllProxyNeeds()">📋 Show All Required Proxies</button><button onclick="finaliseProxies()">✓ Review & Finalise</button><span id="allotMsg" class="copymsg"></span></div><div id="allotReview" class="result" style="display:none"></div>
+</section>
+
+<section id="publishedProxy" class="view"><h2>Today's Proxy Allotment <span class="small" id="publishedProxyDate"></span></h2>
+<div id="publishedProxyResult" class="result">The final proxy allotment has not yet been published for today.</div>
+<div class="actions"><button onclick="copyPublishedProxy()">📋 Copy</button><button onclick="sharePublishedProxy()">↗ Share</button><button onclick="printPublishedProxy()">🖨 Print</button><span id="publishedProxyMsg" class="copymsg"></span></div>
 </section>
 
 <section id="leave" class="view"><h2>Leave / On Duty / Special Assignment / Vacant Position</h2>
@@ -456,6 +477,90 @@ function reviewProxies(){
  }
 }
 
+
+function proxyPrintSheetHtml(rows){
+ return `<div class="printSheet">
+ <div class="printHead"><h2>VIVEKANANDA KENDRA VIDYALAYA, NALBARI</h2><h3>PROXY ALLOTMENT</h3><div><b>Date:</b> ${displayDate()} &nbsp;&nbsp; <b>Day:</b> ${todayName()}</div></div>
+ ${rows.length?`<div class="table"><table><tr><th>Period / Time</th><th>Class</th><th>Proxy For / Reason</th><th>Teacher Allotted</th><th>Teacher's Signature</th></tr>${rows.map(x=>`<tr><td>${PL(x.period)}<br>${esc(x.time)}</td><td>${esc(x.className)}</td><td>${esc(x.absentTeacher)} (${esc(x.absentCode)})<br><span class="small">${esc(x.reason)}</span>${x.kind==="Emergency Supervision"?'<br><b>Emergency Supervision</b>':""}</td><td>${esc(x.assignedName)} (${esc(x.assignedCode)})</td><td class="signatureCell">&nbsp;</td></tr>`).join("")}</table></div>`:"No duties allotted."}
+ <div class="principalSignature">Principal's Signature: ______________________________</div>
+ </div>`;
+}
+function publishedProxySnapshot(){
+ const rows=finalDutyRows().map(x=>({
+   period:Number(x.period),time:String(x.time||""),className:String(x.className||""),
+   absentTeacher:String(x.absentTeacher||""),absentCode:String(x.absentCode||""),
+   reason:String(x.reason||""),assignedName:String(x.assignedName||""),
+   assignedCode:String(x.assignedCode||""),kind:String(x.kind||"Normal Proxy"),
+   engagedClasses:Array.isArray(x.engagedClasses)?x.engagedClasses:[]
+ }));
+ const c=proxyCompletion();
+ return {date:todayKey(),dayName:todayName(),required:c.required,covered:c.covered,rows,text:allotmentText()};
+}
+function renderPublishedProxy(pub){
+ window.__vkvPublishedProxy=pub&&pub.date===todayKey()?pub:null;
+ const btn=E("publishedProxyBtn"),note=E("publishedDraftNote"),out=E("publishedProxyResult"),dateEl=E("publishedProxyDate");
+ if(!window.__vkvPublishedProxy){
+   if(btn)btn.style.display="none";
+   if(note)note.style.display="none";
+   if(dateEl)dateEl.textContent="";
+   if(out)out.innerHTML="The final proxy allotment has not yet been published for today.";
+   return;
+ }
+ const p=window.__vkvPublishedProxy;
+ if(btn)btn.style.display="block";
+ if(note)note.style.display="block";
+ if(dateEl)dateEl.textContent="· "+displayDate();
+ const by=p.finalizedByName||p.finalizedByEmail||"Authorised user";
+ const when=p.finalizedAtMs?new Date(p.finalizedAtMs).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";
+ if(out){
+   out.innerHTML=`<div class="publishedMeta"><b>✓ Finalised</b>${when?" at "+esc(when):""} by ${esc(by)}.<br><span class="small">Teachers see this published version. Draft changes do not appear here until the list is finalised again.</span></div>${proxyPrintSheetHtml(p.rows||[])}`;
+ }
+}
+function openPublishedProxy(btn){show("publishedProxy",btn);renderPublishedProxy(window.__vkvPublishedProxy)}
+async function finaliseProxies(){
+ if(window.__vkvRole&&!["admin","manager","proxy_manager"].includes(window.__vkvRole)){alert("This account has view-only proxy access.");return}
+ const c=proxyCompletion();
+ if(c.required>0&&c.covered<c.required){
+   alert("The proxy list is incomplete. Please allot all "+c.required+" requirements before finalising.");
+   reviewProxies();
+   return;
+ }
+ reviewProxies();
+ const snapshot=publishedProxySnapshot();
+ if(!window.finaliseProxyCloud){alert("Cloud finalisation is not ready. Please refresh once and try again.");return}
+ E("allotMsg").textContent="Finalising…";
+ try{
+   const pub=await window.finaliseProxyCloud(snapshot);
+   renderPublishedProxy(pub);
+   E("allotMsg").textContent="Finalised and published.";
+   setTimeout(()=>openPublishedProxy(E("publishedProxyBtn")),80);
+ }catch(e){
+   console.error(e);
+   E("allotMsg").textContent="Finalisation failed.";
+   alert("Could not finalise the proxy list: "+(e&&e.message?e.message:String(e)));
+ }
+}
+function publishedProxyText(){
+ const p=window.__vkvPublishedProxy;
+ if(!p)return "No final proxy allotment has been published for today.";
+ return p.text||"No proxy allotments recorded.";
+}
+async function copyPublishedProxy(){await copyTextSafe(publishedProxyText(),"publishedProxyMsg")}
+async function sharePublishedProxy(){
+ const text=publishedProxyText();
+ if(navigator.share){try{await navigator.share({title:"VKV Nalbari — Today's Proxy Allotment",text});return}catch(e){if(e&&e.name==="AbortError")return}}
+ await copyPublishedProxy();E("publishedProxyMsg").textContent="Sharing unavailable here; final proxy list copied instead.";
+}
+function printPublishedProxy(){
+ if(!window.__vkvPublishedProxy){alert("No final proxy allotment has been published for today.");return}
+ renderPublishedProxy(window.__vkvPublishedProxy);
+ document.body.classList.add("printPublishedMode");
+ const cleanup=()=>document.body.classList.remove("printPublishedMode");
+ window.addEventListener("afterprint",cleanup,{once:true});
+ setTimeout(()=>window.print(),80);
+ setTimeout(cleanup,1500);
+}
+
 function allotmentText(){
  const rows=finalDutyRows(),c=proxyCompletion();
  let lines=["VIVEKANANDA KENDRA VIDYALAYA, NALBARI","PROXY ALLOTMENT",displayDate()+" · "+todayName(),""];
@@ -474,6 +579,8 @@ function allotmentText(){
 async function copyAllotments(){try{await copyTextSafe(allotmentText(),"allotMsg")}catch(e){alert("Copy could not be completed. Please use Review & Finalise and copy from the preview.")}}
 async function shareAllotments(){try{let text=allotmentText();if(navigator.share){try{await navigator.share({title:"VKV Nalbari Proxy Allotment",text});return}catch(e){if(e&&e.name==="AbortError")return}}await copyAllotments()}catch(e){alert("Sharing is not supported here. The proxy list can still be copied.")}}
 function printProxy(){reviewProxies();let c=proxyCompletion();if(c.required&&c.covered<c.required){if(!confirm("Proxy list is incomplete: "+c.covered+" of "+c.required+" requirements have been allotted. Print anyway?"))return}setTimeout(()=>window.print(),100)}
+window.renderPublishedProxy=renderPublishedProxy;
+window.openPublishedProxy=openPublishedProxy;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
 function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=todayKey();let h=historyData()[inp.value],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${inp.value} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=DATA.teachers.find(x=>x.code===o.code);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
 function historyText(){let el=E("historyResult");return `VKV Nalbari – Daily History\\n${el.innerText||el.textContent||""}`}
@@ -517,7 +624,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collecti
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSignOut=document.getElementById('cloudSignOut');
-let currentUser=null,currentProfile=null,todayPollTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
+let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
 const statusEditorRoles=new Set(['admin','manager']);
 const proxyRoles=new Set(['admin','manager','proxy_manager']);
 const isAdmin=()=>currentProfile&&currentProfile.role==='admin';
@@ -537,7 +644,7 @@ loginBtn.addEventListener('click',doSignIn);signOutBtn.addEventListener('click',
 copyUidBtn.addEventListener('click',async()=>{if(!currentUser)return;try{await navigator.clipboard.writeText(currentUser.uid);copyUidBtn.textContent='UID copied ✓'}catch(e){prompt('Copy this Firebase UID:',currentUser.uid)}});
 function pendingAccess(user,extra=''){
  showGate();loginBtn.style.display='none';copyUidBtn.style.display='inline-block';signOutBtn.style.display='inline-block';
- setMessage('<b>Access is not authorised yet.</b><br>Email: '+safe(user.email||'')+'<br><b>Firebase UID:</b><div class="uidBox">'+safe(user.uid)+'</div>'+extra+'<br><br>Send this UID to the administrator. Only an authorised-user record can unlock the school data.','error');
+ setMessage('<b>Access is not authorised yet.</b><br><b>Google email:</b> '+safe(user.email||'')+'<br><b>Firebase UID:</b><div class="uidBox">'+safe(user.uid)+'</div>'+extra+'<br><br>For normal Viewer access, ask the Admin to add your Google email. The UID is needed only for privileged roles such as Proxy Manager.','error');
 }
 function populateMasterSelectors(){
  const teachers=[...(DATA.teachers||[])].sort((a,b)=>a.name.localeCompare(b.name));
@@ -644,6 +751,7 @@ async function loadTodayAndListen(){
  if(first.exists())hydrateDaily(first.data());
  else if(canWriteDaily()){const p=dailyCloudWritePayload();if(p)await setDoc(ref,{...p,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});}
  if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
+ if(publishedPollTimer){clearInterval(publishedPollTimer);publishedPollTimer=null}
  let lastCloudStamp='';
  const poll=async()=>{
    if(!currentUser||cloudWriting)return;
@@ -665,6 +773,26 @@ async function loadTodayAndListen(){
  await poll();
  todayPollTimer=setInterval(poll,5000);
 }
+
+async function loadPublishedProxyAndListen(){
+ const ref=doc(db,'publishedProxy',todayKey());
+ const loadOnce=async()=>{
+   try{
+     const snap=await getDoc(ref);
+     const pub=snap.exists()?snap.data():null;
+     window.__vkvPublishedProxy=pub;
+     if(window.renderPublishedProxy)window.renderPublishedProxy(pub);
+     return true;
+   }catch(e){
+     console.error('Published proxy:',e);
+     return false;
+   }
+ };
+ await loadOnce();
+ if(publishedPollTimer){clearInterval(publishedPollTimer);publishedPollTimer=null}
+ publishedPollTimer=setInterval(loadOnce,5000);
+}
+
 function applyRoleUI(){
  window.__vkvRole=String(currentProfile&&currentProfile.role||'teacher');
 
@@ -689,6 +817,10 @@ function applyRoleUI(){
  document.querySelectorAll('button[onclick*="deleteAllHistory"]').forEach(b=>{
    b.style.display=isAdmin()?'inline-block':'none';
  });
+ const adminAccessBtn=document.getElementById('adminUserAccessBtn');
+ if(adminAccessBtn)adminAccessBtn.style.display=isAdmin()?'inline-block':'none';
+ const emailViewer=!!currentProfile.emailViewer;
+ ['historyBtn','leaveOpsBtn','proxyWorkBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=emailViewer?'none':''});
 
  // Clear prior role note and show the current permission level.
  const oldNote=document.getElementById('rolePermissionNote');
@@ -697,7 +829,7 @@ function applyRoleUI(){
  if(title){
    let text='';
    if(role==='proxy_manager')text='Proxy Manager access: you can allot/change today’s proxies and emergency supervision, review, copy/share and print the proxy list. Leave/OD records, archived-history deletion and master data remain locked.';
-   else if(role==='teacher')text='Teacher access: timetable, current leave/OD information and proxy information are view-only.';
+   else if(role==='teacher')text='Viewer access: timetable tools and the finalised proxy allotment are view-only. Draft proxy work and administrative records are not shown.';
    else if(role==='admin')text='Admin access: full operational rights.';
    else if(role==='manager')text='Manager access: daily operational editing is enabled; archived-history deletion and master administration remain Admin-only.';
    if(text)title.insertAdjacentHTML('afterend','<div id="rolePermissionNote" class="readonlyNote">'+safe(text)+'</div>');
@@ -712,7 +844,7 @@ function applyRoleUI(){
      const oc=b.getAttribute('onclick')||'';
 
      const statusActions=['saveStatusRecord','deleteSelectedStatus','deleteTodayStatuses','chooseStatus(','chooseDutyDuration('];
-     const proxyActions=['attemptProxy(','attemptProxyFromAll','allotProxySimple','removeProxy(','removeProxySimple','removeProxyAndShowAll','assignEmergencyFromButton','allotEmergency','removeEmergency'];
+     const proxyActions=['attemptProxy(','attemptProxyFromAll','allotProxySimple','removeProxy(','removeProxySimple','removeProxyAndShowAll','assignEmergencyFromButton','allotEmergency','removeEmergency','finaliseProxies('];
 
      if(statusActions.some(x=>oc.includes(x)) && !canEditStatus()){
        e.preventDefault();e.stopImmediatePropagation();
@@ -734,6 +866,30 @@ function applyRoleUI(){
  // For ordinary Teachers, visually disable the proxy allotment mutation buttons after they render.
  document.body.classList.toggle('readOnly',role==='teacher');
 }
+
+window.finaliseProxyCloud=async function(snapshot){
+ if(!currentUser||!canManageProxy())throw new Error('Proxy Manager or Admin access is required.');
+ const ref=doc(db,'publishedProxy',todayKey());
+ const pub={
+   ...snapshot,
+   finalizedAtMs:Date.now(),
+   finalizedByUid:currentUser.uid,
+   finalizedByName:currentUser.displayName||currentProfile.name||currentUser.email||'Authorised user',
+   finalizedByEmail:currentUser.email||'',
+   updatedAt:serverTimestamp()
+ };
+ cloudWriting=true;
+ try{
+   await setDoc(ref,pub);
+   const localPub={...pub,updatedAt:null};
+   window.__vkvPublishedProxy=localPub;
+   if(window.renderPublishedProxy)window.renderPublishedProxy(localPub);
+   return localPub;
+ }finally{
+   cloudWriting=false;
+ }
+};
+
 async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;populateMasterSelectors();return true}
 async function cloudHistoryRender(){
  const inp=document.getElementById('historyDate'),out=document.getElementById('historyResult');if(!inp.value)inp.value=todayKey();
@@ -741,7 +897,7 @@ async function cloudHistoryRender(){
  catch(e){out.innerHTML='<div class="warn">Cloud history could not be loaded: '+safe(e.message||e)+'</div>'}
 }
 window.renderHistory=cloudHistoryRender;
-window.deleteAllHistory=async function(){if(!isAdmin()){alert('Only an Admin can delete history.');return}if(!confirm("Delete ALL archived history except today's live working record? This cannot be undone."))return;const qs=await getDocs(collection(db,'dailyRecords')),batch=writeBatch(db),today=todayKey();let n=0;qs.forEach(d=>{if(d.id!==today){batch.delete(d.ref);n++}});if(n)await batch.commit();localStorage.removeItem('vkvHistory');document.getElementById('historyResult').innerHTML='<div class="slotComplete">Archived history deleted. Today\'s live working record is unchanged.</div>'};
+window.deleteAllHistory=async function(){if(!isAdmin()){alert('Only an Admin can delete history.');return}if(!confirm("Delete ALL archived history except today's live working record and today's final proxy? This cannot be undone."))return;const today=todayKey();const daily=await getDocs(collection(db,'dailyRecords'));let batch=writeBatch(db),count=0;for(const d of daily.docs){if(d.id!==today){batch.delete(d.ref);count++;if(count===450){await batch.commit();batch=writeBatch(db);count=0}}}if(count)await batch.commit();const pubs=await getDocs(collection(db,'publishedProxy'));batch=writeBatch(db);count=0;for(const d of pubs.docs){if(d.id!==today){batch.delete(d.ref);count++;if(count===450){await batch.commit();batch=writeBatch(db);count=0}}}if(count)await batch.commit();localStorage.removeItem('vkvHistory');document.getElementById('historyResult').innerHTML='<div class="slotComplete">Archived history deleted. Today\'s live working record and today\'s final proxy are unchanged.</div>'};
 
 onAuthStateChanged(auth,async user=>{
  currentUser=user;currentProfile=null;
@@ -755,13 +911,28 @@ onAuthStateChanged(auth,async user=>{
  loginBtn.style.display='none';signOutBtn.style.display='inline-block';
 
  try{
-   setMessage('<b>Step 1/3:</b> Verifying Admin/authorised-user access…');
-   const profSnap=await withTimeout(getDoc(doc(db,'authorizedUsers',user.uid)),12000,'Authorisation check');
-   if(!profSnap.exists()||profSnap.data().active!==true){pendingAccess(user);return}
-   currentProfile=profSnap.data();
+   setMessage('<b>Step 1/3:</b> Verifying authorised access…');
+   const profSnap=await withTimeout(getDoc(doc(db,'authorizedUsers',user.uid)),12000,'Privileged authorisation check');
+   if(profSnap.exists()&&profSnap.data().active===true){
+     currentProfile=profSnap.data();
+   }else{
+     const email=String(user.email||'').trim().toLowerCase();
+     if(email){
+       try{
+         const viewerSnap=await withTimeout(getDoc(doc(db,'viewerEmails',email)),12000,'Viewer email authorisation check');
+         if(viewerSnap.exists()&&viewerSnap.data().active===true){
+           currentProfile={active:true,role:'teacher',name:user.displayName||viewerSnap.data().name||'',email:email,emailViewer:true};
+         }
+       }catch(e){
+         console.warn('Viewer email check:',e);
+       }
+     }
+   }
+   if(!currentProfile){pendingAccess(user);return}
 
    setMessage('<b>Step 2/3:</b> Authorisation successful. Loading master timetable…');
-   cloudUser.textContent=(user.displayName||user.email||'User')+' · '+String(currentProfile.role||'teacher').toUpperCase();
+   const roleLabel=currentProfile.emailViewer?'VIEWER':String(currentProfile.role||'teacher').toUpperCase();
+   cloudUser.textContent=(user.displayName||user.email||'User')+' · '+roleLabel;
    cloudSync.textContent='Loading school data…';
 
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
@@ -775,6 +946,14 @@ onAuthStateChanged(auth,async user=>{
    populateMasterSelectors();
 
    setMessage('<b>Step 3/3:</b> Master timetable loaded. Opening app…');
+   if(currentProfile.emailViewer){
+     try{
+       localStorage.removeItem('vkvLeave2_'+todayKey());
+       localStorage.removeItem('vkvAllotments_'+todayKey());
+       localStorage.removeItem('vkvSupervision_'+todayKey());
+       localStorage.removeItem('vkvHistory');
+     }catch(e){}
+   }
    wrapSaveSnapshot();
    applyRoleUI();
 
@@ -790,12 +969,17 @@ onAuthStateChanged(auth,async user=>{
    openApp();
    cloudSync.textContent='App ready · starting cloud sync…';
 
-   loadTodayAndListen()
-     .then(()=>{cloudSync.textContent='Synced'})
-     .catch(e=>{
-       console.error('Daily cloud sync:',e);
-       cloudSync.textContent='App ready · daily sync unavailable';
-     });
+   loadPublishedProxyAndListen().catch(e=>console.error('Published proxy sync:',e));
+   if(currentProfile.emailViewer){
+     cloudSync.textContent='Viewer ready · final proxy sync active';
+   }else{
+     loadTodayAndListen()
+       .then(()=>{cloudSync.textContent='Synced'})
+       .catch(e=>{
+         console.error('Daily cloud sync:',e);
+         cloudSync.textContent='App ready · daily sync unavailable';
+       });
+   }
 
  }catch(e){
    console.error('Startup error:',e);
