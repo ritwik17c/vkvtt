@@ -91,7 +91,7 @@ button.active * { color:#ffffff !important; }
 body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:first-child{opacity:.55}.readonlyNote{background:#fff4d9;border:1px solid #e4c873;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.86rem}
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application. Sign in with an authorised Google account.</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v44. Sign in with an authorised Google account.</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -521,6 +521,10 @@ let currentUser=null,currentProfile=null,todayPollTimer=null,cloudHydrating=fals
 const editorRoles=new Set(['admin','manager']);
 const isEditor=()=>currentProfile&&editorRoles.has(currentProfile.role),isAdmin=()=>currentProfile&&currentProfile.role==='admin';
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const withTimeout=(promise,ms,label)=>Promise.race([
+ promise,
+ new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out after '+Math.round(ms/1000)+' seconds.')),ms))
+]);
 function setMessage(text,kind='info'){msg.className=kind==='error'?'authError':'authInfo';msg.innerHTML=text}
 function showGate(){gate.classList.remove('hidden');cloudBar.classList.remove('show')}
 function openApp(){gate.classList.add('hidden');cloudBar.classList.add('show')}
@@ -599,18 +603,67 @@ window.renderHistory=cloudHistoryRender;
 window.deleteAllHistory=async function(){if(!isAdmin()){alert('Only an Admin can delete history.');return}if(!confirm("Delete ALL archived history except today's live working record? This cannot be undone."))return;const qs=await getDocs(collection(db,'dailyRecords')),batch=writeBatch(db),today=todayKey();let n=0;qs.forEach(d=>{if(d.id!==today){batch.delete(d.ref);n++}});if(n)await batch.commit();localStorage.removeItem('vkvHistory');document.getElementById('historyResult').innerHTML='<div class="slotComplete">Archived history deleted. Today\'s live working record is unchanged.</div>'};
 
 onAuthStateChanged(auth,async user=>{
- currentUser=user;currentProfile=null;loginBtn.style.display='inline-block';copyUidBtn.style.display='none';signOutBtn.style.display='none';
+ currentUser=user;currentProfile=null;
+ loginBtn.style.display='inline-block';copyUidBtn.style.display='none';signOutBtn.style.display='none';
  if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
- if(!user){showGate();setMessage('Private school application. Sign in with an authorised Google account.');return}
- loginBtn.style.display='none';signOutBtn.style.display='inline-block';setMessage('Verifying authorisation…');
- let profSnap;try{profSnap=await getDoc(doc(db,'authorizedUsers',user.uid))}catch(e){showGate();loginBtn.style.display='none';copyUidBtn.style.display='inline-block';signOutBtn.style.display='inline-block';setMessage('<b>Could not connect to Firestore.</b><br>'+safe(e.message||e)+'<br><br>Please refresh once. If the problem continues, the app will need its network connection checked.','error');return}
- if(!profSnap.exists()||profSnap.data().active!==true){pendingAccess(user);return}
- currentProfile=profSnap.data();cloudUser.textContent=(user.displayName||user.email||'User')+' · '+String(currentProfile.role||'teacher').toUpperCase();cloudSync.textContent='Loading school data…';
- let ok;try{ok=await loadMaster()}catch(e){setMessage('<b>Master timetable cannot be loaded.</b><br>'+safe(e.message||e),'error');showGate();return}
- if(!ok){showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html">Open Admin Importer</a> to upload the private timetable seed.':''),'error');return}
- wrapSaveSnapshot();applyRoleUI();cloudHydrating=true;try{window.initializeVKVCore()}finally{cloudHydrating=false}
- try{await loadTodayAndListen()}catch(e){console.error(e);cloudSync.textContent='Cloud sync error'}
- openApp();cloudSync.textContent='Synced';
+ if(!user){
+   showGate();
+   setMessage('Private school application. Sign in with an authorised Google account.');
+   return;
+ }
+ loginBtn.style.display='none';signOutBtn.style.display='inline-block';
+
+ try{
+   setMessage('<b>Step 1/3:</b> Verifying Admin/authorised-user access…');
+   const profSnap=await withTimeout(getDoc(doc(db,'authorizedUsers',user.uid)),12000,'Authorisation check');
+   if(!profSnap.exists()||profSnap.data().active!==true){pendingAccess(user);return}
+   currentProfile=profSnap.data();
+
+   setMessage('<b>Step 2/3:</b> Authorisation successful. Loading master timetable…');
+   cloudUser.textContent=(user.displayName||user.email||'User')+' · '+String(currentProfile.role||'teacher').toUpperCase();
+   cloudSync.textContent='Loading school data…';
+
+   const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
+   if(!snap.exists()){
+     showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     return;
+   }
+   const masterDoc=snap.data();
+   window.DATA=masterDoc.data||masterDoc;
+   populateMasterSelectors();
+
+   setMessage('<b>Step 3/3:</b> Master timetable loaded. Opening app…');
+   wrapSaveSnapshot();
+   applyRoleUI();
+
+   try{
+     cloudHydrating=true;
+     window.initializeVKVCore();
+   }finally{
+     cloudHydrating=false;
+   }
+
+   // IMPORTANT: open the working timetable immediately.
+   // Daily cloud synchronisation must never block access to the app.
+   openApp();
+   cloudSync.textContent='App ready · starting cloud sync…';
+
+   loadTodayAndListen()
+     .then(()=>{cloudSync.textContent='Synced'})
+     .catch(e=>{
+       console.error('Daily cloud sync:',e);
+       cloudSync.textContent='App ready · daily sync unavailable';
+     });
+
+ }catch(e){
+   console.error('Startup error:',e);
+   showGate();
+   loginBtn.style.display='none';
+   copyUidBtn.style.display='inline-block';
+   signOutBtn.style.display='inline-block';
+   setMessage('<b>Startup stopped.</b><br>'+safe(e&&e.message?e.message:String(e))+'<br><br>Please send a screenshot of this exact message.','error');
+ }
 });
 </script>
 </body></html>
