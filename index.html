@@ -91,7 +91,7 @@ button.active * { color:#ffffff !important; }
 body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:first-child{opacity:.55}.readonlyNote{background:#fff4d9;border:1px solid #e4c873;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.86rem}
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v45. Sign in with an authorised Google account.</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Private school application · Cloud v47. Sign in with an authorised Google account.</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -512,12 +512,12 @@ window.initializeVKVCore=function(){
 </script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, FieldPath, deleteField } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSignOut=document.getElementById('cloudSignOut');
-let currentUser=null,currentProfile=null,todayPollTimer=null,cloudHydrating=false,syncTimer=null,coreWrapped=false;
+let currentUser=null,currentProfile=null,todayPollTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
 const statusEditorRoles=new Set(['admin','manager']);
 const proxyRoles=new Set(['admin','manager','proxy_manager']);
 const isAdmin=()=>currentProfile&&currentProfile.role==='admin';
@@ -566,8 +566,77 @@ function hydrateDaily(data,date=todayKey()){
  }finally{cloudHydrating=false}
  if(window.__vkvCoreInitialized){try{renderLeave();renderProxyPeriod();const allot=document.getElementById('allot');if(allot&&allot.classList.contains('active'))showAllProxyNeeds()}catch(e){console.warn(e)}}
 }
-async function pushToday(){if(!currentUser||!canWriteDaily()||cloudHydrating)return;const p=dailyCloudWritePayload();if(!p)return;cloudSync.textContent='Saving…';await setDoc(doc(db,'dailyRecords',p.date),{...p,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});cloudSync.textContent='Synced'}
-function queueTodaySync(){if(!currentUser||!canWriteDaily()||cloudHydrating)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushToday().catch(e=>{console.error(e);cloudSync.textContent='Sync failed'}),300)}
+async function pushToday(payload){
+ if(!currentUser||!canWriteDaily()||cloudHydrating)return;
+ const p=payload||dailyCloudWritePayload();
+ if(!p)return;
+ const ref=doc(db,'dailyRecords',p.date);
+ cloudWriting=true;
+ cloudSync.textContent='Saving…';
+ try{
+   const snap=await getDoc(ref);
+   const meta={updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''};
+   if(!snap.exists()){
+     await setDoc(ref,{...p,...meta});
+   }else if(canEditStatus()){
+     // Replace the complete top-level daily maps. This makes removals persistent.
+     await updateDoc(ref,{
+       date:p.date,
+       dayName:p.dayName,
+       statuses:p.statuses||[],
+       allotments:p.allotments||{},
+       supervisions:p.supervisions||{},
+       ...meta
+     });
+   }else if(canManageProxy()){
+     // Proxy Manager changes are written item-by-item.
+     // Removing one proxy deletes only that one nested allotment field.
+     const cloud=snap.data()||{};
+     const cloudA=cloud.allotments||{}, localA=p.allotments||{};
+     const cloudS=cloud.supervisions||{}, localS=p.supervisions||{};
+     const updates=[];
+
+     const diffMap=(root,oldMap,newMap)=>{
+       const keys=new Set([...Object.keys(oldMap),...Object.keys(newMap)]);
+       for(const k of keys){
+         const before=oldMap[k], after=newMap[k];
+         if(after===undefined){
+           if(before!==undefined)updates.push(new FieldPath(root,k),deleteField());
+         }else if(before===undefined || JSON.stringify(before)!==JSON.stringify(after)){
+           updates.push(new FieldPath(root,k),after);
+         }
+       }
+     };
+
+     diffMap('allotments',cloudA,localA);
+     diffMap('supervisions',cloudS,localS);
+
+     if(updates.length){
+       updates.push(
+         new FieldPath('updatedAt'),serverTimestamp(),
+         new FieldPath('updatedBy'),currentUser.uid,
+         new FieldPath('updatedByEmail'),currentUser.email||''
+       );
+       await updateDoc(ref,...updates);
+     }
+   }
+   cloudSync.textContent='Synced';
+ }finally{
+   cloudWriting=false;
+ }
+}
+function queueTodaySync(){
+ if(!currentUser||!canWriteDaily()||cloudHydrating)return;
+ const payload=dailyCloudWritePayload(); // capture the exact local state now
+ if(!payload)return;
+ clearTimeout(syncTimer);
+ cloudWriting=true; // stop polling from restoring stale cloud data during debounce
+ syncTimer=setTimeout(()=>pushToday(payload).catch(e=>{
+   console.error(e);
+   cloudWriting=false;
+   cloudSync.textContent='Sync failed';
+ }),300);
+}
 function wrapSaveSnapshot(){if(coreWrapped)return;coreWrapped=true;const original=window.saveSnapshot;window.saveSnapshot=function(...args){const r=original.apply(this,args);queueTodaySync();return r}}
 async function loadTodayAndListen(){
  const ref=doc(db,'dailyRecords',todayKey());
@@ -577,7 +646,7 @@ async function loadTodayAndListen(){
  if(todayPollTimer){clearInterval(todayPollTimer);todayPollTimer=null}
  let lastCloudStamp='';
  const poll=async()=>{
-   if(!currentUser)return;
+   if(!currentUser||cloudWriting)return;
    try{
      const snap=await getDoc(ref);
      if(!snap.exists())return;
