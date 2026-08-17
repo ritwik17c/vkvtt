@@ -113,6 +113,7 @@ th{background:#edf5f9;color:var(--ink)}
         <div class="tile" id="openUsers"><b>🔐 User Access & Roles</b><span>Viewer, Proxy Manager, Manager and Admin access.</span></div>
         <div class="tile" id="openImport"><b>📥 Import / Restore</b><span>Replace the master timetable from a private JSON seed when necessary.</span></div>
         <div class="tile" data-open="history"><b>📜 Change History</b><span>See recent timetable corrections and restore a slot if needed.</span></div>
+        <div class="tile" id="openExport"><b>📤 Export Master Timetable</b><span>Excel, CSV, print/PDF and JSON with Normal, Active or any saved Schedule Profile.</span></div>
         <div class="tile" id="downloadBackup"><b>💾 Backup Master</b><span>Download the current Firestore master timetable as JSON.</span></div>
         <div class="tile" data-open="overview"><b>📊 Master Overview</b><span>Teachers, classes, timetable entries and session information.</span></div>
       </div>
@@ -632,6 +633,7 @@ document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>openPanel(el
 $('openSchedules').onclick=()=>{ location.href='admin-schedules.html'; };
 $('openUsers').onclick=()=>{ location.href='admin-users.html'; };
 $('openImport').onclick=()=>{ location.href='admin-import.html'; };
+$('openExport').onclick=()=>{ location.href='admin-export.html'; };
 $('downloadBackup').onclick=()=>{
   const payload=JSON.stringify(master,null,2);
   const blob=new Blob([payload],{type:'application/json'});

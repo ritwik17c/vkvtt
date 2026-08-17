@@ -1,0 +1,482 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VKV Nalbari · Administration · Export Master Timetable</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ink:#17364f;--muted:#617685;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;
+  --green:#2d7d46;--greenbg:#e7f6ea;--amber:#7a5b18;--amberbg:#fff7df;
+  --red:#8b2d2d;--redbg:#fdecec;--bluebg:#eef7fb
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#263d4e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+header{background:#1d638e;color:#fff;padding:18px 16px}
+.wrap{max-width:1180px;margin:auto}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:1.45rem;margin:0}.sub{opacity:.92;margin-top:4px}
+main{padding:18px 14px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d0e}
+h2{margin:0 0 8px;color:var(--ink);font-size:1.18rem}h3{margin:15px 0 7px;color:var(--ink)}
+.help{color:var(--muted);font-size:.88rem;line-height:1.5}
+.status{padding:11px 13px;border-radius:12px;background:var(--bluebg);margin:10px 0;line-height:1.45}
+.ok{background:var(--greenbg);color:#245c34;border:1px solid #a9d4b2}
+.warn{background:var(--amberbg);color:var(--amber);border:1px solid #e4c873}
+.error{background:var(--redbg);color:var(--red);border:1px solid #e5b7b7}
+button,.btn{
+  font:inherit;font-weight:750;border:1px solid #b9ced9;border-radius:11px;
+  padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none
+}
+button:disabled{cursor:not-allowed;opacity:.55}
+.primary{background:var(--deep);color:#fff;border-color:var(--deep)}
+.green{background:var(--greenbg);color:#245c34;border-color:#a9d4b2}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label{display:block;font-size:.82rem;color:var(--muted);margin:7px 0 5px}
+select,input{width:100%;padding:10px;border:1px solid #c7d5de;border-radius:10px;background:#fbfefd;font:inherit}
+.choice{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid #d9e5eb;border-radius:11px;background:#fbfefd}
+.choice input{width:auto;margin-top:3px}.choice b{display:block;color:var(--ink)}
+.choice span{font-size:.8rem;color:var(--muted)}
+.exportCards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.exportCard{border:1px solid #d4e1e8;border-radius:14px;padding:14px;background:#fbfefd;cursor:pointer}
+.exportCard:hover{border-color:#92b8cd;background:#f5fbfd}
+.exportCard b{display:block;color:var(--ink);margin-bottom:4px}.exportCard span{font-size:.8rem;color:var(--muted);line-height:1.35}
+.preview{overflow:auto;max-height:420px;border:1px solid #d9e5eb;border-radius:12px;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:780px}
+th,td{border:1px solid #e0e9ee;padding:7px;text-align:left;font-size:.81rem}
+th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#fff4d9;color:#6f5715;font-weight:800}
+#app{display:none}
+@media(max-width:900px){.exportCards{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.exportCards,.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap head">
+    <div><h1>VKV Nalbari · Administration</h1><div class="sub">📤 Export Master Timetable</div></div>
+    <button id="backAdmin">← Admin Dashboard</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="card" id="gate">
+    <h2>Administrator Verification</h2>
+    <div id="gateMsg" class="status">Checking Admin access…</div>
+    <button id="signInBtn" style="display:none">Sign in with Google</button>
+  </div>
+
+  <div id="app">
+    <div class="card">
+      <h2>Export Options</h2>
+      <div class="help">Exports are read-only. They do not change the Master Timetable, Schedule Profiles or Firestore data.</div>
+
+      <div class="grid2">
+        <div>
+          <label>Timings / Schedule Profile to use</label>
+          <select id="profileSelect"></select>
+        </div>
+        <div>
+          <label>Academic Session</label>
+          <input id="sessionBox" readonly>
+        </div>
+      </div>
+
+      <h3>Include</h3>
+      <div class="grid3">
+        <label class="choice"><input type="checkbox" id="includeCodes" checked><div><b>Teacher codes</b><span>Include codes such as RC2, BD, etc.</span></div></label>
+        <label class="choice"><input type="checkbox" id="includeNames" checked><div><b>Teacher names</b><span>Include full teacher names where available.</span></div></label>
+        <label class="choice"><input type="checkbox" id="includeTimes" checked><div><b>Period timings</b><span>Use timings from the selected Schedule Profile.</span></div></label>
+        <label class="choice"><input type="checkbox" id="includeInactive"><div><b>Inactive / disabled slots</b><span>Include Master records even when that class-period is disabled in the selected profile.</span></div></label>
+        <label class="choice"><input type="checkbox" id="includeSubject" checked><div><b>Subject / assignment</b><span>Include the subject or assignment text.</span></div></label>
+        <label class="choice"><input type="checkbox" id="includeStatus" checked><div><b>Active status</b><span>Add Active / Disabled status for each exported record.</span></div></label>
+      </div>
+
+      <div id="profileSummary" class="status"></div>
+
+      <div class="exportCards">
+        <div class="exportCard" id="exportExcel"><b>📊 Excel (.xlsx)</b><span>Multi-sheet workbook: master, day-wise, class-wise, teacher-wise, workload, timings and class-period matrix.</span></div>
+        <div class="exportCard" id="exportCsv"><b>🧾 CSV</b><span>Long-form Master Timetable for easy transfer to other software.</span></div>
+        <div class="exportCard" id="exportPrint"><b>🖨 Print / Save as PDF</b><span>Clean class-wise timetable prepared for browser printing or Save as PDF.</span></div>
+        <div class="exportCard" id="exportJson"><b>🗄 JSON Backup</b><span>Technical backup of the complete current Master data, including Schedule Profiles.</span></div>
+      </div>
+
+      <div id="exportMsg" class="status" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>Preview</h2>
+      <div class="help">Showing the first 100 export rows using the current options.</div>
+      <div id="preview" class="preview"></div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",
+  authDomain:"vkv-nalbari-timetable.firebaseapp.com",
+  projectId:"vkv-nalbari-timetable",
+  storageBucket:"vkv-nalbari-timetable.firebasestorage.app",
+  messagingSenderId:"791432856951",
+  appId:"1:791432856951:web:61324065a54bef30f98d72"
+};
+const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+
+const $=id=>document.getElementById(id);
+const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+let user=null,adminProfile=null,masterDoc=null,master=null,periods=[];
+
+$('backAdmin').onclick=()=>location.href='admin-dashboard.html';
+$('signInBtn').onclick=()=>signInWithPopup(auth,provider);
+
+onAuthStateChanged(auth,async u=>{
+  user=u;
+  if(!u){
+    $('gateMsg').textContent='Sign in with the Admin Google account.';
+    $('signInBtn').style.display='inline-block';
+    return;
+  }
+  $('signInBtn').style.display='none';
+  try{
+    const ps=await getDoc(doc(db,'authorizedUsers',u.uid));
+    if(!ps.exists()||ps.data().active!==true||ps.data().role!=='admin'){
+      $('gateMsg').className='status warn';
+      $('gateMsg').innerHTML='<b>Admin access required.</b><br>'+safe(u.email||'');
+      return;
+    }
+    adminProfile=ps.data();
+    $('gateMsg').className='status ok';
+    $('gateMsg').textContent='Admin verified: '+(u.displayName||adminProfile.name||u.email);
+    await loadMaster();
+    $('app').style.display='block';
+  }catch(e){
+    $('gateMsg').className='status error';
+    $('gateMsg').textContent='Could not load the Master Timetable: '+(e.message||e);
+  }
+});
+
+async function loadMaster(){
+  const snap=await getDoc(doc(db,'master','current'));
+  if(!snap.exists())throw new Error('Master timetable not found.');
+  masterDoc=snap.data();
+  master=structuredClone(masterDoc.data||masterDoc);
+  if(!Array.isArray(master.records)||!Array.isArray(master.classes)||!Array.isArray(master.teachers))
+    throw new Error('Master timetable structure is incomplete.');
+  ensureProfiles();
+  renderControls();
+  renderPreview();
+}
+
+function ensureProfiles(){
+  periods=[...new Set([
+    ...Object.keys(master.times||{}).map(Number),
+    ...Object.values(master.patterns||{}).flat().map(Number),
+    ...(master.records||[]).map(r=>Number(r.period))
+  ])].filter(Boolean).sort((a,b)=>a-b);
+
+  if(!master.scheduleProfiles)master.scheduleProfiles={};
+  if(!master.scheduleProfiles.normal){
+    const cp={};
+    for(const c of master.classes||[]){
+      const arr=master.patterns&&Array.isArray(master.patterns[c])?master.patterns[c].map(Number):periods.slice();
+      cp[c]=[...new Set(arr)].sort((a,b)=>a-b);
+    }
+    master.scheduleProfiles.normal={id:'normal',name:'Normal Schedule',times:{...(master.times||{})},classPeriods:cp};
+  }
+  if(!master.activeScheduleProfileId||!master.scheduleProfiles[master.activeScheduleProfileId])
+    master.activeScheduleProfileId='normal';
+}
+
+function renderControls(){
+  const options=Object.values(master.scheduleProfiles).sort((a,b)=>{
+    if(a.id==='normal')return -1;if(b.id==='normal')return 1;
+    return String(a.name||a.id).localeCompare(String(b.name||b.id));
+  });
+  $('profileSelect').innerHTML=options.map(p=>{
+    const active=p.id===master.activeScheduleProfileId?' · ACTIVE':'';
+    return `<option value="${safe(p.id)}">${safe(p.name||p.id)}${active}</option>`;
+  }).join('');
+  $('profileSelect').value=master.activeScheduleProfileId||'normal';
+  $('sessionBox').value=masterDoc.session||master.session||'2026-27';
+  updateSummary();
+}
+
+function selectedProfile(){
+  return master.scheduleProfiles[$('profileSelect').value]||master.scheduleProfiles.normal;
+}
+function classPeriodActive(cls,period,profile=selectedProfile()){
+  if(profile&&profile.classPeriods&&Object.prototype.hasOwnProperty.call(profile.classPeriods,cls)){
+    return (profile.classPeriods[cls]||[]).map(Number).includes(Number(period));
+  }
+  if(master.patterns&&Array.isArray(master.patterns[cls])){
+    return master.patterns[cls].map(Number).includes(Number(period));
+  }
+  return true;
+}
+function timeFor(period,profile=selectedProfile()){
+  const p=String(Number(period));
+  return String(profile?.times?.[p]??master.times?.[p]??'');
+}
+function teacherByCode(code){return master.teachers.find(t=>t.code===code)}
+function allTeacherCodes(){return master.teachers.map(t=>t.code).filter(Boolean).sort((a,b)=>b.length-a.length)}
+function inferCodes(r){
+  if(Array.isArray(r.codes)&&r.codes.length)return [...new Set(r.codes)];
+  const entry=String(r.entry||'');
+  return allTeacherCodes().filter(code=>{
+    const re=new RegExp('(^|[^A-Za-z0-9])'+code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'($|[^A-Za-z0-9])');
+    return re.test(entry);
+  });
+}
+function subjectFromRecord(r){
+  let text=String(r.entry||'').trim();
+  for(const code of inferCodes(r)){
+    const re=new RegExp('(^|[-/ ,&])'+code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[-/ ,&])','g');
+    text=text.replace(re,'$1');
+  }
+  return text.replace(/[\s\-\/,&]+$/g,'').trim()||String(r.entry||'').trim();
+}
+function includeInactive(){return $('includeInactive').checked}
+
+function exportRows(){
+  const profile=selectedProfile();
+  return master.records
+    .map(r=>{
+      const codes=inferCodes(r);
+      const active=classPeriodActive(r.class,r.period,profile);
+      return {
+        Day:r.day,
+        Period:'P'+Number(r.period),
+        'Period No.':Number(r.period),
+        Time:$('includeTimes').checked?timeFor(r.period,profile):'',
+        'Class / Section':r.class,
+        'Subject / Assignment':$('includeSubject').checked?subjectFromRecord(r):'',
+        'Teacher Codes':$('includeCodes').checked?codes.join(', '):'',
+        'Teacher Names':$('includeNames').checked?codes.map(c=>teacherByCode(c)?.name||c).join(', '):'',
+        'Original Entry':String(r.entry||''),
+        Status:$('includeStatus').checked?(active?'Active':'Disabled'):''
+      };
+    })
+    .filter(row=>includeInactive()||row.Status!=='Disabled')
+    .sort((a,b)=>DAYS.indexOf(a.Day)-DAYS.indexOf(b.Day)||a['Period No.']-b['Period No.']||String(a['Class / Section']).localeCompare(String(b['Class / Section'])));
+}
+
+function updateSummary(){
+  const p=selectedProfile();
+  const disabled=[];
+  for(const c of master.classes){
+    for(const n of periods)if(!classPeriodActive(c,n,p))disabled.push(c+' P'+n);
+  }
+  $('profileSummary').innerHTML=
+    '<b>Selected:</b> '+safe(p?.name||'Normal Schedule')+
+    (p?.id===master.activeScheduleProfileId?' <span class="badge">Currently Active</span>':'')+
+    '<br><b>Classes / Sections:</b> '+master.classes.length+
+    ' · <b>Periods:</b> '+periods.length+
+    ' · <b>Disabled class-period cells in this profile:</b> '+disabled.length;
+}
+
+function renderPreview(){
+  if(!master)return;
+  updateSummary();
+  const rows=exportRows().slice(0,100);
+  if(!rows.length){$('preview').innerHTML='<div class="status warn">No rows match the current export options.</div>';return}
+  const cols=['Day','Period','Time','Class / Section','Subject / Assignment','Teacher Codes','Teacher Names','Status'];
+  $('preview').innerHTML='<table><thead><tr>'+cols.map(c=>'<th>'+safe(c)+'</th>').join('')+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr>'+cols.map(c=>'<td>'+safe(r[c])+'</td>').join('')+'</tr>').join('')+
+    '</tbody></table>';
+}
+
+['profileSelect','includeCodes','includeNames','includeTimes','includeInactive','includeSubject','includeStatus'].forEach(id=>{
+  $(id).addEventListener('change',renderPreview);
+});
+
+function cleanFilePart(s){
+  return String(s||'').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').slice(0,60);
+}
+function baseFilename(ext){
+  const p=selectedProfile();
+  const session=masterDoc.session||master.session||'Session';
+  return `VKV_Nalbari_Master_Timetable_${cleanFilePart(session)}_${cleanFilePart(p?.name||'Schedule')}.${ext}`;
+}
+function downloadBlob(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1200);
+}
+function showMsg(text,kind='ok'){
+  $('exportMsg').style.display='block';$('exportMsg').className='status '+kind;$('exportMsg').innerHTML=text;
+}
+
+function excelRows(){
+  const rows=exportRows();
+  return rows.map(({['Period No.']:periodNo,...rest})=>rest);
+}
+function sheetFromJson(rows,widths){
+  const ws=XLSX.utils.json_to_sheet(rows);
+  if(widths)ws['!cols']=widths.map(w=>({wch:w}));
+  if(rows.length){
+    const ref=ws['!ref'];
+    if(ref)ws['!autofilter']={ref};
+  }
+  return ws;
+}
+function safeSheetName(name,used){
+  let n=String(name||'Sheet').replace(/[\\/?*\[\]:]/g,' ').trim().slice(0,31)||'Sheet';
+  let base=n,i=2;
+  while(used.has(n)){const suf=' '+i++;n=(base.slice(0,31-suf.length)+suf)}
+  used.add(n);return n;
+}
+function buildTeacherWiseRows(rows){
+  const out=[];
+  for(const r of master.records){
+    const active=classPeriodActive(r.class,r.period,selectedProfile());
+    if(!includeInactive()&&!active)continue;
+    for(const code of inferCodes(r)){
+      out.push({
+        Teacher:teacherByCode(code)?.name||code,
+        Code:code,
+        Day:r.day,
+        Period:'P'+Number(r.period),
+        Time:$('includeTimes').checked?timeFor(r.period):'',
+        'Class / Section':r.class,
+        'Subject / Assignment':$('includeSubject').checked?subjectFromRecord(r):'',
+        Status:$('includeStatus').checked?(active?'Active':'Disabled'):''
+      });
+    }
+  }
+  return out.sort((a,b)=>a.Teacher.localeCompare(b.Teacher)||DAYS.indexOf(a.Day)-DAYS.indexOf(b.Day)||Number(a.Period.slice(1))-Number(b.Period.slice(1)));
+}
+function workloadRows(teacherRows){
+  const map=new Map();
+  for(const t of master.teachers){
+    map.set(t.code,{Teacher:t.name,Code:t.code,'Distinct Active Slots / Week':0,'Exported Rows':0});
+  }
+  const slots=new Map();
+  for(const r of teacherRows){
+    if(!map.has(r.Code))map.set(r.Code,{Teacher:r.Teacher,Code:r.Code,'Distinct Active Slots / Week':0,'Exported Rows':0});
+    map.get(r.Code)['Exported Rows']++;
+    const k=r.Code+'|'+r.Day+'|'+r.Period;
+    slots.set(k,r.Code);
+  }
+  for(const code of slots.values())map.get(code)['Distinct Active Slots / Week']++;
+  return [...map.values()].sort((a,b)=>a.Teacher.localeCompare(b.Teacher));
+}
+function timingRows(){
+  const p=selectedProfile();
+  return periods.map(n=>({Period:'P'+n,Time:timeFor(n,p)}));
+}
+function matrixRows(){
+  const p=selectedProfile();
+  return master.classes.map(c=>{
+    const row={'Class / Section':c};
+    for(const n of periods)row['P'+n]=classPeriodActive(c,n,p)?'Active':'Disabled';
+    return row;
+  });
+}
+
+$('exportExcel').onclick=()=>{
+  try{
+    if(!window.XLSX){showMsg('Excel library did not load. Please check the internet connection and try again.','error');return}
+    const rows=excelRows();
+    const teacherRows=buildTeacherWiseRows(rows);
+    const wb=XLSX.utils.book_new();
+    const used=new Set();
+
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(rows,[12,9,14,19,24,18,28,20,12]),safeSheetName('Master Timetable',used));
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(rows.slice().sort((a,b)=>DAYS.indexOf(a.Day)-DAYS.indexOf(b.Day)||Number(a.Period.slice(1))-Number(b.Period.slice(1))),[12,9,14,19,24,18,28,20,12]),safeSheetName('Day Wise',used));
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(rows.slice().sort((a,b)=>String(a['Class / Section']).localeCompare(String(b['Class / Section']))||DAYS.indexOf(a.Day)-DAYS.indexOf(b.Day)||Number(a.Period.slice(1))-Number(b.Period.slice(1))),[12,9,14,19,24,18,28,20,12]),safeSheetName('Class Wise',used));
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(teacherRows,[25,10,12,9,14,19,24,12]),safeSheetName('Teacher Wise',used));
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(workloadRows(teacherRows),[25,10,22,15]),safeSheetName('Teacher Workload',used));
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(timingRows(),[12,20]),safeSheetName('Period Timings',used));
+    XLSX.utils.book_append_sheet(wb,sheetFromJson(matrixRows(),[20,...periods.map(()=>11)]),safeSheetName('Class Period Matrix',used));
+
+    XLSX.writeFile(wb,baseFilename('xlsx'),{compression:true});
+    showMsg('<b>Excel workbook exported.</b> It contains multiple timetable and summary sheets.','ok');
+  }catch(e){showMsg('Excel export failed: '+safe(e.message||e),'error')}
+};
+
+$('exportCsv').onclick=()=>{
+  try{
+    const rows=excelRows();
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const csv=XLSX.utils.sheet_to_csv(ws);
+    downloadBlob(new Blob(["\ufeff"+csv],{type:'text/csv;charset=utf-8'}),baseFilename('csv'));
+    showMsg('<b>CSV exported.</b>','ok');
+  }catch(e){showMsg('CSV export failed: '+safe(e.message||e),'error')}
+};
+
+$('exportJson').onclick=()=>{
+  try{
+    const payload={
+      exportedAt:new Date().toISOString(),
+      exportedBy:user?.email||'',
+      selectedScheduleProfileId:$('profileSelect').value,
+      selectedScheduleProfileName:selectedProfile()?.name||'',
+      masterDocument:masterDoc
+    };
+    downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),baseFilename('json'));
+    showMsg('<b>JSON backup exported.</b>','ok');
+  }catch(e){showMsg('JSON export failed: '+safe(e.message||e),'error')}
+};
+
+function printTableForClass(cls){
+  const profile=selectedProfile();
+  const classPeriods=periods.filter(n=>includeInactive()||classPeriodActive(cls,n,profile));
+  const head='<tr><th>Day</th>'+classPeriods.map(n=>'<th>P'+n+( $('includeTimes').checked?'<div class="ptime">'+safe(timeFor(n,profile))+'</div>':'')+'</th>').join('')+'</tr>';
+  const body=DAYS.map(day=>{
+    const cells=classPeriods.map(n=>{
+      const active=classPeriodActive(cls,n,profile);
+      if(!active)return '<td class="disabled">Disabled</td>';
+      const recs=master.records.filter(r=>r.class===cls&&r.day===day&&Number(r.period)===n);
+      if(!recs.length)return '<td></td>';
+      return '<td>'+recs.map(r=>{
+        const codes=inferCodes(r);
+        const subject=$('includeSubject').checked?subjectFromRecord(r):'';
+        const codeTxt=$('includeCodes').checked?codes.join('/'):'';
+        const nameTxt=$('includeNames').checked?codes.map(c=>teacherByCode(c)?.name||c).join(', '):'';
+        return [subject,codeTxt,nameTxt].filter(Boolean).map(safe).join('<br>');
+      }).join('<hr>')+'</td>';
+    }).join('');
+    return '<tr><th>'+safe(day)+'</th>'+cells+'</tr>';
+  }).join('');
+  return `<section class="classPage"><h2>${safe(cls)}</h2><table>${head}${body}</table></section>`;
+}
+
+$('exportPrint').onclick=()=>{
+  const w=window.open('','_blank');
+  if(!w){showMsg('The print window was blocked by the browser. Allow pop-ups for this site and try again.','warn');return}
+  const p=selectedProfile(),session=masterDoc.session||master.session||'';
+  const classes=master.classes||[];
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>${safe(baseFilename('pdf').replace('.pdf',''))}</title>
+  <style>
+  @page{size:A4 landscape;margin:9mm}
+  body{font-family:Arial,sans-serif;color:#162f42;margin:0}
+  .top{text-align:center;margin-bottom:10px}.top h1{font-size:19px;margin:0}.top div{font-size:11px;margin-top:3px}
+  .classPage{page-break-after:always}.classPage:last-child{page-break-after:auto}
+  h2{font-size:15px;margin:5px 0 8px}
+  table{border-collapse:collapse;width:100%;table-layout:fixed}
+  th,td{border:1px solid #7c8f9b;padding:4px;text-align:center;vertical-align:middle;font-size:8.5px;word-wrap:break-word}
+  th{background:#eef3f6;font-weight:bold}.ptime{font-weight:normal;font-size:7px;margin-top:2px}
+  td.disabled{background:#f1f1f1;color:#888;font-style:italic}hr{border:0;border-top:1px dotted #aaa;margin:3px 0}
+  .screenOnly{margin:10px;text-align:center}@media print{.screenOnly{display:none}}
+  </style></head><body>
+  <div class="screenOnly"><button onclick="window.print()">Print / Save as PDF</button></div>
+  <div class="top"><h1>Vivekananda Kendra Vidyalaya, Nalbari</h1><div>Master Timetable · ${safe(session)} · ${safe(p?.name||'Normal Schedule')}</div></div>
+  ${classes.map(printTableForClass).join('')}
+  </body></html>`;
+  w.document.open();w.document.write(html);w.document.close();
+  showMsg('<b>Print view opened.</b> Use the browser Print dialog and choose “Save as PDF” when required.','ok');
+};
+</script>
+</body>
+</html>
