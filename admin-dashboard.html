@@ -104,8 +104,10 @@ th{background:#edf5f9;color:var(--ink)}
     <div class="card">
       <h2>Administration Dashboard</h2>
       <div class="help">Choose the task you want. The live timetable remains the single master source: a saved timetable correction updates the data used by all timetable and proxy views.</div>
+      <div id="activeScheduleStatus" class="status">Active schedule: loading…</div>
       <div class="tiles">
         <div class="tile" data-open="masterEditor"><b>📅 Master Timetable</b><span>Correct one live timetable slot. Available teachers are shown first.</span></div>
+        <div class="tile" id="openSchedules"><b>🗓 Schedule Profiles</b><span>Normal, heat-wave and custom timings with any class-period combination.</span></div>
         <div class="tile" data-open="teachers"><b>👩‍🏫 Teachers & Workload</b><span>View the teacher directory and current teaching load.</span></div>
         <div class="tile" data-open="classes"><b>🏫 Classes & Sections</b><span>View all active class/section structures and scheduled slots.</span></div>
         <div class="tile" id="openUsers"><b>🔐 User Access & Roles</b><span>Viewer, Proxy Manager, Manager and Admin access.</span></div>
@@ -274,6 +276,10 @@ async function loadMaster(){
 }
 
 function renderAll(){
+  const scheduleProfiles=master.scheduleProfiles||{};
+  const activeId=master.activeScheduleProfileId||'normal';
+  const activeProfile=scheduleProfiles[activeId]||scheduleProfiles.normal;
+  $('activeScheduleStatus').innerHTML='<b>Active Schedule:</b> '+safe(activeProfile?.name||'Normal Schedule');
   $('mTeachers').textContent=master.teachers.length;
   $('mClasses').textContent=master.classes.length;
   $('mEntries').textContent=master.records.length;
@@ -623,6 +629,7 @@ function openPanel(id){
 }
 document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>openPanel(el.dataset.open));
 
+$('openSchedules').onclick=()=>{ location.href='admin-schedules.html'; };
 $('openUsers').onclick=()=>{ location.href='admin-users.html'; };
 $('openImport').onclick=()=>{ location.href='admin-import.html'; };
 $('downloadBackup').onclick=()=>{
