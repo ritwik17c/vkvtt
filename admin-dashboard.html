@@ -1,0 +1,640 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VKV Nalbari · Administration</title>
+<style>
+:root{
+  --ink:#17364f;--muted:#617685;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;
+  --green:#2d7d46;--greenbg:#e7f6ea;--amber:#7a5b18;--amberbg:#fff7df;
+  --red:#8b2d2d;--redbg:#fdecec;--bluebg:#eef7fb;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#263d4e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+header{background:#1d638e;color:#fff;padding:18px 16px}
+.wrap{max-width:1180px;margin:auto}
+.headline{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:1.5rem;margin:0}.subtitle{opacity:.92;margin-top:4px}
+main{padding:18px 14px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d0e}
+h2{margin:0 0 7px;color:var(--ink);font-size:1.18rem}h3{color:var(--ink)}
+.help{color:var(--muted);font-size:.9rem;line-height:1.5}
+.status{padding:11px 13px;border-radius:12px;background:var(--bluebg);margin:10px 0;line-height:1.45}
+.ok{background:var(--greenbg);color:#245c34;border:1px solid #a9d4b2}
+.warn{background:var(--amberbg);color:var(--amber);border:1px solid #e4c873}
+.error{background:var(--redbg);color:var(--red);border:1px solid #e5b7b7}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.btn{
+  font:inherit;font-weight:750;border:1px solid #b9ced9;border-radius:11px;
+  padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none
+}
+button:hover,.btn:hover{filter:brightness(.98)}
+.primary{background:var(--deep);color:#fff;border-color:var(--deep)}
+.green{background:var(--greenbg);color:#245c34;border-color:#a9d4b2}
+.danger{background:var(--redbg);color:var(--red);border-color:#e5b7b7}
+.smallbtn{padding:7px 9px;font-size:.84rem}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.tile{border:1px solid #d4e1e8;border-radius:15px;padding:16px;background:#fbfefd;cursor:pointer}
+.tile:hover{border-color:#92b8cd;background:#f5fbfd}
+.tile b{display:block;font-size:1rem;color:var(--ink);margin-bottom:4px}
+.tile span{font-size:.84rem;color:var(--muted);line-height:1.35}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+.metric{background:#f6fafc;border:1px solid #dde8ed;border-radius:13px;padding:13px}
+.metric .num{font-size:1.5rem;font-weight:850;color:var(--deep)}
+.metric .lab{font-size:.8rem;color:var(--muted)}
+.panel{display:none}.panel.active{display:block}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:.82rem;color:#617685;margin:7px 0 5px}
+select,input,textarea{
+  width:100%;padding:11px;border:1px solid #c7d5de;border-radius:10px;background:#fbfefd;
+  color:#263d4e;font:inherit
+}
+.currentBox{background:#f3f8fb;border:1px solid #d5e4eb;border-radius:13px;padding:13px;margin:12px 0}
+.currentEntry{font-weight:850;color:var(--ink);font-size:1.06rem}
+.teacherGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.teacherChoice{display:flex;gap:9px;align-items:flex-start;border:1px solid #d6e3e9;border-radius:11px;padding:9px;background:#fbfefd}
+.teacherChoice input{width:auto;margin-top:3px}
+.teacherChoice .name{font-weight:700;color:var(--ink)}.teacherChoice .meta{font-size:.78rem;color:var(--muted)}
+.diag{margin-top:10px;border-top:1px dashed #d8e3e9;padding-top:10px}
+.unavailableList{display:none;margin-top:8px}
+.unavailableItem{padding:7px 9px;border-bottom:1px solid #e6eef2;font-size:.86rem}
+.altResults{margin-top:10px}
+.altCard{border:1px solid #d7e4ea;border-radius:12px;padding:11px;margin:8px 0;background:#fbfefd}
+.altCard.good{background:#f0f8f1;border-color:#b7d6bd}
+.historyItem{border:1px solid #dbe6eb;border-radius:12px;padding:12px;margin:8px 0;background:#fbfefd}
+.historyItem .when{font-size:.78rem;color:var(--muted)}
+.tablewrap{overflow:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:680px}
+th,td{border:1px solid #e0e9ee;padding:8px;text-align:left;font-size:.86rem}
+th{background:#edf5f9;color:var(--ink)}
+.code{font-family:ui-monospace,Consolas,monospace}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#e9f3f7;font-size:.76rem}
+#app{display:none}
+@media(max-width:850px){
+  .tiles{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:1fr 1fr}.grid4{grid-template-columns:1fr 1fr}.teacherGrid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .tiles,.grid4,.grid2{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap headline">
+    <div>
+      <h1>VKV Nalbari · Administration</h1>
+      <div class="subtitle">Master timetable, access, backup and administrative tools</div>
+    </div>
+    <button id="closeBtn">← Close & Return to Timetable</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="gate" class="card">
+    <h2>Administrator Verification</h2>
+    <div id="gateMsg" class="status">Checking Admin access…</div>
+    <div class="actions">
+      <button id="signInBtn" style="display:none">Sign in with Google</button>
+    </div>
+  </div>
+
+  <div id="app">
+    <div class="card">
+      <h2>Administration Dashboard</h2>
+      <div class="help">Choose the task you want. The live timetable remains the single master source: a saved timetable correction updates the data used by all timetable and proxy views.</div>
+      <div class="tiles">
+        <div class="tile" data-open="masterEditor"><b>📅 Master Timetable</b><span>Correct one live timetable slot. Available teachers are shown first.</span></div>
+        <div class="tile" data-open="teachers"><b>👩‍🏫 Teachers & Workload</b><span>View the teacher directory and current teaching load.</span></div>
+        <div class="tile" data-open="classes"><b>🏫 Classes & Sections</b><span>View all active class/section structures and scheduled slots.</span></div>
+        <div class="tile" id="openUsers"><b>🔐 User Access & Roles</b><span>Viewer, Proxy Manager, Manager and Admin access.</span></div>
+        <div class="tile" id="openImport"><b>📥 Import / Restore</b><span>Replace the master timetable from a private JSON seed when necessary.</span></div>
+        <div class="tile" data-open="history"><b>📜 Change History</b><span>See recent timetable corrections and restore a slot if needed.</span></div>
+        <div class="tile" id="downloadBackup"><b>💾 Backup Master</b><span>Download the current Firestore master timetable as JSON.</span></div>
+        <div class="tile" data-open="overview"><b>📊 Master Overview</b><span>Teachers, classes, timetable entries and session information.</span></div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="num" id="mTeachers">—</div><div class="lab">Teachers</div></div>
+        <div class="metric"><div class="num" id="mClasses">—</div><div class="lab">Classes / Sections</div></div>
+        <div class="metric"><div class="num" id="mEntries">—</div><div class="lab">Timetable Entries</div></div>
+        <div class="metric"><div class="num" id="mChanges">—</div><div class="lab">Recorded Changes</div></div>
+      </div>
+    </div>
+
+    <section id="masterEditor" class="card panel">
+      <h2>📅 Edit Master Timetable</h2>
+      <div class="help">Select the exact slot. Only teachers free in that slot are offered as new choices. The teacher(s) already attached to the current entry remain visible even when the same slot is shared with another class.</div>
+
+      <div class="grid4">
+        <div><label>Day</label><select id="editDay"></select></div>
+        <div><label>Class / Section</label><select id="editClass"></select></div>
+        <div><label>Period</label><select id="editPeriod"></select></div>
+        <div><label>Time</label><input id="editTime" readonly></div>
+      </div>
+
+      <div id="slotCurrent" class="currentBox">Choose a slot.</div>
+
+      <div class="grid2">
+        <div>
+          <label>Subject / Assignment</label>
+          <input id="editSubject" placeholder="e.g. ENG, Maths, Chemistry">
+        </div>
+        <div>
+          <label>Teacher selection</label>
+          <div class="help">Tick one or more teachers where the period is split between groups.</div>
+        </div>
+      </div>
+
+      <div id="availableTeachers" class="teacherGrid"></div>
+
+      <div class="actions">
+        <button class="primary" id="saveSlot">Save Timetable Change</button>
+        <button id="reloadSlot">Reload Current Slot</button>
+      </div>
+      <div id="saveMsg" class="status" style="display:none"></div>
+
+      <div class="diag">
+        <div class="actions">
+          <button class="smallbtn" id="toggleUnavailable">👁 Show unavailable teachers</button>
+        </div>
+        <div id="unavailableTeachers" class="unavailableList"></div>
+      </div>
+
+      <div class="diag">
+        <h3>Need a teacher who is busy in this slot?</h3>
+        <div class="help">Choose that teacher and the app will look for another slot of the same class where the teacher is free. Where a safe two-way swap is possible, it is shown as a suggested swap.</div>
+        <div class="grid2">
+          <div><label>Teacher</label><select id="altTeacher"></select></div>
+          <div style="align-self:end"><button id="findAlternatives">🔎 Find Alternative Slots</button></div>
+        </div>
+        <div id="altResults" class="altResults"></div>
+      </div>
+    </section>
+
+    <section id="teachers" class="card panel">
+      <h2>👩‍🏫 Teachers & Workload</h2>
+      <div class="help">This panel reflects the current master timetable. Combined/shared entries in the same slot are counted once per teacher per day/period.</div>
+      <div id="teacherTable" class="tablewrap"></div>
+    </section>
+
+    <section id="classes" class="card panel">
+      <h2>🏫 Classes & Sections</h2>
+      <div class="help">Current class/section structure and the number of master timetable entries for each.</div>
+      <div id="classTable" class="tablewrap"></div>
+    </section>
+
+    <section id="history" class="card panel">
+      <h2>📜 Master Timetable Change History</h2>
+      <div class="help">The dashboard keeps the most recent 100 master timetable changes inside the protected master document. Restoring a previous slot creates a new history entry rather than erasing the audit trail.</div>
+      <div id="historyList"></div>
+    </section>
+
+    <section id="overview" class="card panel">
+      <h2>📊 Master Overview</h2>
+      <div id="overviewBox" class="status"></div>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",
+  authDomain:"vkv-nalbari-timetable.firebaseapp.com",
+  projectId:"vkv-nalbari-timetable",
+  storageBucket:"vkv-nalbari-timetable.firebasestorage.app",
+  messagingSenderId:"791432856951",
+  appId:"1:791432856951:web:61324065a54bef30f98d72"
+};
+const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+
+const $=id=>document.getElementById(id);
+const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+let currentUser=null, profile=null, masterDoc=null, master=null;
+let selectedRecordIndex=-1;
+
+function msg(id,text,kind='ok'){
+  const el=$(id); el.style.display='block'; el.className='status '+kind; el.innerHTML=text;
+}
+function closeAndReturn(){
+  try{
+    if(window.opener&&!window.opener.closed){window.opener.location.reload();window.opener.focus();window.close();return}
+  }catch(e){}
+  location.href='index.html';
+}
+$('closeBtn').onclick=closeAndReturn;
+
+$('signInBtn').onclick=()=>signInWithPopup(auth,provider);
+
+onAuthStateChanged(auth, async user=>{
+  currentUser=user;
+  if(!user){
+    $('gateMsg').textContent='Sign in with the Admin Google account.';
+    $('signInBtn').style.display='inline-block';
+    return;
+  }
+  $('signInBtn').style.display='none';
+  try{
+    const ps=await getDoc(doc(db,'authorizedUsers',user.uid));
+    if(!ps.exists()||ps.data().active!==true||ps.data().role!=='admin'){
+      $('gateMsg').className='status warn';
+      $('gateMsg').innerHTML='<b>Admin access required.</b><br>'+safe(user.email||'');
+      return;
+    }
+    profile=ps.data();
+    $('gateMsg').className='status ok';
+    $('gateMsg').textContent='Admin verified: '+(user.displayName||profile.name||user.email);
+    await loadMaster();
+    $('app').style.display='block';
+    openPanel('masterEditor');
+  }catch(e){
+    $('gateMsg').className='status error';
+    $('gateMsg').textContent='Could not open Administration: '+(e.message||e);
+  }
+});
+
+async function loadMaster(){
+  const snap=await getDoc(doc(db,'master','current'));
+  if(!snap.exists())throw new Error('Master timetable is not available in Firestore.');
+  masterDoc=snap.data();
+  master=structuredClone(masterDoc.data||masterDoc);
+  if(!Array.isArray(master.records)||!Array.isArray(master.teachers)||!Array.isArray(master.classes))
+    throw new Error('Master timetable structure is incomplete.');
+  renderAll();
+}
+
+function renderAll(){
+  $('mTeachers').textContent=master.teachers.length;
+  $('mClasses').textContent=master.classes.length;
+  $('mEntries').textContent=master.records.length;
+  $('mChanges').textContent=(masterDoc.changeHistory||[]).length;
+
+  fill($('editDay'),DAYS);
+  fill($('editClass'),master.classes);
+  fill($('altTeacher'),master.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>({value:t.code,label:t.name+' ('+t.code+')'})));
+
+  renderTeacherTable();
+  renderClassTable();
+  renderHistory();
+  renderOverview();
+
+  if(!$('editDay').value)$('editDay').value='Monday';
+  if(!$('editClass').value)$('editClass').value=master.classes[0]||'';
+  updatePeriods();
+}
+
+function fill(sel,items){
+  const old=sel.value;
+  sel.innerHTML=items.map(x=>{
+    const value=typeof x==='object'?x.value:x, label=typeof x==='object'?x.label:x;
+    return '<option value="'+safe(value)+'">'+safe(label)+'</option>';
+  }).join('');
+  if([...sel.options].some(o=>o.value===old))sel.value=old;
+}
+
+function teacherByCode(code){return master.teachers.find(t=>t.code===code)}
+function allTeacherCodes(){return master.teachers.map(t=>t.code).sort((a,b)=>b.length-a.length)}
+
+function inferRecordCodes(r){
+  if(Array.isArray(r.codes)&&r.codes.length)return [...new Set(r.codes)];
+  const entry=String(r.entry||'');
+  return allTeacherCodes().filter(code=>{
+    const re=new RegExp('(^|[^A-Za-z0-9])'+code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'($|[^A-Za-z0-9])');
+    return re.test(entry);
+  });
+}
+
+function subjectFromRecord(r){
+  let text=String(r?.entry||'').trim();
+  const codes=inferRecordCodes(r);
+  for(const code of codes){
+    const re=new RegExp('(^|[-/ ,&])'+code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[-/ ,&])','g');
+    text=text.replace(re,'$1');
+  }
+  return text.replace(/[\s\-\/,&]+$/g,'').trim()||String(r?.entry||'').trim();
+}
+
+function buildEntry(subject,codes){
+  const clean=String(subject||'').trim();
+  if(!codes.length)return clean;
+  return clean+'-'+codes.join('/');
+}
+
+function recordsAt(day,period,excludeIndex=-1){
+  return master.records.map((r,i)=>({r,i})).filter(x=>x.i!==excludeIndex&&x.r.day===day&&Number(x.r.period)===Number(period));
+}
+
+function busyMap(day,period,excludeIndex=-1){
+  const map=new Map();
+  for(const {r} of recordsAt(day,period,excludeIndex)){
+    for(const code of inferRecordCodes(r)){
+      if(!map.has(code))map.set(code,[]);
+      map.get(code).push(r.class+' · '+r.entry);
+    }
+  }
+  return map;
+}
+
+function updatePeriods(){
+  const cls=$('editClass').value;
+  let periods=(master.patterns&&master.patterns[cls])||Object.keys(master.times||{}).map(Number);
+  periods=[...new Set(periods.map(Number))].sort((a,b)=>a-b);
+  fill($('editPeriod'),periods.map(p=>({value:String(p),label:'P'+p})));
+  loadSlot();
+}
+
+function findRecordIndex(cls,day,period){
+  return master.records.findIndex(r=>r.class===cls&&r.day===day&&Number(r.period)===Number(period));
+}
+
+function loadSlot(){
+  const cls=$('editClass').value,day=$('editDay').value,period=Number($('editPeriod').value||0);
+  selectedRecordIndex=findRecordIndex(cls,day,period);
+  if(selectedRecordIndex<0){
+    $('editTime').value=(master.times&&master.times[String(period)])||'';
+    $('slotCurrent').innerHTML='<b>No timetable record exists for this slot.</b>';
+    $('editSubject').value='';
+    $('availableTeachers').innerHTML='';
+    $('unavailableTeachers').innerHTML='';
+    return;
+  }
+  const r=master.records[selectedRecordIndex];
+  $('editTime').value=r.time||(master.times&&master.times[String(period)])||'';
+  const codes=inferRecordCodes(r);
+  $('slotCurrent').innerHTML='<div class="help">Current live entry</div><div class="currentEntry">'+safe(r.entry)+'</div><div class="help">'+safe(r.class)+' · '+safe(r.day)+' · P'+safe(r.period)+' · '+safe(r.time||'')+'</div>';
+  $('editSubject').value=subjectFromRecord(r);
+  renderTeacherChoices(r,codes);
+  $('altResults').innerHTML='';
+  $('saveMsg').style.display='none';
+}
+
+function renderTeacherChoices(r,currentCodes){
+  const day=r.day,period=Number(r.period),busy=busyMap(day,period,selectedRecordIndex);
+  const currentSet=new Set(currentCodes);
+  const allowed=master.teachers.filter(t=>!busy.has(t.code)||currentSet.has(t.code)).sort((a,b)=>{
+    const ac=currentSet.has(a.code)?0:1,bc=currentSet.has(b.code)?0:1;
+    return ac-bc||a.name.localeCompare(b.name);
+  });
+  $('availableTeachers').innerHTML=allowed.map(t=>{
+    const current=currentSet.has(t.code);
+    const shared=current&&busy.has(t.code);
+    return `<label class="teacherChoice"><input type="checkbox" class="teacherCheck" value="${safe(t.code)}" ${current?'checked':''}>
+      <div><div class="name">${safe(t.name)} <span class="code">(${safe(t.code)})</span></div>
+      <div class="meta">${current?(shared?'Current teacher · shared/engaged elsewhere in this slot':'Current teacher'):'Available in this slot'}</div></div>
+    </label>`;
+  }).join('');
+
+  const unavailable=master.teachers.filter(t=>busy.has(t.code)&&!currentSet.has(t.code)).sort((a,b)=>a.name.localeCompare(b.name));
+  $('unavailableTeachers').innerHTML=unavailable.length?unavailable.map(t=>
+    `<div class="unavailableItem"><b>${safe(t.name)} (${safe(t.code)})</b> — ${busy.get(t.code).map(safe).join('; ')}</div>`
+  ).join(''):'<div class="help">No unavailable teachers in this slot.</div>';
+}
+
+function selectedTeacherCodes(){
+  return [...document.querySelectorAll('.teacherCheck:checked')].map(x=>x.value);
+}
+
+$('editDay').onchange=loadSlot;
+$('editClass').onchange=updatePeriods;
+$('editPeriod').onchange=loadSlot;
+$('reloadSlot').onclick=loadSlot;
+$('toggleUnavailable').onclick=()=>{
+  const box=$('unavailableTeachers');
+  const show=box.style.display!=='block';
+  box.style.display=show?'block':'none';
+  $('toggleUnavailable').textContent=show?'🙈 Hide unavailable teachers':'👁 Show unavailable teachers';
+};
+
+async function saveMasterChange(change){
+  const history=[...(masterDoc.changeHistory||[])];
+  history.unshift(change);
+  if(history.length>100)history.length=100;
+  await setDoc(doc(db,'master','current'),{
+    data:master,
+    changeHistory:history,
+    session:masterDoc.session||'2026-27',
+    updatedAt:serverTimestamp(),
+    updatedBy:currentUser.uid,
+    updatedByEmail:currentUser.email||''
+  },{merge:true});
+  masterDoc={...masterDoc,data:structuredClone(master),changeHistory:history};
+  renderAll();
+}
+
+$('saveSlot').onclick=async()=>{
+  if(selectedRecordIndex<0){msg('saveMsg','This slot has no existing master record to edit.','warn');return}
+  const codes=selectedTeacherCodes();
+  if(!codes.length){msg('saveMsg','Select at least one available teacher.','warn');return}
+  const subject=$('editSubject').value.trim();
+  if(!subject){msg('saveMsg','Enter the subject / assignment.','warn');return}
+
+  const r=master.records[selectedRecordIndex];
+  const before=structuredClone(r);
+  const after={...r,entry:buildEntry(subject,codes),codes:[...codes]};
+  if(before.entry===after.entry&&JSON.stringify(inferRecordCodes(before))===JSON.stringify(after.codes)){
+    msg('saveMsg','No change to save.','warn');return;
+  }
+
+  master.records[selectedRecordIndex]=after;
+  const change={
+    atMs:Date.now(),type:'slot_edit',
+    byUid:currentUser.uid,byName:currentUser.displayName||profile.name||currentUser.email||'Admin',
+    byEmail:currentUser.email||'',
+    class:r.class,day:r.day,period:Number(r.period),
+    before:{entry:before.entry,codes:inferRecordCodes(before)},
+    after:{entry:after.entry,codes:after.codes}
+  };
+  $('saveSlot').disabled=true;
+  msg('saveMsg','Saving the master timetable…','ok');
+  try{
+    await saveMasterChange(change);
+    loadSlot();
+    msg('saveMsg','<b>Master timetable updated successfully.</b><br>All timetable views will use this corrected master data the next time they refresh/reload.','ok');
+  }catch(e){
+    master.records[selectedRecordIndex]=before;
+    msg('saveMsg','Save failed: '+safe(e.message||e),'error');
+  }finally{$('saveSlot').disabled=false}
+};
+
+function teacherFreeAt(code,day,period,excludeIndexes=[]){
+  return !master.records.some((r,i)=>!excludeIndexes.includes(i)&&r.day===day&&Number(r.period)===Number(period)&&inferRecordCodes(r).includes(code));
+}
+
+function safeSwapCandidate(targetTeacherCode,candidateIndex){
+  if(selectedRecordIndex<0)return false;
+  const a=master.records[selectedRecordIndex],b=master.records[candidateIndex];
+  if(!teacherFreeAt(targetTeacherCode,b.day,b.period,[selectedRecordIndex,candidateIndex]))return false;
+  const bCodes=inferRecordCodes(b);
+  return bCodes.every(code=>teacherFreeAt(code,a.day,a.period,[selectedRecordIndex,candidateIndex]));
+}
+
+$('findAlternatives').onclick=()=>{
+  if(selectedRecordIndex<0)return;
+  const target=$('altTeacher').value;
+  const a=master.records[selectedRecordIndex];
+  const candidates=master.records.map((r,i)=>({r,i}))
+    .filter(x=>x.i!==selectedRecordIndex&&x.r.class===a.class)
+    .filter(x=>teacherFreeAt(target,x.r.day,x.r.period,[selectedRecordIndex,x.i]))
+    .sort((x,y)=>DAYS.indexOf(x.r.day)-DAYS.indexOf(y.r.day)||Number(x.r.period)-Number(y.r.period));
+
+  if(!candidates.length){
+    $('altResults').innerHTML='<div class="status warn">No alternative slot was found for this class where the selected teacher is free.</div>';
+    return;
+  }
+  $('altResults').innerHTML=candidates.slice(0,18).map(x=>{
+    const swap=safeSwapCandidate(target,x.i);
+    return `<div class="altCard ${swap?'good':''}">
+      <b>${safe(x.r.day)} · P${safe(x.r.period)} · ${safe(x.r.time||'')}</b><br>
+      <span class="help">This class currently has: ${safe(x.r.entry)}</span><br>
+      ${swap?`<span class="badge">Safe two-way swap available</span>
+      <button class="smallbtn" data-swap-index="${x.i}" data-target-teacher="${safe(target)}">↔ Use this slot</button>`
+      :`<span class="help">Teacher is free here, but the present lesson cannot be moved safely to the original slot automatically.</span>`}
+    </div>`;
+  }).join('');
+};
+
+document.addEventListener('click',async e=>{
+  const swap=e.target.closest('[data-swap-index]');
+  if(swap){
+    const bi=Number(swap.dataset.swapIndex),target=swap.dataset.targetTeacher;
+    const a=master.records[selectedRecordIndex],b=master.records[bi];
+    if(!a||!b)return;
+    const aBefore=structuredClone(a),bBefore=structuredClone(b);
+    const desiredSubject=$('editSubject').value.trim()||subjectFromRecord(a);
+    const aNew={...a,entry:bBefore.entry,codes:inferRecordCodes(bBefore)};
+    const bNew={...b,entry:buildEntry(desiredSubject,[target]),codes:[target]};
+    if(!confirm(`Use ${b.day} P${b.period} for ${desiredSubject} with ${teacherByCode(target)?.name||target}, and move "${bBefore.entry}" to ${a.day} P${a.period}?`))return;
+
+    master.records[selectedRecordIndex]=aNew;
+    master.records[bi]=bNew;
+    const change={
+      atMs:Date.now(),type:'slot_swap',
+      byUid:currentUser.uid,byName:currentUser.displayName||profile.name||currentUser.email||'Admin',
+      byEmail:currentUser.email||'',class:a.class,day:a.day,period:Number(a.period),
+      before:{entry:aBefore.entry,codes:inferRecordCodes(aBefore),swapWith:{day:bBefore.day,period:Number(bBefore.period),entry:bBefore.entry,codes:inferRecordCodes(bBefore)}},
+      after:{entry:aNew.entry,codes:aNew.codes,swapWith:{day:bNew.day,period:Number(bNew.period),entry:bNew.entry,codes:bNew.codes}}
+    };
+    try{
+      await saveMasterChange(change);
+      updatePeriods(); loadSlot();
+      msg('saveMsg','<b>Alternative-slot swap saved successfully.</b>','ok');
+      $('altResults').innerHTML='';
+    }catch(err){
+      master.records[selectedRecordIndex]=aBefore;master.records[bi]=bBefore;
+      msg('saveMsg','Swap failed: '+safe(err.message||err),'error');
+    }
+    return;
+  }
+
+  const restore=e.target.closest('[data-restore-history]');
+  if(restore){
+    const idx=Number(restore.dataset.restoreHistory);
+    await restoreHistory(idx);
+  }
+});
+
+function renderTeacherTable(){
+  const rows=master.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>{
+    const slots=new Set(master.records.filter(r=>inferRecordCodes(r).includes(t.code)).map(r=>r.day+'|'+r.period));
+    return `<tr><td>${safe(t.name)}</td><td class="code">${safe(t.code)}</td><td>${slots.size}</td></tr>`;
+  });
+  $('teacherTable').innerHTML='<table><thead><tr><th>Teacher</th><th>Code</th><th>Distinct Teaching Slots / Week</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>';
+}
+
+function renderClassTable(){
+  const rows=master.classes.map(c=>{
+    const n=master.records.filter(r=>r.class===c).length;
+    const periods=(master.patterns&&master.patterns[c])||[];
+    return `<tr><td>${safe(c)}</td><td>${n}</td><td>${safe(periods.join(', '))}</td></tr>`;
+  });
+  $('classTable').innerHTML='<table><thead><tr><th>Class / Section</th><th>Scheduled Entries</th><th>Periods Used</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>';
+}
+
+function changeLabel(c){
+  if(c.type==='slot_swap')return 'Alternative-slot swap';
+  if(c.type==='restore')return 'Restored previous slot';
+  return 'Edited timetable slot';
+}
+
+function renderHistory(){
+  const h=masterDoc.changeHistory||[];
+  $('mChanges').textContent=h.length;
+  $('historyList').innerHTML=h.length?h.map((c,i)=>{
+    const d=new Date(c.atMs||0);
+    return `<div class="historyItem">
+      <b>${safe(changeLabel(c))}</b> · ${safe(c.class||'')} · ${safe(c.day||'')} · P${safe(c.period||'')}
+      <div class="when">${safe(d.toLocaleString())} · ${safe(c.byName||c.byEmail||'Admin')}</div>
+      <div><b>Before:</b> ${safe(c.before?.entry||'')}</div>
+      <div><b>After:</b> ${safe(c.after?.entry||'')}</div>
+      ${c.type==='slot_edit'||c.type==='restore'?`<button class="smallbtn" data-restore-history="${i}">↶ Restore “Before” to this slot</button>`:''}
+    </div>`;
+  }).join(''):'<div class="status">No timetable corrections have been recorded through this dashboard yet.</div>';
+}
+
+async function restoreHistory(historyIndex){
+  const c=(masterDoc.changeHistory||[])[historyIndex];
+  if(!c||!c.before)return;
+  const ri=findRecordIndex(c.class,c.day,c.period);
+  if(ri<0){alert('The original slot no longer exists in the master timetable.');return}
+  if(!confirm(`Restore ${c.class} · ${c.day} · P${c.period} to "${c.before.entry}"?`))return;
+  const current=structuredClone(master.records[ri]);
+  master.records[ri]={...current,entry:c.before.entry,codes:[...(c.before.codes||[])]};
+  const newChange={
+    atMs:Date.now(),type:'restore',
+    byUid:currentUser.uid,byName:currentUser.displayName||profile.name||currentUser.email||'Admin',
+    byEmail:currentUser.email||'',class:c.class,day:c.day,period:Number(c.period),
+    before:{entry:current.entry,codes:inferRecordCodes(current)},
+    after:{entry:c.before.entry,codes:[...(c.before.codes||[])]}
+  };
+  try{
+    await saveMasterChange(newChange);
+    if($('editClass').value===c.class&&$('editDay').value===c.day&&Number($('editPeriod').value)===Number(c.period))loadSlot();
+  }catch(e){
+    master.records[ri]=current;
+    alert('Restore failed: '+(e.message||e));
+  }
+}
+
+function renderOverview(){
+  const session=masterDoc.session||'Not specified';
+  const last=masterDoc.updatedAt?.toDate?masterDoc.updatedAt.toDate().toLocaleString():'Available in Firestore';
+  $('overviewBox').innerHTML=
+    '<b>Session:</b> '+safe(session)+'<br>'+
+    '<b>Teachers:</b> '+master.teachers.length+'<br>'+
+    '<b>Classes / Sections:</b> '+master.classes.length+'<br>'+
+    '<b>Timetable entries:</b> '+master.records.length+'<br>'+
+    '<b>Periods:</b> '+Object.keys(master.times||{}).length+'<br>'+
+    '<b>Last master update:</b> '+safe(last);
+}
+
+function openPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const el=$(id);if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'})}
+}
+document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>openPanel(el.dataset.open));
+
+$('openUsers').onclick=()=>{
+  const w=window.open('admin-users.html','vkvAdminUsers');
+  if(!w)location.href='admin-users.html';
+};
+$('openImport').onclick=()=>{
+  const w=window.open('admin-import.html','vkvAdminImport');
+  if(!w)location.href='admin-import.html';
+};
+$('downloadBackup').onclick=()=>{
+  const payload=JSON.stringify(master,null,2);
+  const blob=new Blob([payload],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='VKV_Nalbari_Master_Timetable_Backup_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+</script>
+</body>
+</html>
