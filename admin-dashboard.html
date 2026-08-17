@@ -87,7 +87,7 @@ th{background:#edf5f9;color:var(--ink)}
       <h1>VKV Nalbari · Administration</h1>
       <div class="subtitle">Master timetable, access, backup and administrative tools</div>
     </div>
-    <button id="closeBtn">← Close & Return to Timetable</button>
+    <button id="homeBtn">🏠 Timetable Home</button>
   </div>
 </header>
 
@@ -222,13 +222,17 @@ let selectedRecordIndex=-1;
 function msg(id,text,kind='ok'){
   const el=$(id); el.style.display='block'; el.className='status '+kind; el.innerHTML=text;
 }
-function closeAndReturn(){
+function goTimetableHome(){
   try{
-    if(window.opener&&!window.opener.closed){window.opener.location.reload();window.opener.focus();window.close();return}
+    if(window.opener&&!window.opener.closed){
+      window.opener.focus();
+      window.close();
+      return;
+    }
   }catch(e){}
   location.href='index.html';
 }
-$('closeBtn').onclick=closeAndReturn;
+$('homeBtn').onclick=goTimetableHome;
 
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
@@ -619,14 +623,8 @@ function openPanel(id){
 }
 document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>openPanel(el.dataset.open));
 
-$('openUsers').onclick=()=>{
-  const w=window.open('admin-users.html','vkvAdminUsers');
-  if(!w)location.href='admin-users.html';
-};
-$('openImport').onclick=()=>{
-  const w=window.open('admin-import.html','vkvAdminImport');
-  if(!w)location.href='admin-import.html';
-};
+$('openUsers').onclick=()=>{ location.href='admin-users.html'; };
+$('openImport').onclick=()=>{ location.href='admin-import.html'; };
 $('downloadBackup').onclick=()=>{
   const payload=JSON.stringify(master,null,2);
   const blob=new Blob([payload],{type:'application/json'});
