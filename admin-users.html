@@ -25,14 +25,14 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>VKV Nalbari · Administration</h1><div class="sub">User Access & Roles · Cloud v54.6</div></div></header>
+<header><div class="wrap"><h1>VKV Nalbari · Administration</h1><div class="sub">User Access & Roles · Cloud v54.7</div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">This page opens separately so returning does not reload the timetable session.</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToTimetable">← Close & Return to Timetable</button></div></div>
 
 <div id="app">
   <div class="card">
     <h2>Viewer Access · Teachers</h2>
-    <div class="help">Paste the teachers’ Google email addresses. Viewer accounts can see the timetable and finalised proxy list, but cannot edit anything. After adding an email, link it to the correct teacher in the table below. This teacher–email link powers My Timetable, My Proxy and My Leave / OD / Special.</div>
+    <div class="help">Paste the teachers’ Google email addresses. Viewer accounts can see the timetable and finalised proxy list, but cannot edit anything. Known teacher emails are auto-matched from the approved staff list. Non-teaching accounts may remain “Not linked” and will not block the list. Manual linking remains available for future additions such as Minu Limboo. This teacher–email link powers My Timetable, My Proxy and My Leave / OD / Special.</div>
     <label>Teacher Google emails</label>
     <textarea id="viewerInput" placeholder="REMOVED_EMAIL&#10;REMOVED_EMAIL&#10;REMOVED_EMAIL"></textarea>
     <div class="actions"><button class="primary" id="addViewers">Add Viewer Accounts</button><button id="refreshViewers">Refresh List</button><button class="green" id="syncPersonal">🔄 Sync My Area Records</button></div>
@@ -68,6 +68,30 @@ const $=id=>document.getElementById(id);
 const safe=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let currentUser=null,master=null,masterWrapped=true;
 
+const SCHOOL_EMAIL_TEACHER_DEFAULTS=Object.freeze({
+  "REMOVED_EMAIL":"AD2","REMOVED_EMAIL":"AM","REMOVED_EMAIL":"AD1","REMOVED_EMAIL":"AD3",
+  "REMOVED_EMAIL":"AC","REMOVED_EMAIL":"BB2","REMOVED_EMAIL":"BD","REMOVED_EMAIL":"BB1",
+  "REMOVED_EMAIL":"DM","REMOVED_EMAIL":"DR","REMOVED_EMAIL":"DD1","REMOVED_EMAIL":"DB",
+  "REMOVED_EMAIL":"DD3","REMOVED_EMAIL":"DD2","REMOVED_EMAIL":"DK","REMOVED_EMAIL":"GP",
+  "REMOVED_EMAIL":"GG","REMOVED_EMAIL":"HS","REMOVED_EMAIL":"HB","REMOVED_EMAIL":"JM",
+  "REMOVED_EMAIL":"JD","REMOVED_EMAIL":"JK","REMOVED_EMAIL":"KCN","REMOVED_EMAIL":"MD",
+  "REMOVED_EMAIL":"MR","REMOVED_EMAIL":"ND","REMOVED_EMAIL":"NB","REMOVED_EMAIL":"NH",
+  "REMOVED_EMAIL":"PT","REMOVED_EMAIL":"PS","REMOVED_EMAIL":"PRS","REMOVED_EMAIL":"PB1",
+  "REMOVED_EMAIL":"RC2","REMOVED_EMAIL":"RC2","REMOVED_EMAIL":"RH","REMOVED_EMAIL":"SD",
+  "REMOVED_EMAIL":"SP","REMOVED_EMAIL":"SKK","REMOVED_EMAIL":"YJS"
+});
+const SCHOOL_TEMP_EMAIL_DEFAULTS=Object.freeze({"REMOVED_EMAIL":"Jahnabi Barman"});
+function normName(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ')}
+function temporaryCodeForEmail(email){
+ const wanted=normName(SCHOOL_TEMP_EMAIL_DEFAULTS[String(email||'').toLowerCase()]||'');if(!wanted)return '';
+ const reps=Array.isArray(master&&master.temporaryReplacements)?master.temporaryReplacements:[];
+ const now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+ const matches=reps.filter(r=>r&&r.tempCode&&normName(r.tempName)===wanted);if(!matches.length)return '';
+ const active=matches.find(r=>r.active!==false&&String(r.startDate||'')<=today&&today<=String(r.endDate||r.startDate||''));
+ return String((active||matches.slice().sort((a,b)=>String(b.endDate||'').localeCompare(String(a.endDate||'')))[0]).tempCode||'');
+}
+function defaultCodeForEmail(email){email=String(email||'').toLowerCase();return String(SCHOOL_EMAIL_TEACHER_DEFAULTS[email]||temporaryCodeForEmail(email)||'')}
+
 function showMsg(id,text,kind='ok'){
  const el=$(id);el.style.display='block';el.className='status '+kind;el.textContent=text;
 }
@@ -76,8 +100,12 @@ function parseEmails(text){
  return [...new Set(matches)];
 }
 function teacherOptions(selected=''){
- const a=(master&&Array.isArray(master.teachers)?master.teachers:[]).slice().sort((x,y)=>String(x.name||'').localeCompare(String(y.name||'')));
- return '<option value="">Not linked</option>'+a.map(t=>'<option value="'+safe(t.code)+'" '+(String(t.code)===String(selected)?'selected':'')+'>'+safe(t.name)+' ('+safe(t.code)+')</option>').join('');
+ const a=(master&&Array.isArray(master.teachers)?master.teachers:[]).map(t=>({...t,temporary:false}));
+ const reps=Array.isArray(master&&master.temporaryReplacements)?master.temporaryReplacements:[];
+ const seen=new Set(a.map(t=>String(t.code)));
+ for(const r of reps){if(r&&r.tempCode&&!seen.has(String(r.tempCode))){a.push({code:r.tempCode,name:(r.tempName||r.tempCode)+' — Temporary for '+(r.originalCode||''),temporary:true});seen.add(String(r.tempCode))}}
+ a.sort((x,y)=>String(x.name||'').localeCompare(String(y.name||'')));
+ return '<option value="">Not linked / non-teaching account</option>'+a.map(t=>'<option value="'+safe(t.code)+'" '+(String(t.code)===String(selected)?'selected':'')+'>'+safe(t.name)+' ('+safe(t.code)+')'+(t.temporary?' · Temporary':'')+'</option>').join('');
 }
 async function loadMaster(){
  const snap=await getDoc(doc(db,'master','current'));
@@ -157,7 +185,7 @@ async function loadViewers(){
  try{
    const qs=await getDocs(collection(db,'viewerEmails'));
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>a.id.localeCompare(b.id));
-   body.innerHTML=rows.length?rows.map((x,i)=>`<tr><td>${safe(x.email||x.id)}</td><td><select id="viewerTeacher_${i}" data-old-code="${safe(x.teacherCode||'')}">${teacherOptions(x.teacherCode||'')}</select></td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active Viewer'}</span></td><td><button data-link-viewer="${safe(x.id)}" data-select-id="viewerTeacher_${i}">Save Teacher Link</button> <button data-toggle-viewer="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`).join(''):'<tr><td colspan="4">No Viewer accounts yet.</td></tr>';
+   body.innerHTML=rows.length?rows.map((x,i)=>{const email=String(x.email||x.id).toLowerCase(),auto=defaultCodeForEmail(email),effective=String(x.teacherCode||auto||'');return `<tr><td>${safe(x.email||x.id)}</td><td><select id="viewerTeacher_${i}" data-old-code="${safe(x.teacherCode||'')}">${teacherOptions(effective)}</select>${!x.teacherCode&&auto?'<div class="small" style="margin-top:4px">Auto-linked from approved staff list</div>':''}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active Viewer'}</span></td><td><button data-link-viewer="${safe(x.id)}" data-select-id="viewerTeacher_${i}">Save / Override Link</button> <button data-toggle-viewer="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`}).join(''):'<tr><td colspan="4">No Viewer accounts yet.</td></tr>';
  }catch(e){body.innerHTML='<tr><td colspan="4">Could not load viewers: '+safe(e.message||e)+'</td></tr>'}
 }
 $('addViewers').onclick=async()=>{
@@ -184,12 +212,16 @@ $('syncPersonal').onclick=async()=>{
  try{
    await loadMaster();
    const viewers=await getDocs(collection(db,'viewerEmails'));
-   const codeToEmail={...(master.teacherEmailMap||{})};
-   viewers.forEach(d=>{const x=d.data()||{};if(x.teacherCode&&x.active!==false)codeToEmail[String(x.teacherCode)]=String(x.email||d.id).toLowerCase()});
+   const codeToEmails=new Map();
+   const addLink=(code,email)=>{code=String(code||'').trim();email=String(email||'').trim().toLowerCase();if(!code||!email)return;if(!codeToEmails.has(code))codeToEmails.set(code,new Set());codeToEmails.get(code).add(email)};
+   for(const [code,email] of Object.entries(master.teacherEmailMap||{}))addLink(code,email);
+   for(const [email,code] of Object.entries(SCHOOL_EMAIL_TEACHER_DEFAULTS))addLink(code,email);
+   for(const email of Object.keys(SCHOOL_TEMP_EMAIL_DEFAULTS)){const code=temporaryCodeForEmail(email);if(code)addLink(code,email)}
+   viewers.forEach(d=>{const x=d.data()||{},email=String(x.email||d.id).toLowerCase();if(x.active!==false)addLink(String(x.teacherCode||defaultCodeForEmail(email)||''),email)});
    const priv=await getDocs(collection(db,'authorizedUsers'));
-   priv.forEach(d=>{const x=d.data()||{};if(x.teacherCode&&x.email&&x.active!==false)codeToEmail[String(x.teacherCode)]=String(x.email).toLowerCase()});
-   const emails=[...new Set(Object.values(codeToEmail).filter(Boolean).map(x=>String(x).toLowerCase()))];
-   if(!emails.length)throw new Error('No teacher–email links have been saved yet. Link the Viewer emails to teachers first.');
+   priv.forEach(d=>{const x=d.data()||{},email=String(x.email||'').toLowerCase();if(x.active!==false)addLink(String(x.teacherCode||defaultCodeForEmail(email)||''),email)});
+   const emails=[...new Set([...codeToEmails.values()].flatMap(s=>[...s]))];
+   if(!emails.length)throw new Error('No teacher email mapping is available yet.');
 
    showMsg('viewerMsg','Clearing old personal projections…','ok');
    const dels=[];
@@ -209,13 +241,13 @@ $('syncPersonal').onclick=async()=>{
      const data=d.data()||{};
      if(d.id==='__leavePlans'){plans=data.plans||{};return}
      for(const st of (data.statuses||[])){
-       if(!personalType(st))continue;const code=String(st.code||''),email=String(codeToEmail[code]||'').toLowerCase();if(!email)continue;
-       ensure(email,code,d.id).manualStatus={...st,approved:true,source:'daily',date:d.id};
+       if(!personalType(st))continue;const code=String(st.code||''),targets=[...(codeToEmails.get(code)||[])];if(!targets.length)continue;
+       for(const email of targets)ensure(email,code,d.id).manualStatus={...st,approved:true,source:'daily',date:d.id};
      }
    });
    for(const p of Object.values(plans)){
-     if(!personalType(p)||p.active===false)continue;const code=String(p.code||''),email=String(codeToEmail[code]||'').toLowerCase();if(!email)continue;
-     for(const date of planDates(p)){const r=ensure(email,code,date);r.scheduledPlans[String(p.id||code+'_'+date)]={...p,approved:true,source:'scheduled'}}
+     if(!personalType(p)||p.active===false)continue;const code=String(p.code||''),targets=[...(codeToEmails.get(code)||[])];if(!targets.length)continue;
+     for(const email of targets)for(const date of planDates(p)){const r=ensure(email,code,date);r.scheduledPlans[String(p.id||code+'_'+date)]={...p,approved:true,source:'scheduled'}}
    }
    const writes=[];
    for(const r of byPath.values()){
@@ -223,7 +255,7 @@ $('syncPersonal').onclick=async()=>{
      writes.push(b=>b.set(ref,{...r,updatedAt:serverTimestamp()},{merge:true}));
    }
    if(writes.length)await commitChunks(writes);
-   showMsg('viewerMsg','My Area records synced successfully for '+emails.length+' linked account(s). '+writes.length+' date record(s) prepared.','ok');
+   showMsg('viewerMsg','My Area records synced successfully for '+emails.length+' teacher account(s). Unlinked non-teaching accounts were safely ignored. '+writes.length+' date record(s) prepared.','ok');
  }catch(e){showMsg('viewerMsg','Could not sync My Area records: '+(e.message||e),'warn')}
  finally{btn.disabled=false}
 };
