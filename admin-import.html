@@ -15,10 +15,11 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Import / Restore · Leave Ledger Import v55.1</div></div><a class="btn" href="admin-dashboard.html?v=55.1">← Admin Dashboard</a></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Import / Restore · Leave Ledger Import v56.0</div></div><a class="btn" href="admin-dashboard.html?v=56.0">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="status" class="box">Checking sign-in…</div>
 <div id="tools" hidden>
+  <div class="actions" style="margin:6px 0 2px"><a class="btn green" href="#leaveImport">🗓 Jump to Import Leave from Excel</a></div>
   <section class="card">
     <h2>📥 Master Timetable Import / Restore</h2>
     <p class="help">Select the private master seed JSON from your computer. It is read locally and uploaded directly to Firestore; the file does not need to be placed on GitHub.</p>
@@ -26,7 +27,7 @@
     <div id="masterSummary" class="box">No master file selected.</div>
   </section>
 
-  <section class="card">
+  <section class="card" id="leaveImport">
     <h2>🗓 Import Past Leave / OD / Special History from Excel</h2>
     <p class="help"><b>For historical records only.</b> You may upload either the app’s clean import template or the existing VKV leave-statement workbook (for example <b>Leave_record_2026-27.xlsx</b>). The app auto-detects the format, reads leave categories (VL / EL / CL / SEL / EOL / Maternity), previews the records, and imports only after confirmation. Dates from today onward are not accepted here.</p>
     <div class="actions">
@@ -278,6 +279,17 @@ async function writePersonalProjection(plans){
  for(let i=0;i<ops.length;i+=350){const batch=writeBatch(db);for(const op of ops.slice(i,i+350)){const ref=doc(db,'personalStatus',op.email,'records',op.date);batch.set(ref,{date:op.date,email:op.email,teacherCode:String(op.code),updatedAt:serverTimestamp(),scheduledPlans:{[op.id]:op.clean}},{merge:true})}await batch.commit()}
  return{projected,unlinked};
 }
+async function writeApprovedPlanProjection(plans){
+ for(let i=0;i<plans.length;i+=350){
+   const batch=writeBatch(db);
+   for(const p of plans.slice(i,i+350)){
+     const ref=doc(db,'approvedStatusPlans',String(p.id));
+     batch.set(ref,{...p,approved:true,source:'excel-history',updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:true});
+   }
+   await batch.commit();
+ }
+ return plans.length;
+}
 $('importHistory').onclick=async()=>{
  if(!user)return;const candidates=leavePreview.filter(x=>x.state==='ready'||x.state==='warning').map(x=>x.plan);if(!candidates.length)return;
  if(!confirm(`Import ${candidates.length} approved historical Leave / OD / Special record${candidates.length===1?'':'s'}?\n\nThis will add them to school history. Exact duplicates found during the final check will be skipped.`))return;
@@ -287,8 +299,8 @@ $('importHistory').onclick=async()=>{
    if(!fresh.length){$('importResult').innerHTML='<div class="box warn">Nothing new was imported because all ready rows already exist.</div>';return}
    const merged={...latest};fresh.forEach(p=>{merged[p.id]={...p,importedAtMs:Date.now(),importedBy:user.uid,importedByEmail:user.email||''}});
    await setDoc(ref,{date:LEAVE_PLAN_DOC,dayName:'Scheduled Leave / Status Plans',plans:merged,updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:true});
-   const projection=await writePersonalProjection(fresh);existingPlans=merged;
-   const dates=fresh.reduce((n,p)=>n+planDateKeys(p).length,0);$('importResult').innerHTML=`<div class="box ok"><b>Import completed.</b><br>${fresh.length} historical record${fresh.length===1?'':'s'} imported, covering ${dates} teacher-date${dates===1?'':'s'}. ${projection.projected} My Area projection${projection.projected===1?'':'s'} written.${projection.unlinked?`<br>${projection.unlinked} imported record${projection.unlinked===1?' has':'s have'} no linked teacher email yet; they can be backfilled later with <b>Sync My Area Records</b>.`:''}</div>`;
+   const projection=await writePersonalProjection(fresh);const approvedCount=await writeApprovedPlanProjection(fresh);existingPlans=merged;
+   const dates=fresh.reduce((n,p)=>n+planDateKeys(p).length,0);$('importResult').innerHTML=`<div class="box ok"><b>Import completed.</b><br>${fresh.length} historical record${fresh.length===1?'':'s'} imported, covering ${dates} teacher-date${dates===1?'':'s'}. ${approvedCount} approved-register record${approvedCount===1?'':'s'} updated. ${projection.projected} My Area projection${projection.projected===1?'':'s'} written.${projection.unlinked?`<br>${projection.unlinked} imported record${projection.unlinked===1?' has':'s have'} no linked teacher email yet; they can be backfilled later with <b>Sync My Area Records</b>.`:''}</div>`;
    // Rebuild preview so the imported rows visibly become duplicates.
    leavePreview=validateHistoryRows(leavePreview.map(x=>x.raw));renderPreview();$('importHistory').disabled=true;
  }catch(e){$('importResult').innerHTML='<div class="box error"><b>Import failed.</b><br>'+esc(e.message||e)+'</div>';$('importHistory').disabled=false}

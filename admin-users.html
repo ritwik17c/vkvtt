@@ -28,29 +28,29 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 </style>
 </head>
 <body>
-<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v55.1</div></div><a class="btn headerBack" href="admin-dashboard.html?v=55.1">← Admin Dashboard</a></div></header>
+<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v56.0</div></div><a class="btn headerBack" href="admin-dashboard.html?v=56.0">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">Admin Dashboard → User Access & Roles</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToDashboard">← Admin Dashboard</button></div></div>
 
 <div id="app">
   <div class="card">
     <h2>Viewer Access · Teachers</h2>
-    <div class="help">Paste the teachers’ Google email addresses. Viewer accounts can see the timetable and finalised proxy list, but cannot edit anything. Known teacher emails are auto-matched from the approved staff list. Non-teaching accounts may remain “Not linked” and will not block the list. Manual linking remains available for future additions such as Minu Limboo. This teacher–email link powers My Timetable, My Proxy and My Leave / OD / Special.</div>
+    <div class="help">Paste the teachers’ Google email addresses. Viewer accounts can see the timetable and finalised proxy list, but cannot edit anything. Known teacher emails are auto-matched from the approved staff list. Non-teaching accounts may remain “Not linked” and will not block the list. Manual linking remains available for future additions such as Minu Limboo. This teacher–email link powers My Timetable, My Proxy and My Leave / OD / Special. A Viewer can also be changed to <b>Approved Leave Viewer</b> below; that gives read-only access to the school approved leave register without giving edit rights.</div>
     <label>Teacher Google emails</label>
     <textarea id="viewerInput" placeholder="teacher1@gmail.com&#10;teacher2@gmail.com&#10;teacher3@gmail.com"></textarea>
     <div class="actions"><button class="primary" id="addViewers">Add Viewer Accounts</button><button id="refreshViewers">Refresh List</button><button class="green" id="syncPersonal">🔄 Sync My Area Records</button></div>
     <div id="viewerMsg" class="status" style="display:none"></div>
-    <div class="tablewrap"><table><thead><tr><th>Email</th><th>Linked Teacher</th><th>Status</th><th>Action</th></tr></thead><tbody id="viewerRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div>
+    <div class="tablewrap"><table><thead><tr><th>Email</th><th>Linked Teacher</th><th>Access</th><th>Status</th><th>Action</th></tr></thead><tbody id="viewerRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
   </div>
 
   <div class="card">
     <h2>Privileged Accounts</h2>
-    <div class="help">Use this only for Admin / Proxy Manager / Manager accounts. These require the person’s Firebase UID. Normal teachers should be added in the Viewer section above. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
+    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer accounts. These require the person’s Firebase UID. Normal teachers should be added in the Viewer section above. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record. <b>Approved Leave Viewer</b> is a read-only role for a Vice Principal or another authorised person: it can open only the approved leave register, not edit leave or proxy allotments.</div>
     <div class="grid">
       <div><label>Firebase UID</label><input id="privUid" placeholder="Paste Firebase UID"></div>
       <div><label>Name</label><input id="privName" placeholder="Teacher name"></div>
       <div><label>Google email</label><input id="privEmail" type="email" placeholder="teacher@gmail.com"></div>
-      <div><label>Role</label><select id="privRole"><option value="proxy_manager">Proxy Manager</option><option value="manager">Manager</option><option value="admin">Admin</option></select></div>
+      <div><label>Role</label><select id="privRole"><option value="proxy_manager">Proxy Manager</option><option value="manager">Manager</option><option value="leave_viewer">Approved Leave Viewer</option><option value="admin">Admin</option></select></div>
     </div>
     <div class="actions"><button class="green" id="savePriv">Add / Update Privileged Account</button><button id="refreshPriv">Refresh List</button></div>
     <div id="privMsg" class="status" style="display:none"></div>
@@ -167,18 +167,18 @@ async function verifyAdmin(user){
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 
 $('backToDashboard').onclick=()=>{
- location.href='admin-dashboard.html?v=55.1';
+ location.href='admin-dashboard.html?v=56.0';
 };
 
 onAuthStateChanged(auth,verifyAdmin);
 
 async function loadViewers(){
- const body=$('viewerRows');body.innerHTML='<tr><td colspan="4">Loading…</td></tr>';
+ const body=$('viewerRows');body.innerHTML='<tr><td colspan="5">Loading…</td></tr>';
  try{
    const qs=await getDocs(collection(db,'viewerEmails'));
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>a.id.localeCompare(b.id));
-   body.innerHTML=rows.length?rows.map((x,i)=>{const email=String(x.email||x.id).toLowerCase(),auto=defaultCodeForEmail(email),effective=String(x.teacherCode||auto||'');return `<tr><td>${safe(x.email||x.id)}</td><td><select id="viewerTeacher_${i}" data-old-code="${safe(x.teacherCode||'')}">${teacherOptions(effective)}</select>${!x.teacherCode&&auto?'<div class="small" style="margin-top:4px">Auto-linked from approved staff list</div>':''}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active Viewer'}</span></td><td><button data-link-viewer="${safe(x.id)}" data-select-id="viewerTeacher_${i}">Save / Override Link</button> <button data-toggle-viewer="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`}).join(''):'<tr><td colspan="4">No Viewer accounts yet.</td></tr>';
- }catch(e){body.innerHTML='<tr><td colspan="4">Could not load viewers: '+safe(e.message||e)+'</td></tr>'}
+   body.innerHTML=rows.length?rows.map((x,i)=>{const email=String(x.email||x.id).toLowerCase(),auto=defaultCodeForEmail(email),effective=String(x.teacherCode||auto||'');return `<tr><td>${safe(x.email||x.id)}</td><td><select id="viewerTeacher_${i}" data-old-code="${safe(x.teacherCode||'')}">${teacherOptions(effective)}</select>${!x.teacherCode&&auto?'<div class="small" style="margin-top:4px">Auto-linked from approved staff list</div>':''}</td><td><select id="viewerRole_${i}"><option value="teacher" ${String(x.role||'teacher')!=='leave_viewer'?'selected':''}>Teacher / General Viewer</option><option value="leave_viewer" ${String(x.role||'')==='leave_viewer'?'selected':''}>Approved Leave Viewer</option></select></td><td><span class="pill">${x.active===false?'Temporarily Disabled':(String(x.role||'')==='leave_viewer'?'Active · Leave Viewer':'Active Viewer')}</span></td><td><button data-link-viewer="${safe(x.id)}" data-select-id="viewerTeacher_${i}">Save Teacher Link</button> <button data-role-viewer="${safe(x.id)}" data-role-select="viewerRole_${i}">Update Access</button> <button data-toggle-viewer="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-viewer="${safe(x.id)}">Remove</button></td></tr>`}).join(''):'<tr><td colspan="5">No Viewer accounts yet.</td></tr>';
+ }catch(e){body.innerHTML='<tr><td colspan="5">Could not load viewers: '+safe(e.message||e)+'</td></tr>'}
 }
 $('addViewers').onclick=async()=>{
  const emails=parseEmails($('viewerInput').value);
@@ -252,6 +252,10 @@ $('syncPersonal').onclick=async()=>{
  finally{btn.disabled=false}
 };
 
+function roleOptions(selected=''){
+ const opts=[['proxy_manager','Proxy Manager'],['manager','Manager'],['leave_viewer','Approved Leave Viewer'],['admin','Admin']];
+ return opts.map(([v,l])=>'<option value="'+v+'" '+(String(selected)===v?'selected':'')+'>'+l+'</option>').join('');
+}
 async function loadPrivileged(){
  const body=$('privRows');body.innerHTML='<tr><td colspan="5">Loading…</td></tr>';
  try{
@@ -259,7 +263,7 @@ async function loadPrivileged(){
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>(a.name||a.email||a.id).localeCompare(b.name||b.email||b.id));
    body.innerHTML=rows.length?rows.map(x=>{
      const self=x.id===currentUser.uid;
-     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td><span class="pill">${safe(x.role||'')}</span></td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
+     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td>${self?'<span class="pill">Admin · protected</span>':`<select id="role_${safe(x.id)}" style="min-width:175px">${roleOptions(x.role||'proxy_manager')}</select> <button data-save-role="${safe(x.id)}" data-role-select="role_${safe(x.id)}">Update Role</button>`}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
    }).join(''):'<tr><td colspan="6">No privileged accounts found.</td></tr>';
  }catch(e){body.innerHTML='<tr><td colspan="6">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
 }
@@ -289,6 +293,14 @@ document.addEventListener('click',async e=>{
    }catch(err){showMsg('viewerMsg','Could not save teacher link: '+(err.message||err),'warn')}
    return;
  }
+ const rv=e.target.closest('[data-role-viewer]');
+ if(rv){
+   const email=String(rv.dataset.roleViewer||'').toLowerCase(),sel=$(rv.dataset.roleSelect),role=sel?sel.value:'teacher';
+   if(!['teacher','leave_viewer'].includes(role)){showMsg('viewerMsg','Choose a valid access level.','warn');return}
+   try{await setDoc(doc(db,'viewerEmails',email),{role},{merge:true});await loadViewers();showMsg('viewerMsg',role==='leave_viewer'?'Approved Leave Viewer access enabled for '+email+'.':'General Viewer access restored for '+email+'.','ok')}
+   catch(err){showMsg('viewerMsg','Could not update access: '+(err.message||err),'warn')}
+   return;
+ }
  const tv=e.target.closest('[data-toggle-viewer]');
  if(tv){
    const email=tv.dataset.toggleViewer,active=tv.dataset.nextActive==='true';
@@ -297,6 +309,14 @@ document.addEventListener('click',async e=>{
      await loadViewers();
      showMsg('viewerMsg',(active?'Viewer access enabled for ':'Viewer access temporarily disabled for ')+email+'.','ok');
    }catch(err){showMsg('viewerMsg','Could not change Viewer access: '+(err.message||err),'warn')}
+   return;
+ }
+ const sr=e.target.closest('[data-save-role]');
+ if(sr){
+   const uid=sr.dataset.saveRole,sel=$(sr.dataset.roleSelect),role=sel?sel.value:'';
+   if(!['proxy_manager','manager','leave_viewer','admin'].includes(role)){showMsg('privMsg','Choose a valid role.','warn');return}
+   try{await setDoc(doc(db,'authorizedUsers',uid),{role},{merge:true});await loadPrivileged();showMsg('privMsg','Role updated successfully.','ok')}
+   catch(err){showMsg('privMsg','Could not update role: '+(err.message||err),'warn')}
    return;
  }
  const tp=e.target.closest('[data-toggle-priv]');

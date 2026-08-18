@@ -142,7 +142,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 #publishedProxyBtn.active{background:#2d7d46!important;color:#fff!important;border-color:#2d7d46!important}
 .publishedMeta{background:#e7f6ea;border:1px solid #a8d1b1;color:#245c34;border-radius:12px;padding:10px 12px;margin-bottom:12px}
 .draftNote{background:#fff8e8;border:1px solid #e4c873;color:#6b5618;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:.86rem}
-.adminOnlyLink{display:none}
+.adminOnlyLink,.leaveRegisterLink{display:none}
 @media print{
  body.printPublishedMode #allot{display:none!important}
  body.printPublishedMode #publishedProxy{display:block!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important;width:100%!important}
@@ -168,7 +168,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v55.1</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v56.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -184,7 +184,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </div>
 <div class="nav">
 <button onclick="show('teacher',this)">👨‍🏫 Teacher Wise</button><button onclick="show('class',this)">🏫 Class Wise</button><button onclick="show('day',this)">📅 Day Wise</button>
-</div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button id="historyBtn" onclick="show('history',this);renderHistory()">📚 History</button><button id="adminUserAccessBtn" class="adminOnlyLink" onclick="openAdminDashboard()">⚙️ Admin Dashboard</button></div>
+</div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button id="historyBtn" onclick="show('history',this);renderHistory()">📚 History</button><button id="approvedLeaveBtn" class="leaveRegisterLink" onclick="openApprovedLeaveRegister()">🗂 Approved Leave</button><button id="adminUserAccessBtn" class="adminOnlyLink" onclick="openAdminDashboard()">⚙️ Admin Dashboard</button></div>
 <div class="opsTitle">Daily Management</div>
 <div class="opsGrid">
 <button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / OD / Special / Vacant</button>
@@ -224,7 +224,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </section>
 
 <section id="myStatus" class="view">
-<h2>My Leave / OD / Special Assignment</h2>
+<h2>My Leave / OD / Special Assignment</h2><div class="small">All approved records linked to your account are shown here — past, current and future.</div>
 <div id="myStatusIdentity" class="myIdentity"></div>
 <div class="small">Only school-saved records linked to your authorised Google account are shown here. Vacant-position records are not included.</div>
 <div class="actions"><button onclick="loadMyStatus()">↻ Refresh</button><span id="myStatusMsg" class="copymsg"></span></div>
@@ -1268,9 +1268,14 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=55.1','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=55.1';
+ const w=window.open('admin-dashboard.html?v=56.0','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=56.0';
 }
+function openApprovedLeaveRegister(){
+ const w=window.open('admin-leave.html?v=56.0','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=56.0';
+}
+window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
 function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=todayKey();let h=historyData()[inp.value],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${inp.value} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=teacherByEffectiveCode(o.code,inp.value);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
 function historyText(){let el=E("historyResult");return `VKV Nalbari – Daily History\\n${el.innerText||el.textContent||""}`}
@@ -1309,7 +1314,7 @@ window.initializeVKVCore=function(){
 </script><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, getDocs, writeBatch, FieldPath, deleteField } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, getDocs, writeBatch, FieldPath, deleteField } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
@@ -1448,6 +1453,21 @@ async function syncPersonalManualStatusesForDate(date,oldStatuses,newStatuses){
  }
  if(ops.length)await commitPersonalOps(ops);
 }
+async function syncApprovedScheduledPlan(oldPlan,newPlan){
+ const oldOk=oldPlan&&PERSONAL_STATUS_TYPES.has(String(oldPlan.type||'')),newOk=newPlan&&PERSONAL_STATUS_TYPES.has(String(newPlan.type||''));
+ if(oldOk&&oldPlan.id&&(!newOk||String(oldPlan.id)!==String(newPlan&&newPlan.id||''))){
+   await deleteDoc(doc(db,'approvedStatusPlans',String(oldPlan.id)));
+ }
+ if(newOk&&newPlan.id){
+   await setDoc(doc(db,'approvedStatusPlans',String(newPlan.id)),{...newPlan,approved:true,source:newPlan.source||'scheduled',updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});
+ }
+}
+async function syncApprovedManualStatusesForDate(date,statuses){
+ const approved=(statuses||[]).filter(x=>x&&PERSONAL_STATUS_TYPES.has(String(x.type||''))).map(x=>({...x,approved:true,source:'daily',date}));
+ const ref=doc(db,'approvedDailyStatus',date);
+ if(approved.length)await setDoc(ref,{date,statuses:approved,updatedAt:serverTimestamp(),updatedBy:currentUser.uid,updatedByEmail:currentUser.email||''},{merge:true});
+ else {try{await deleteDoc(ref)}catch(e){console.warn('Approved daily projection delete:',e)}}
+}
 function cacheLeavePlans(plans){
  const clean=plans&&typeof plans==='object'?plans:{};
  window.__vkvLeavePlans=clean;
@@ -1457,7 +1477,7 @@ function cacheLeavePlans(plans){
  }
 }
 async function loadLeavePlansOnce(){
- if(!currentUser||!currentProfile||currentProfile.emailViewer)return;
+ if(!currentUser||!currentProfile||currentProfile.emailViewer||currentProfile.role==='leave_viewer')return;
  const snap=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));
  cacheLeavePlans(snap.exists()?(snap.data().plans||{}):{});
 }
@@ -1484,6 +1504,7 @@ window.saveScheduledStatusPlan=async function(plan){
  }
  const plans={...cachedLeavePlans(),[id]:clean};cacheLeavePlans(plans);
  try{await syncPersonalScheduledPlan(oldPlan,clean)}catch(e){console.warn('Personal Leave / OD sync:',e)}
+ try{await syncApprovedScheduledPlan(oldPlan,clean)}catch(e){console.warn('Approved Leave register sync:',e)}
  return clean;
 };
 window.deleteScheduledStatusPlan=async function(id){
@@ -1501,6 +1522,7 @@ window.deleteScheduledStatusPlan=async function(id){
  }
  const plans={...cachedLeavePlans()};delete plans[id];cacheLeavePlans(plans);
  try{if(oldPlan)await syncPersonalScheduledPlan(oldPlan,null)}catch(e){console.warn('Personal Leave / OD delete sync:',e)}
+ try{if(oldPlan)await syncApprovedScheduledPlan(oldPlan,null)}catch(e){console.warn('Approved Leave register delete sync:',e)}
 };
 function dailyLocalPayload(){return {date:todayKey(),dayName:todayName(),statuses:storedStatusData(),allotments:allotData(),supervisions:supervisionData()}}
 function dailyCloudWritePayload(){
@@ -1574,7 +1596,10 @@ async function pushToday(payload){
        await updateDoc(ref,...updates);
      }
    }
-   if(canEditStatus()){try{await syncPersonalManualStatusesForDate(p.date,oldStatuses,p.statuses||[])}catch(e){console.warn('Personal Leave / OD daily sync:',e)}}
+   if(canEditStatus()){
+     try{await syncPersonalManualStatusesForDate(p.date,oldStatuses,p.statuses||[])}catch(e){console.warn('Personal Leave / OD daily sync:',e)}
+     try{await syncApprovedManualStatusesForDate(p.date,p.statuses||[])}catch(e){console.warn('Approved Leave daily sync:',e)}
+   }
    cloudSync.textContent='Synced';
  }finally{
    cloudWriting=false;
@@ -1702,6 +1727,8 @@ function applyRoleUI(){
  document.querySelectorAll('button[onclick*="deleteAllHistory"]').forEach(b=>{
    b.style.display=isAdmin()?'inline-block':'none';
  });
+ const approvedLeaveBtn=document.getElementById('approvedLeaveBtn');
+ if(approvedLeaveBtn)approvedLeaveBtn.style.display=(isAdmin()||role==='leave_viewer')?'inline-block':'none';
  const adminAccessBtn=document.getElementById('adminUserAccessBtn');
  if(adminAccessBtn){
    const adminEmail=String(currentUser&&currentUser.email||'').trim().toLowerCase();
@@ -1712,7 +1739,8 @@ function applyRoleUI(){
    adminAccessBtn.style.display=isOwnerAdmin?'inline-block':'none';
  }
  const emailViewer=!!currentProfile.emailViewer;
- ['historyBtn','leaveOpsBtn','proxyWorkBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=emailViewer?'none':''});
+ const leaveViewer=role==='leave_viewer';
+ ['historyBtn','leaveOpsBtn','proxyWorkBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=(emailViewer||leaveViewer)?'none':''});
 
  // Keep the everyday interface uncluttered. Role information is enforced silently.
  const oldNote=document.getElementById('rolePermissionNote');if(oldNote)oldNote.remove();
@@ -1746,7 +1774,7 @@ function applyRoleUI(){
  }
 
  // For ordinary Teachers, visually disable the proxy allotment mutation buttons after they render.
- document.body.classList.toggle('readOnly',role==='teacher');
+ document.body.classList.toggle('readOnly',role==='teacher'||role==='leave_viewer');
 }
 
 window.finaliseProxyCloud=async function(snapshot){
@@ -2031,7 +2059,7 @@ onAuthStateChanged(auth,async user=>{
        try{
          const viewerSnap=await withTimeout(getDoc(doc(db,'viewerEmails',email)),12000,'Viewer email authorisation check');
          if(viewerSnap.exists()&&viewerSnap.data().active===true){
-           currentProfile={...viewerSnap.data(),active:true,role:'teacher',name:user.displayName||viewerSnap.data().name||'',email:email,emailViewer:true};
+           currentProfile={...viewerSnap.data(),active:true,role:(viewerSnap.data().role==='leave_viewer'?'leave_viewer':'teacher'),name:user.displayName||viewerSnap.data().name||'',email:email,emailViewer:true};
          }
        }catch(e){
          console.warn('Viewer email check:',e);
@@ -2048,7 +2076,7 @@ onAuthStateChanged(auth,async user=>{
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
    if(!snap.exists()){
      showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
-     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=55.1">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=56.0">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
      return;
    }
    const masterDoc=snap.data();
@@ -2062,7 +2090,7 @@ onAuthStateChanged(auth,async user=>{
    if(window.refreshMyAreaIdentity)window.refreshMyAreaIdentity();
 
    setMessage('<b>Step 3/3:</b> Master timetable loaded. Opening app…');
-   if(currentProfile.emailViewer){
+   if(currentProfile.emailViewer||currentProfile.role==='leave_viewer'){
      try{
        localStorage.removeItem('vkvLeave2_'+todayKey());
        localStorage.removeItem('vkvAllotments_'+todayKey());
@@ -2090,8 +2118,8 @@ onAuthStateChanged(auth,async user=>{
    startSchedulePolling();
 
    loadPublishedProxyAndListen().catch(e=>console.error('Published proxy sync:',e));
-   if(currentProfile.emailViewer){
-     cloudSync.textContent='Viewer ready · final proxy sync active';
+   if(currentProfile.emailViewer||currentProfile.role==='leave_viewer'){
+     cloudSync.textContent=currentProfile.role==='leave_viewer'?'Approved Leave Viewer ready':'Viewer ready · final proxy sync active';
    }else{
      loadLeavePlansAndPoll().catch(e=>console.error('Scheduled leave sync:',e));
      loadTodayAndListen()
