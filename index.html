@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -168,7 +168,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v56.0</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v56.1</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -475,7 +475,7 @@ function refreshScheduleUi(){
 }
 window.applyActiveScheduleProfile=refreshScheduleUi;
 function rowsTable(a){return '<div class="table"><table><tr><th>Day</th><th>Period</th><th>Time</th><th>Class</th><th>Assignment</th></tr>'+a.map(x=>`<tr><td>${x.day}</td><td>${PL(x.period)}</td><td>${esc(scheduleTime(x.period))}</td><td>${x.class}</td><td>${esc(x.entry)}</td></tr>`).join("")+'</table></div>'}
-function teacherResult(){let c=E("teacherSel").value,d=E("teacherDay").value,p=Number(E("teacherPeriod").value);if(!c)return E("teacherResult").innerHTML="Select a teacher.";let t=teacherByEffectiveCode(c),a=operationalRecords().filter(x=>x.codes.includes(c)&&(!d||x.day===d)&&(!p||Number(x.period)===p)).sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day)||a.period-b.period);let groups={};a.forEach(x=>{let k=x.day+"|"+x.period;if(!groups[k])groups[k]={day:x.day,period:x.period,time:scheduleTime(x.period),classes:[],entries:[]};groups[k].classes.push(x.class);groups[k].entries.push(x.entry)});let g=Object.values(groups);if(!g.length){const rep=activeReplacementForOriginal(c);E("teacherResult").innerHTML=rep?`<b>${esc(t?t.name:c)}</b> is currently covered by <b>${esc(rep.tempName||rep.tempCode)}</b> (${esc(rep.tempCode)}) until ${esc(rep.endDate)}.`:"No matching teaching assignment under the active schedule.";return}let table='<div class="table"><table><tr><th>Day</th><th>Period</th><th>Time</th><th>Class</th><th>Assignment</th></tr>'+g.map(x=>`<tr><td>${x.day}</td><td>${PL(x.period)}</td><td>${esc(x.time)}</td><td>${x.classes.join(" + ")}</td><td>${x.entries.map(esc).join(" / ")}</td></tr>`).join("")+'</table></div>';E("teacherResult").innerHTML=table+`<p>Matching teaching periods: <b>${g.length}</b></p>`}
+function teacherResult(){let c=E("teacherSel").value,d=E("teacherDay").value,p=Number(E("teacherPeriod").value);if(!c)return E("teacherResult").innerHTML="Select a teacher.";let t=teacherByEffectiveCode(c),a=operationalRecords().filter(x=>x.codes.includes(c)&&(!d||x.day===d)&&(!p||Number(x.period)===p)).sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day)||a.period-b.period);let groups={};a.forEach(x=>{let k=x.day+"|"+x.period;if(!groups[k])groups[k]={day:x.day,period:x.period,time:scheduleTime(x.period),classes:[],entries:[]};groups[k].classes.push(x.class);groups[k].entries.push(x.entry)});let g=Object.values(groups);if(!g.length){const rep=activeReplacementForOriginal(c);E("teacherResult").innerHTML=rep?`<b>${esc(t?t.name:c)}</b> is currently covered by <b>${esc(rep.tempName||rep.tempCode)}</b> (${esc(rep.tempCode)}) until ${esc(displayDate(rep.endDate))}.`:"No matching teaching assignment under the active schedule.";return}let table='<div class="table"><table><tr><th>Day</th><th>Period</th><th>Time</th><th>Class</th><th>Assignment</th></tr>'+g.map(x=>`<tr><td>${x.day}</td><td>${PL(x.period)}</td><td>${esc(x.time)}</td><td>${x.classes.join(" + ")}</td><td>${x.entries.map(esc).join(" / ")}</td></tr>`).join("")+'</table></div>';E("teacherResult").innerHTML=table+`<p>Matching teaching periods: <b>${g.length}</b></p>`}
 function classResult(){let c=E("classSel").value,d=E("classDay").value;if(!c)return E("classResult").innerHTML="Select a class.";refreshPeriodSelect("classPeriod","All",classActivePeriods(c));let p=Number(E("classPeriod").value);let a=operationalRecords().filter(x=>x.class===c&&(!d||x.day===d)&&(!p||Number(x.period)===p)).sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day)||a.period-b.period);E("classResult").innerHTML=a.length?rowsTable(a):"No matching teaching assignment under the active schedule."}
 function dayResult(){let d=E("daySel").value,c=E("dayClass").value;if(c)refreshPeriodSelect("dayPeriod","All",classActivePeriods(c));else refreshPeriodSelect("dayPeriod","All");let p=Number(E("dayPeriod").value||0);if(!d){E("dayResult").innerHTML="Select a day. Period and Class are optional filters.";return}let a=operationalRecords().filter(x=>x.day===d&&(!p||Number(x.period)===p)&&(!c||x.class===c)).sort((a,b)=>a.period-b.period||a.class.localeCompare(b.class));E("dayResult").innerHTML=a.length?rowsTable(a):"No matching timetable entry under the active schedule."}
 function freeResult(){let d=E("freeDay").value,p=Number(E("freePeriod").value);if(!d||!p)return;if(!activeSchedulePeriods().includes(p)){E("freeResult").innerHTML="This period is not active in the current schedule.";return}let busy=new Set(operationalRecords().filter(x=>x.day===d&&Number(x.period)===p).flatMap(x=>x.codes));let statuses=leaveData();statuses.forEach(o=>{if(activeLeaveAt(o,p))busy.add(o.code)});activeTemporaryReplacements().forEach(r=>busy.add(r.originalCode));let a=DATA.teachers.filter(t=>!busy.has(t.code));E("freeResult").innerHTML='<div class="small" style="margin-bottom:7px">'+PL(p)+' · '+esc(scheduleTime(p))+' · '+esc(activeScheduleName())+'</div>'+a.map(t=>`<span class="tag">${esc(t.name)} (${t.code})</span>`).join("")}
@@ -543,7 +543,7 @@ let leaveDateMode="single",leaveSingleDate=todayKey(),leaveRangeStart=todayKey()
 let leaveCalendarMonth=new Date(dateFromKey(todayKey()).getFullYear(),dateFromKey(todayKey()).getMonth(),1);
 let leaveCalDragging=false,leaveCalDragAnchor="";
 
-function formatLeaveDate(k,withYear=true){if(!k)return"";return dateFromKey(k).toLocaleDateString("en-GB",{day:"2-digit",month:"short",...(withYear?{year:"numeric"}:{})})}
+function formatLeaveDate(k,withYear=true){if(!k)return"";const m=String(k).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return String(k);return withYear?`${m[3]}/${m[2]}/${m[1]}`:`${m[3]}/${m[2]}`}
 function dateRangeDays(a,b){if(!a||!b)return 0;let x=dateFromKey(a),y=dateFromKey(b);if(x>y){let t=x;x=y;y=t}return Math.round((y-x)/86400000)+1}
 function normalizeLeaveRange(){if(leaveRangeStart&&leaveRangeEnd&&leaveRangeStart>leaveRangeEnd){const t=leaveRangeStart;leaveRangeStart=leaveRangeEnd;leaveRangeEnd=t}}
 function selectedDateSpec(){
@@ -849,7 +849,7 @@ async function shareView(resultId,title){
 }
 
 function todayKey(){let n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0")}
-function displayDate(){let n=new Date();return String(n.getDate()).padStart(2,"0")+"/"+String(n.getMonth()+1).padStart(2,"0")+"/"+n.getFullYear()}
+function displayDate(k){if(k){const m=String(k).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(k)}let n=new Date();return String(n.getDate()).padStart(2,"0")+"/"+String(n.getMonth()+1).padStart(2,"0")+"/"+n.getFullYear()}
 function historyData(){try{return JSON.parse(localStorage.getItem("vkvHistory")||"{}")}catch(e){return{}}}
 function saveSnapshot(){let h=historyData(),day=todayKey();h[day]={date:day,dayName:todayName(),statuses:storedStatusData(),allotments:allotData()};localStorage.setItem("vkvHistory",JSON.stringify(h))}
 function allotData(){try{
@@ -1196,7 +1196,7 @@ function renderMyTimetable(scope="today",btn){
  });
  const rows=Object.values(groups);
  const rep=activeReplacementForOriginal(code,todayKey());
- const coverNote=rep?`<div class="warn" style="margin-bottom:10px">Your timetable is currently being covered by <b>${esc(rep.tempName||rep.tempCode)} (${esc(rep.tempCode)})</b> as a leave-vacancy replacement until ${esc(rep.endDate)}.</div>`:"";
+ const coverNote=rep?`<div class="warn" style="margin-bottom:10px">Your timetable is currently being covered by <b>${esc(rep.tempName||rep.tempCode)} (${esc(rep.tempCode)})</b> as a leave-vacancy replacement until ${esc(displayDate(rep.endDate))}.</div>`:"";
  if(!rows.length){
    out.innerHTML=coverNote+(scope==="today"?`No regular teaching period is scheduled for you today (${esc(todayName())}) under the active schedule.`:"No teaching assignment was found under the active schedule.");
    return;
@@ -1268,16 +1268,16 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=56.0','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=56.0';
+ const w=window.open('admin-dashboard.html?v=56.1','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=56.1';
 }
 function openApprovedLeaveRegister(){
- const w=window.open('admin-leave.html?v=56.0','vkvApprovedLeave');
- if(!w)location.href='admin-leave.html?v=56.0';
+ const w=window.open('admin-leave.html?v=56.1','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=56.1';
 }
 window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
-function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=todayKey();let h=historyData()[inp.value],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${inp.value} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=teacherByEffectiveCode(o.code,inp.value);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
+function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=todayKey();let h=historyData()[inp.value],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${displayDate(inp.value)} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=teacherByEffectiveCode(o.code,inp.value);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
 function historyText(){let el=E("historyResult");return `VKV Nalbari – Daily History\\n${el.innerText||el.textContent||""}`}
 async function copyHistory(){await copyTextSafe(historyText(),"historyResultMsg")}
 async function shareHistory(){let text=historyText();if(navigator.share){try{await navigator.share({title:"VKV Nalbari Daily History",text});return}catch(e){}}await copyHistory()}
@@ -1955,7 +1955,7 @@ window.loadMyProxyHistoryCloud=async function(){
    const dayCount=new Set(items.map(x=>x.date)).size;
    if(out)out.innerHTML='<div class="slotComplete"><b>Total Proxy Periods: '+items.length+'</b> · '+dayCount+' day'+(dayCount===1?'':'s')+'</div>'+
      '<div class="table"><table><tr><th>Date</th><th>Day</th><th>Period / Time</th><th>Class</th><th>Proxy For / Reason</th><th>Duty</th></tr>'+
-     items.map(x=>'<tr><td>'+safe(x.date)+'</td><td>'+safe(x.dayName)+'</td><td>'+PL(Number(x.period))+'<br>'+safe(x.time||'')+'</td><td>'+safe(x.className||'')+'</td><td>'+safe(x.absentTeacher||'')+' ('+safe(x.absentCode||'')+')<br><span class="small">'+safe(x.reason||'')+'</span></td><td>'+safe(x.kind||'Normal Proxy')+'</td></tr>').join('')+
+     items.map(x=>'<tr><td>'+safe(displayDate(x.date))+'</td><td>'+safe(x.dayName)+'</td><td>'+PL(Number(x.period))+'<br>'+safe(x.time||'')+'</td><td>'+safe(x.className||'')+'</td><td>'+safe(x.absentTeacher||'')+' ('+safe(x.absentCode||'')+')<br><span class="small">'+safe(x.reason||'')+'</span></td><td>'+safe(x.kind||'Normal Proxy')+'</td></tr>').join('')+
      '</table></div>';
    if(msg)msg.textContent=items.length+' period'+(items.length===1?'':'s');
  }catch(e){
@@ -1987,14 +1987,15 @@ window.loadMyStatusCloud=async function(){
      const ds=planDateKeys(x);if(ds.includes(today))return 'current';
      if(ds.some(d=>d>today))return 'upcoming';return 'past';
    };
+   const dateSortKey=x=>x.kind==='manual'?(x.date||''):(x.startDate||x.date||((x.dates||[]).slice().sort()[0])||'');
    const dateText=x=>{
-     if(x.kind==='manual')return x.date;
-     if(x.mode==='multiple'){const ds=(x.dates||[]).slice().sort();return ds.length<=5?ds.join(' · '):(ds.slice(0,5).join(' · ')+' · +'+(ds.length-5)+' more');}
-     const a=x.startDate||x.date||'',b=x.endDate||a;return a===b?a:(a+' → '+b);
+     if(x.kind==='manual')return displayDate(x.date);
+     if(x.mode==='multiple'){const ds=(x.dates||[]).slice().sort();return ds.length<=5?ds.map(displayDate).join(' · '):(ds.slice(0,5).map(displayDate).join(' · ')+' · +'+(ds.length-5)+' more');}
+     const a=x.startDate||x.date||'',b=x.endDate||a;return a===b?displayDate(a):(displayDate(a)+' → '+displayDate(b));
    };
    const labelOf=x=>window.statusLabel?window.statusLabel(x):(x.type||'Status');
    const groups={current:[],upcoming:[],past:[]};items.forEach(x=>groups[stateOf(x)].push(x));
-   groups.current.sort((a,b)=>dateText(a).localeCompare(dateText(b)));groups.upcoming.sort((a,b)=>dateText(a).localeCompare(dateText(b)));groups.past.sort((a,b)=>dateText(b).localeCompare(dateText(a)));
+   groups.current.sort((a,b)=>dateSortKey(a).localeCompare(dateSortKey(b)));groups.upcoming.sort((a,b)=>dateSortKey(a).localeCompare(dateSortKey(b)));groups.past.sort((a,b)=>dateSortKey(b).localeCompare(dateSortKey(a)));
    const section=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.map(x=>'<tr><td>'+safe(labelOf(x))+'</td><td>'+safe(x.leaveCategory?leaveCategoryLabel(x.leaveCategory):'—')+'</td><td>'+safe((x.type==='full'||x.type==='half')?(x.leaveUnits||'—'):'—')+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
    if(!items.length){
      out.innerHTML='<div class="slotComplete">No approved Leave / OD / Special Assignment record is available for you yet.</div><div class="small">If an older approved record is missing, the Admin can run “Sync My Area Records” once from User Access & Roles.</div>';
@@ -2019,8 +2020,8 @@ window.exportLeaveExcelCloud=async function(){
    const teacherName=code=>{const t=teacherByEffectiveCode(code)||permanentTeacherByCode(code);return t?t.name:String(code||'')};
    const leaveUnits=x=>{if(Number(x.leaveUnits)>0)return Number(x.leaveUnits);const count=x._source==='Daily record'?1:planDateKeys(x).length;if(x.type==='half')return count*0.5;if(x.type==='full')return count;return 0};
    const recs=[];
-   for(const x of scheduled){const ds=planDateKeys(x),start=x.startDate||x.date||(ds[0]||''),end=x.endDate||start||(ds[ds.length-1]||'');recs.push({code:String(x.code||''),name:teacherName(x.code),type:String(x.type||''),status:statusLabel(x),category:String(x.leaveCategory||''),units:leaveUnits(x),from:start,to:end,specific:x.mode==='multiple'?(x.dates||[]).join(', '):'',duration:x.duration||'',periods:x.duration==='custom'?`P${x.from}–P${x.to}`:(x.duration==='half'?'P5–P8':''),note:x.note||'',reference:x.referenceNo||'',source:x._source})}
-   for(const x of manual){recs.push({code:String(x.code||''),name:teacherName(x.code),type:String(x.type||''),status:statusLabel(x),category:String(x.leaveCategory||''),units:leaveUnits(x),from:x.date||'',to:x.date||'',specific:'',duration:x.duration||'',periods:(x.from||x.to)?`P${x.from||1}–P${x.to||8}`:'',note:x.note||'',reference:x.referenceNo||'',source:x._source})}
+   for(const x of scheduled){const ds=planDateKeys(x),start=x.startDate||x.date||(ds[0]||''),end=x.endDate||start||(ds[ds.length-1]||'');recs.push({code:String(x.code||''),name:teacherName(x.code),type:String(x.type||''),status:statusLabel(x),category:String(x.leaveCategory||''),units:leaveUnits(x),from:displayDate(start),to:displayDate(end),specific:x.mode==='multiple'?(x.dates||[]).map(displayDate).join(', '):'',duration:x.duration||'',periods:x.duration==='custom'?`P${x.from}–P${x.to}`:(x.duration==='half'?'P5–P8':''),note:x.note||'',reference:x.referenceNo||'',source:x._source})}
+   for(const x of manual){recs.push({code:String(x.code||''),name:teacherName(x.code),type:String(x.type||''),status:statusLabel(x),category:String(x.leaveCategory||''),units:leaveUnits(x),from:displayDate(x.date||''),to:displayDate(x.date||''),specific:'',duration:x.duration||'',periods:(x.from||x.to)?`P${x.from||1}–P${x.to||8}`:'',note:x.note||'',reference:x.referenceNo||'',source:x._source})}
    recs.sort((a,b)=>String(a.from).localeCompare(String(b.from))||a.name.localeCompare(b.name));
    const wb=XLSX.utils.book_new();
    const history=[['Teacher Code','Teacher Name','Status','Leave Category','Leave Days','From Date','To Date','Specific Dates','Duration / Periods','Remarks','Reference No.','Source'],...recs.map(r=>[r.code,r.name,r.status,r.category?leaveCategoryLabel(r.category):'',r.units||'',r.from,r.to,r.specific,[r.duration,r.periods].filter(Boolean).join(' · '),r.note,r.reference,r.source])];
@@ -2076,7 +2077,7 @@ onAuthStateChanged(auth,async user=>{
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
    if(!snap.exists()){
      showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
-     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=56.0">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=56.1">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
      return;
    }
    const masterDoc=snap.data();
