@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Administration · Import / Restore · Past History Import v54.8</div></div><a class="btn" href="admin-dashboard.html">← Admin Dashboard</a></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Import / Restore · Leave Ledger Import v55.0</div></div><a class="btn" href="admin-dashboard.html">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="status" class="box">Checking sign-in…</div>
 <div id="tools" hidden>
@@ -25,13 +25,13 @@
 
   <section class="card">
     <h2>🗓 Import Past Leave / OD / Special History from Excel</h2>
-    <p class="help"><b>For historical records only.</b> This importer accepts dates before today and adds them to the same approved Leave / OD / Special history already used by the timetable app. It does not create today's proxy requirements. Exact duplicate records are skipped.</p>
+    <p class="help"><b>For historical records only.</b> You may upload either the app’s clean import template or the existing VKV leave-statement workbook (for example <b>Leave_record_2026-27.xlsx</b>). The app auto-detects the format, reads leave categories (VL / EL / CL / SEL / EOL / Maternity), previews the records, and imports only after confirmation. Dates from today onward are not accepted here.</p>
     <div class="actions">
       <button id="downloadTemplate" class="green">⬇ Download Excel Template</button>
       <input id="leaveFile" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
       <button id="clearLeaveFile">Clear</button>
     </div>
-    <div class="small" style="margin-top:8px">Preferred sheet name: <b>Past_Leave_History</b>. Teacher Code is matched first; exact Teacher Name is used only when the code is blank.</div>
+    <div class="small" style="margin-top:8px">Template format: preferred sheet name <b>Past_Leave_History</b>. Existing VKV leave-statement format: month blocks with FROM / TO / VL / EL / CL / SEL / EOL / Maternity Leave are detected automatically. Teacher Code is matched first; legacy teacher names are matched carefully against the master roster.</div>
     <div id="leaveSummary" class="box">Select a completed Excel file to preview it. Nothing is saved until you confirm the import.</div>
     <div id="metrics" class="metrics" hidden>
       <div class="metric"><b id="mRows">0</b><span>Rows read</span></div>
@@ -39,7 +39,7 @@
       <div class="metric"><b id="mDup">0</b><span>Duplicates skipped</span></div>
       <div class="metric"><b id="mErr">0</b><span>Need correction</span></div>
     </div>
-    <div id="previewWrap" class="tablewrap" hidden><table><thead><tr><th>Row</th><th>Teacher</th><th>Status</th><th>Date(s)</th><th>Duration</th><th>Remarks / Ref.</th><th>Check</th></tr></thead><tbody id="previewBody"></tbody></table></div>
+    <div id="previewWrap" class="tablewrap" hidden><table><thead><tr><th>Row</th><th>Teacher</th><th>Status</th><th>Leave Category</th><th>Leave Days</th><th>Date(s)</th><th>Duration</th><th>Remarks / Ref.</th><th>Check</th></tr></thead><tbody id="previewBody"></tbody></table></div>
     <div class="actions"><button id="importHistory" class="primary" disabled>✅ Confirm Import</button></div>
     <div id="importResult"></div>
   </section>
@@ -82,19 +82,22 @@ $('uploadMaster').onclick=async()=>{if(!user||!masterSeed){alert('Select a valid
 // ----- Excel history template -----
 function downloadHistoryTemplate(){
  if(!window.XLSX){alert('Excel library is still loading. Please try again in a moment.');return}
- const rows=[['Teacher Code','Teacher Name','Status Type','From Date','To Date','Specific Dates','Duration','From Period','To Period','Remarks','Reference No.'],
- ['ML','Minu Limboo','Full Leave','2026-07-15','2026-07-31','','','','','Medical leave',''],
- ['AD1','Anuradha Das','OD','2026-08-05','2026-08-05','','Full Day','','','CBSE duty','Order 12/2026'],
- ['YJS','Yuva Jyoti Sarma','Special Assignment','','','2026-06-10, 2026-06-17, 2026-06-24','Custom',2,4,'External programme','']];
+ const rows=[['Teacher Code','Teacher Name','Status Type','Leave Category','Leave Days','From Date','To Date','Specific Dates','Duration','From Period','To Period','Remarks','Reference No.'],
+ ['ML','Minu Limboo','Full Leave','CL',2,'2026-07-15','2026-07-16','','','','','Casual leave',''],
+ ['AD1','Anuradha Das','OD','','','2026-08-05','2026-08-05','','Full Day','','','CBSE duty','Order 12/2026'],
+ ['YJS','Yuva Jyoti Sarma','Special Assignment','','','','','2026-06-10, 2026-06-17, 2026-06-24','Custom',2,4,'External programme','']];
  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);XLSX.utils.book_append_sheet(wb,ws,'Past_Leave_History');
  const ins=XLSX.utils.aoa_to_sheet([
  ['VKV Nalbari Timetable – Past Leave / OD / Special History Import'],
  ['Only dates before today are accepted. Use the timetable app for current/future records.'],[],
  ['Status Type','Full Leave | Half Leave | OD | Special Assignment'],
+ ['Leave Category','Required for leave: VL | EL | CL | SEL | EOL | Maternity Leave'],
+ ['Leave Days','Optional override. If blank, Full Leave = selected date count; Half Leave = 0.5 × selected date count.'],
  ['Continuous dates','Fill From Date and optional To Date.'],
  ['Staggered dates','Use Specific Dates instead of From/To; separate dates with commas, semicolons or line breaks.'],
  ['OD / Special Duration','Full Day | Half Day | Custom. Custom requires From Period and To Period.'],
  ['Approval','Rows imported by Admin are treated as approved historical school records.'],
+ ['Existing VKV workbook','The old month-wise leave statement can be uploaded directly; the importer reads its FROM / TO and category columns.'],
  ['Duplicates','Exact duplicates are skipped automatically.']
  ]);XLSX.utils.book_append_sheet(wb,ins,'Instructions');
  const teachers=[['Teacher Code','Teacher Name'],...((master&&master.teachers)||[]).map(t=>[t.code,t.name])];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(teachers),'Teachers');
@@ -116,10 +119,14 @@ function parseDate(v){
 function parseSpecificDates(v){if(v===null||v===undefined||v==='')return[];return [...new Set(String(v).split(/[,;\n]+/).map(x=>parseDate(x.trim())).filter(Boolean))].sort()}
 function statusCode(v){const s=norm(v).replace(/[_-]+/g,' ');if(['full','leave','full leave','full day leave'].includes(s))return'full';if(['half','half leave','half day leave'].includes(s))return'half';if(['od','on duty','on-duty'].includes(s))return'od';if(['special','special assignment','special duty'].includes(s))return'special';return''}
 function statusLabel(t){return t==='full'?'Full Leave':t==='half'?'Half Leave':t==='od'?'OD':t==='special'?'Special Assignment':t}
+const LEAVE_CATEGORY_LABELS={VL:'VL',EL:'EL',CL:'CL',SEL:'SEL',EOL:'EOL',MATERNITY:'Maternity Leave'};
+function leaveCategoryCode(v){let s=norm(v).replace(/[^a-z0-9]+/g,'');if(!s)return'';if(s==='vl'||s.includes('vacation'))return'VL';if(s==='el'||s.includes('earnedleave'))return'EL';if(s==='cl'||s.includes('casual'))return'CL';if(s==='sel'||s.includes('specialearned')||s.includes('sickearned'))return'SEL';if(s==='eol'||s.includes('extraordinary'))return'EOL';if(s.includes('maternity'))return'MATERNITY';return''}
+function leaveCategoryLabel(v){return LEAVE_CATEGORY_LABELS[String(v||'').toUpperCase()]||String(v||'')}
+function numericValue(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='number'&&isFinite(v))return v;const n=Number(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:0}
 function durationCode(v){const s=norm(v);if(!s||['full','full day','whole day'].includes(s))return'full';if(['half','half day'].includes(s))return'half';if(['custom','period','periods','custom period'].includes(s))return'custom';return''}
 function dateRangeKeys(start,end){const out=[],a=new Date(start+'T00:00:00'),b=new Date(end+'T00:00:00');for(let d=new Date(a);d<=b;d.setDate(d.getDate()+1))out.push(dateKeyFromDate(d));return out}
 function planDateKeys(p){if(p.mode==='multiple')return [...new Set((p.dates||[]).filter(Boolean))].sort();const s=p.startDate||p.date||'',e=p.endDate||s;return s&&e?dateRangeKeys(s,e):[]}
-function canonicalPlan(p){const ds=planDateKeys(p);return [String(p.code||''),String(p.type||''),ds.join(','),String(p.duration||''),String(p.from??''),String(p.to??'')].join('|')}
+function canonicalPlan(p){const ds=planDateKeys(p);return [String(p.code||''),String(p.type||''),String(p.leaveCategory||''),String(Number(p.leaveUnits||0)),ds.join(','),String(p.duration||''),String(p.from??''),String(p.to??'')].join('|')}
 function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
 function plansOverlap(a,b){const ad=planDateKeys(a),bd=new Set(planDateKeys(b));return ad.some(d=>bd.has(d))}
 function teacherMatch(code,name){
@@ -136,44 +143,128 @@ function durationText(p){if(!(p.type==='od'||p.type==='special'))return p.type==
 function validateHistoryRows(rows){
  const bySig=new Map(Object.values(existingPlans).filter(Boolean).map(p=>[canonicalPlan(p),p])),seen=new Set(),out=[];const today=todayKey();
  rows.forEach((r,i)=>{
-  const issues=[],warnings=[];const tm=teacherMatch(rowValue(r,['Teacher Code']),rowValue(r,['Teacher Name']));
-  if(tm.error){issues.push(tm.error);out.push({row:i+2,state:'error',issues,warnings,raw:r});return}if(tm.warning)warnings.push(tm.warning);const t=tm.teacher;
-  const type=statusCode(rowValue(r,['Status Type','Type','Leave Type']));if(!type)issues.push('Status Type must be Full Leave, Half Leave, OD or Special Assignment.');
+  const rowNo=Number(r.__rowNum||i+2);const issues=[],warnings=[];const tm=teacherMatch(rowValue(r,['Teacher Code']),rowValue(r,['Teacher Name']));
+  if(tm.error){issues.push(tm.error);out.push({row:rowNo,state:'error',issues,warnings,raw:r});return}if(tm.warning)warnings.push(tm.warning);const t=tm.teacher;
+  const type=statusCode(rowValue(r,['Status Type','Operational Status','Status','Type']));if(!type)issues.push('Status Type must be Full Leave, Half Leave, OD or Special Assignment.');
   const specific=parseSpecificDates(rowValue(r,['Specific Dates','Selected Dates','Dates'])),from=parseDate(rowValue(r,['From Date','Start Date','Date'])),to=parseDate(rowValue(r,['To Date','End Date']))||from;
   let mode='',start='',end='',dates=[];
   if(specific.length){mode='multiple';dates=specific;start=specific[0];end=specific[specific.length-1];if(from)warnings.push('Specific Dates supplied; From/To dates were ignored.');}
   else if(from){start=from;end=to||from;if(end<start)issues.push('To Date cannot be earlier than From Date.');mode=start===end?'single':'range';dates=start&&end&&end>=start?dateRangeKeys(start,end):[]}
   else issues.push('Enter From Date or Specific Dates.');
   if(dates.some(d=>d>=today))issues.push(`Past-history import accepts dates before ${today} only.`);
+  let leaveCategory='',leaveUnits=0;
+  if(type==='full'||type==='half'){
+    leaveCategory=leaveCategoryCode(rowValue(r,['Leave Category','Category','Leave Account','Leave Type']));
+    if(!leaveCategory)issues.push('Leave Category is required: VL, EL, CL, SEL, EOL or Maternity Leave.');
+    leaveUnits=numericValue(rowValue(r,['Leave Days','Leave Units','Days']));
+    if(!leaveUnits)leaveUnits=(type==='half'?dates.length*0.5:dates.length);
+    if(!leaveUnits||leaveUnits<=0)issues.push('Leave Days could not be calculated; enter a positive Leave Days value.');
+    leaveUnits=Math.round(leaveUnits*2)/2;
+  }
   let duration='',fp=0,tp=0;
   if(type==='od'||type==='special'){
     duration=durationCode(rowValue(r,['Duration','Duty Duration']));if(!duration)issues.push('Duration must be Full Day, Half Day or Custom for OD / Special Assignment.');
     if(duration==='half'){fp=5;tp=8}else if(duration==='custom'){fp=Number(rowValue(r,['From Period']));tp=Number(rowValue(r,['To Period']));if(!Number.isInteger(fp)||!Number.isInteger(tp)||fp<1||tp<1||fp>8||tp>8||fp>tp)issues.push('Custom duration needs valid From/To Period numbers (1–8).')}
   }
   const note=String(rowValue(r,['Remarks','Remark','Note'])||'').trim(),refNo=String(rowValue(r,['Reference No.','Reference No','Reference','Order No.','Order No'])||'').trim();
-  const plan={code:String(t.code),type,mode,startDate:start,endDate:end,active:true,approved:true,source:'excel-history',createdAtMs:Date.now()};if(mode==='multiple')plan.dates=dates;if(type==='od'||type==='special'){plan.duration=duration;plan.from=duration==='full'?0:fp;plan.to=duration==='full'?0:tp}if(note)plan.note=note;if(refNo)plan.referenceNo=refNo;
-  if(issues.length){out.push({row:i+2,state:'error',issues,warnings,teacher:t,plan,raw:r});return}
+  const plan={code:String(t.code),type,mode,startDate:start,endDate:end,active:true,approved:true,source:'excel-history',createdAtMs:Date.now()};if(mode==='multiple')plan.dates=dates;if(type==='full'||type==='half'){plan.leaveCategory=leaveCategory;plan.leaveUnits=leaveUnits;}if(type==='od'||type==='special'){plan.duration=duration;plan.from=duration==='full'?0:fp;plan.to=duration==='full'?0:tp}if(note)plan.note=note;if(refNo)plan.referenceNo=refNo;
+  if(issues.length){out.push({row:rowNo,state:'error',issues,warnings,teacher:t,plan,raw:r});return}
   const sig=canonicalPlan(plan);plan.id=`hist_${t.code}_${start}_${hashString(sig)}`;
-  if(bySig.has(sig)||seen.has(sig)){out.push({row:i+2,state:'duplicate',issues:['Exact duplicate — will be skipped.'],warnings,teacher:t,plan,raw:r});return}
+  if(bySig.has(sig)||seen.has(sig)){out.push({row:rowNo,state:'duplicate',issues:['Exact duplicate — will be skipped.'],warnings,teacher:t,plan,raw:r});return}
   seen.add(sig);
   const overlap=Object.values(existingPlans).find(p=>p&&String(p.code)===String(t.code)&&plansOverlap(p,plan));if(overlap)warnings.push('Overlaps an existing saved status for this teacher.');
   if(!linkedEmail(t.code))warnings.push('No linked teacher email yet: school history will import; My Area can be synced after linking the email.');
-  out.push({row:i+2,state:warnings.length?'warning':'ready',issues,warnings,teacher:t,plan,raw:r});
+  out.push({row:rowNo,state:warnings.length?'warning':'ready',issues,warnings,teacher:t,plan,raw:r});
  });return out;
 }
 function renderPreview(){
  const total=leavePreview.length,ready=leavePreview.filter(x=>x.state==='ready'||x.state==='warning').length,dup=leavePreview.filter(x=>x.state==='duplicate').length,err=leavePreview.filter(x=>x.state==='error').length;
  $('mRows').textContent=total;$('mReady').textContent=ready;$('mDup').textContent=dup;$('mErr').textContent=err;$('metrics').hidden=false;$('previewWrap').hidden=!total;$('importHistory').disabled=!ready;
- $('previewBody').innerHTML=leavePreview.map(x=>{const p=x.plan||{},badge=x.state==='ready'?'<span class="badge ready">Ready</span>':x.state==='warning'?'<span class="badge warning">Ready · warning</span>':x.state==='duplicate'?'<span class="badge duplicate">Duplicate</span>':'<span class="badge invalid">Error</span>';const msg=[...(x.issues||[]),...(x.warnings||[])].map(esc).join('<br>');return `<tr><td>${x.row}</td><td>${x.teacher?`<b>${esc(x.teacher.name)}</b><br><span class="small">${esc(x.teacher.code)}</span>`:'—'}</td><td>${esc(statusLabel(p.type||''))}</td><td>${p.startDate?esc(dateText(p)):'—'}</td><td>${esc(durationText(p))}</td><td>${esc(p.note||'')}${p.referenceNo?`<br><span class="small">Ref: ${esc(p.referenceNo)}</span>`:''}</td><td>${badge}${msg?`<div class="small" style="margin-top:4px">${msg}</div>`:''}</td></tr>`}).join('');
+ $('previewBody').innerHTML=leavePreview.map(x=>{const p=x.plan||{},badge=x.state==='ready'?'<span class="badge ready">Ready</span>':x.state==='warning'?'<span class="badge warning">Ready · warning</span>':x.state==='duplicate'?'<span class="badge duplicate">Duplicate</span>':'<span class="badge invalid">Error</span>';const msg=[...(x.issues||[]),...(x.warnings||[])].map(esc).join('<br>');return `<tr><td>${x.row}</td><td>${x.teacher?`<b>${esc(x.teacher.name)}</b><br><span class="small">${esc(x.teacher.code)}</span>`:'—'}</td><td>${esc(statusLabel(p.type||''))}</td><td>${esc(p.leaveCategory?leaveCategoryLabel(p.leaveCategory):'—')}</td><td>${esc((p.type==='full'||p.type==='half')?(p.leaveUnits||'—'):'—')}</td><td>${p.startDate?esc(dateText(p)):'—'}</td><td>${esc(durationText(p))}</td><td>${esc(p.note||'')}${p.referenceNo?`<br><span class="small">Ref: ${esc(p.referenceNo)}</span>`:''}</td><td>${badge}${msg?`<div class="small" style="margin-top:4px">${msg}</div>`:''}</td></tr>`}).join('');
  $('leaveSummary').className='box '+(err?'warn':'ok');$('leaveSummary').innerHTML=`Preview complete: <b>${ready}</b> row${ready===1?'':'s'} ready to import, <b>${dup}</b> duplicate${dup===1?'':'s'} to skip, <b>${err}</b> row${err===1?'':'s'} needing correction.`;
 }
+
+const LEGACY_MONTHS={JANUARY:1,FEBRUARY:2,MARCH:3,APRIL:4,MAY:5,JUNE:6,JULY:7,AUGUST:8,SEPTEMBER:9,OCTOBER:10,NOVEMBER:11,DECEMBER:12};
+function legacyNorm(v){return String(v??'').replace(/\s+/g,' ').trim().toUpperCase()}
+function legacyHeader(v){return legacyNorm(v).replace(/[^A-Z]/g,'')}
+function legacyNameKey(v){return norm(v).replace(/\b(sri|smt|mr|mrs|ms|dr)\b/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/y/g,'i')}
+function legacyTeacherByName(v){const key=legacyNameKey(v);if(!key||key==='xyz')return null;const ts=(master&&master.teachers)||[],compact=key.replace(/\s+/g,'');let exact=ts.find(t=>legacyNameKey(t.name).replace(/\s+/g,'')===compact);if(exact)return exact;const a=key.split(' ').filter(Boolean);let scored=ts.map(t=>{const b=legacyNameKey(t.name).split(' ').filter(Boolean),common=a.filter(x=>b.includes(x)).length;let score=common/Math.max(a.length,b.length);if(a.length>=2&&b.length>=2&&a[a.length-1]===b[b.length-1]&&a[0].slice(0,3)===b[0].slice(0,3))score=Math.max(score,0.9);return{t,score}}).sort((x,y)=>y.score-x.score);return scored[0]&&scored[0].score>=0.66&&(scored.length<2||scored[0].score-scored[1].score>=0.15)?scored[0].t:null}
+function extractLegacyDates(v){if(v===null||v===undefined||v===''||v===0||v==='0')return[];if(v instanceof Date||typeof v==='number'){const d=parseDate(v);return d?[d]:[]}const s=String(v);const hits=s.match(/\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2}|\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{4}/g)||[];const out=hits.map(parseDate).filter(Boolean);if(!out.length){const d=parseDate(s);if(d)out.push(d)}return[...new Set(out)].sort()}
+function detectLegacyBlocks(matrix){
+ let best={row:-1,months:[]};
+ for(let r=0;r<Math.min(matrix.length,40);r++){
+   const ms=[];(matrix[r]||[]).forEach((v,c)=>{const k=legacyHeader(v);if(LEGACY_MONTHS[k])ms.push({name:k,col:c})});
+   if(ms.length>best.months.length)best={row:r,months:ms};
+ }
+ if(best.months.length<3)return null;
+ let sub=-1;
+ for(let r=best.row+1;r<=Math.min(best.row+3,matrix.length-1);r++){
+   const count=(matrix[r]||[]).filter(v=>legacyHeader(v)==='FROM').length;
+   if(count>=3){sub=r;break}
+ }
+ if(sub<0)return null;
+ const fromCols=[];(matrix[sub]||[]).forEach((v,c)=>{if(legacyHeader(v)==='FROM')fromCols.push(c)});
+ const blocks=[];
+ for(let i=0;i<fromCols.length;i++){
+   const start=fromCols[i],end=(fromCols[i+1]??(start+8))-1,map={from:start};
+   for(let c=start;c<=end;c++){
+     const h=legacyHeader((matrix[sub]||[])[c]);
+     if(h==='TO')map.to=c;else if(['VL','EL','CL','SEL','EOL'].includes(h))map[h]=c;else if(h.includes('MATERNITY'))map.MATERNITY=c;
+   }
+   let month='';for(let c=start;c<=end;c++){const k=legacyHeader((matrix[best.row]||[])[c]);if(LEGACY_MONTHS[k]){month=k;break}}
+   if(month&&map.to!==undefined)blocks.push({name:month,col:start,end,map});
+ }
+ return blocks.length>=3?{monthRow:best.row,subRow:sub,blocks}:null;
+}
+function datesFromLegacyRows(rows,b){
+ const all=[];
+ for(const row of rows){
+   const fs=extractLegacyDates(row[b.map.from]),ts=extractLegacyDates(row[b.map.to]);
+   if(fs.length===1&&ts.length===1){for(const d of dateRangeKeys(fs[0],ts[0]))all.push(d)}
+   else if(fs.length){fs.forEach(d=>all.push(d));ts.forEach(d=>all.push(d))}
+ }
+ return[...new Set(all)].sort();
+}
+function legacyRowsFromWorkbook(wb){
+ const out=[];
+ for(const sheetName of wb.SheetNames){
+   const ws=wb.Sheets[sheetName],matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true}),det=detectLegacyBlocks(matrix);if(!det)continue;
+   const groups=[];let current=null;
+   for(let r=det.subRow+1;r<matrix.length;r++){
+     const row=matrix[r]||[];let t=null;
+     for(let c=0;c<(det.blocks[0]?.col||20);c++){t=legacyTeacherByName(row[c]);if(t)break}
+     if(t){current={teacher:t,rowNum:r+1,rows:[row]};groups.push(current);continue}
+     if(current){const hasRelevant=det.blocks.some(b=>extractLegacyDates(row[b.map.from]).length||extractLegacyDates(row[b.map.to]).length);if(hasRelevant)current.rows.push(row)}
+   }
+   for(const g of groups){
+     for(const b of det.blocks){
+       const dates=datesFromLegacyRows(g.rows,b);
+       for(const cat of ['VL','EL','CL','SEL','EOL','MATERNITY']){
+         const c=b.map[cat];if(c===undefined)continue;
+         let units=0;for(const row of g.rows)units+=numericValue(row[c]);
+         if(!(units>0))continue;
+         const obj={'Teacher Code':g.teacher.code,'Teacher Name':g.teacher.name,'Status Type':units===0.5&&dates.length===1?'Half Leave':'Full Leave','Leave Category':cat,'Leave Days':units,'Remarks':'Imported from existing VKV leave statement · '+b.name,'__rowNum':g.rowNum};
+         if(dates.length===1){obj['From Date']=dates[0];obj['To Date']=dates[0]}
+         else if(dates.length>1){obj['Specific Dates']=dates.join(', ')}
+         else obj['From Date']='';
+         out.push(obj);
+       }
+     }
+   }
+   if(out.length)return out;
+ }
+ return out;
+}
+function isTemplateMatrix(matrix){for(let r=0;r<Math.min(matrix.length,8);r++){const hs=(matrix[r]||[]).map(legacyHeader);if(hs.includes('TEACHERCODE')&&hs.some(x=>x==='STATUSTYPE'||x==='OPERATIONALSTATUS'))return true}return false}
 $('leaveFile').onchange=async()=>{
  leavePreview=[];$('importResult').innerHTML='';const f=$('leaveFile').files[0];if(!f){$('leaveSummary').className='box';$('leaveSummary').textContent='Select a completed Excel file to preview it.';return}
  try{
   if(!window.XLSX)throw new Error('Excel library has not loaded yet.');
-  const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});const name=wb.SheetNames.includes('Past_Leave_History')?'Past_Leave_History':wb.SheetNames[0];const ws=wb.Sheets[name];const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
-  if(!rows.length)throw new Error('No data rows were found in the Excel sheet.');
-  const lp=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));existingPlans=lp.exists()?(lp.data().plans||{}):{};leavePreview=validateHistoryRows(rows);renderPreview();
+  const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});let rows=[],format='';
+  if(wb.SheetNames.includes('Past_Leave_History')){const ws=wb.Sheets['Past_Leave_History'];rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});format='App import template';}
+  else{const first=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(first,{header:1,defval:'',raw:true});if(isTemplateMatrix(matrix)){rows=XLSX.utils.sheet_to_json(first,{defval:'',raw:true});format='Tabular leave history';}else{rows=legacyRowsFromWorkbook(wb);format='Existing VKV month-wise leave statement';}}
+  if(!rows.length)throw new Error('No recognisable leave-history rows were found. Use the app template or the existing VKV month-wise leave statement.');
+  const lp=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));existingPlans=lp.exists()?(lp.data().plans||{}):{};leavePreview=validateHistoryRows(rows);renderPreview();$('leaveSummary').innerHTML='<b>'+esc(format)+'</b> detected.<br>'+$('leaveSummary').innerHTML;
  }catch(e){$('leaveSummary').className='box error';$('leaveSummary').textContent='Could not read this Excel file: '+(e.message||e);$('previewWrap').hidden=true;$('metrics').hidden=true;$('importHistory').disabled=true}
 };
 $('clearLeaveFile').onclick=()=>{$('leaveFile').value='';leavePreview=[];$('previewWrap').hidden=true;$('metrics').hidden=true;$('importHistory').disabled=true;$('leaveSummary').className='box';$('leaveSummary').textContent='Select a completed Excel file to preview it. Nothing is saved until you confirm the import.';$('importResult').innerHTML=''};

@@ -164,8 +164,8 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner.custom{background:#fff4d9;border-color:#e4c873;color:#6b5618}
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
 
-</style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v54.7</p>
+</style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head><body><div id="authGate"><div class="authCard">
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v55.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -299,8 +299,17 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <button data-leave-type="special" onclick="chooseStatus('special',this)">Special Assignment</button>
 <button data-leave-type="vacant" onclick="chooseStatus('vacant',this)">Vacant Position</button>
 </div>
+<div id="leaveCategoryBox" class="proxycard disabledBox">
+<div class="proxyhead">3. Leave Category &amp; Leave Account</div>
+<div class="small">Required for Full Leave / Half Leave. This lets the timetable app become the leave register too, so the same leave need not be entered again in a separate Excel sheet.</div>
+<div class="controls">
+<div><label>Leave Category</label><select id="leaveCategory" onchange="refreshLeaveCategoryUi(false)"><option value="">Select…</option><option value="VL">VL</option><option value="EL">EL</option><option value="CL">CL</option><option value="SEL">SEL</option><option value="EOL">EOL</option><option value="MATERNITY">Maternity Leave</option></select></div>
+<div><label>Leave Days</label><input id="leaveUnits" type="number" min="0" step="0.5" placeholder="Auto calculated"><div class="small">Auto-calculated from the selected dates; you may correct it when school leave-counting rules require a different figure.</div></div>
+</div>
+<div class="actions" style="margin-top:8px"><button type="button" onclick="autoFillLeaveUnits()">↻ Auto Calculate Leave Days</button><span id="leaveAccountHint" class="small"></span></div>
+</div>
 <div id="dutyDurationBox" class="proxycard disabledBox">
-<div class="proxyhead">3. Duration for On Duty / Special Assignment</div>
+<div class="proxyhead">4. Duration for On Duty / Special Assignment</div>
 <div class="leaveBtns durationBtns">
 <button data-duration="full" onclick="chooseDutyDuration('full',this)">Full Day</button>
 <button data-duration="half" onclick="chooseDutyDuration('half',this)">Half Day · P5–P8</button>
@@ -328,7 +337,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <div id="leavePlansList" style="margin-top:8px">Loading scheduled entries…</div>
 </div>
 
-<div class="actions"><button onclick="copyProxy()">📋 Copy Proxy List</button><button onclick="shareProxy()">↗ Share Proxy List</button><span id="copyMsg" class="copymsg"></span></div>
+<div class="actions"><button id="exportLeaveExcelBtn" onclick="exportLeaveExcel()">⬇ Export Leave Register (Excel)</button><button onclick="copyProxy()">📋 Copy Proxy List</button><button onclick="shareProxy()">↗ Share Proxy List</button><span id="copyMsg" class="copymsg"></span></div>
 <div id="leaveResult" class="result"></div></section>
 <section id="history" class="view"><h2>Daily History</h2>
 <div class="controls"><div><label>Date</label><input type="date" id="historyDate" onchange="renderHistory()"></div></div>
@@ -494,6 +503,7 @@ function plannedStatusesForDate(date=todayKey()){
  const plans=Object.values(cachedLeavePlans());
  return plans.filter(p=>planAppliesToDate(p,date)).map(p=>({
    code:p.code,type:p.type,from:p.from||0,to:p.to||0,duration:p.duration||"",
+   leaveCategory:p.leaveCategory||"",leaveUnits:Number(p.leaveUnits||0),
    note:p.note||"",date,day:dayNameForDate(date),planned:true,planId:p.id||""
  }));
 }
@@ -506,6 +516,12 @@ function mergeEffectiveStatuses(base,planned){
 function leaveData(date=todayKey()){return mergeEffectiveStatuses(storedStatusData(date),plannedStatusesForDate(date))}
 
 let selectedStatus="",selectedDuration="";
+const LEAVE_CATEGORY_LABELS={VL:"VL",EL:"EL",CL:"CL",SEL:"SEL",EOL:"EOL",MATERNITY:"Maternity Leave"};
+function leaveCategoryLabel(v){return LEAVE_CATEGORY_LABELS[String(v||"").toUpperCase()]||String(v||"")}
+function leaveDateCountFromSpec(spec){if(!spec||spec.invalid)return 0;if(spec.mode==="multiple")return (spec.dates||[]).length;return dateRangeDays(spec.startDate,spec.endDate||spec.startDate)}
+function autoCalculatedLeaveUnits(){const n=leaveDateCountFromSpec(selectedDateSpec());if(selectedStatus==="half")return n*0.5;if(selectedStatus==="full")return n;return 0}
+function autoFillLeaveUnits(){const el=E("leaveUnits");if(!el)return;const n=autoCalculatedLeaveUnits();el.value=n?String(n):"";refreshLeaveCategoryUi(false)}
+function refreshLeaveCategoryUi(auto=false){const box=E("leaveCategoryBox"),cat=E("leaveCategory"),units=E("leaveUnits"),hint=E("leaveAccountHint"),isLeave=selectedStatus==="full"||selectedStatus==="half";if(box)box.classList.toggle("disabledBox",!isLeave);if(cat)cat.disabled=!isLeave;if(units)units.disabled=!isLeave;if(!isLeave){if(cat)cat.value="";if(units)units.value="";if(hint)hint.textContent="Leave category does not apply to OD / Special Assignment / Vacant Position.";return}if(auto&&units&&document.activeElement!==units){const n=autoCalculatedLeaveUnits();units.value=n?String(n):""}if(hint){const c=cat&&cat.value?leaveCategoryLabel(cat.value):"Select the leave category";const n=units&&units.value?Number(units.value):0;hint.textContent=c+(n?" · "+n+" leave day"+(n===1?"":"s"):"")}}
 let editingLeavePlanId="";
 let proxyPeriod=1;
 
@@ -569,6 +585,7 @@ function renderLeaveCalendar(){
  if(rt)rt.value=leaveRangeEnd||"";
  document.querySelectorAll("[data-leave-date-mode]").forEach(b=>b.classList.toggle("active",b.getAttribute("data-leave-date-mode")===leaveDateMode));
  renderLeaveSelectionSummary();
+ refreshLeaveCategoryUi(true);
 }
 function chooseLeaveDateMode(mode,btn){
  if(window.__vkvRole&&!["admin","manager"].includes(window.__vkvRole))return;
@@ -622,7 +639,7 @@ function initializeLeaveCalendar(){resetLeaveDateSelection();initLeaveCalendarPo
 window.initializeLeaveCalendar=initializeLeaveCalendar;
 
 function selectLeaveButton(btn){document.querySelectorAll(".leaveBtns button[data-leave-type]").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active")}
-function chooseStatus(type,btn){selectedStatus=type;selectLeaveButton(btn);let duty=(type==="od"||type==="special"),box=E("dutyDurationBox");box.classList.toggle("disabledBox",!duty);if(!duty){selectedDuration="";document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyFrom").value="";E("dutyTo").value="";E("durationHelp").textContent=type==="full"?"Full Leave applies to each selected date.":type==="vacant"?"Vacant Position applies to each selected date.":"Half Leave applies to P5–P8 on each selected date."}else{E("durationHelp").textContent="Choose Full Day, Half Day or Custom Period Range.";E("dutyFrom").disabled=true;E("dutyTo").disabled=true}}
+function chooseStatus(type,btn){selectedStatus=type;selectLeaveButton(btn);let duty=(type==="od"||type==="special"),box=E("dutyDurationBox");box.classList.toggle("disabledBox",!duty);if(!duty){selectedDuration="";document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyFrom").value="";E("dutyTo").value="";E("durationHelp").textContent=type==="full"?"Full Leave applies to each selected date.":type==="vacant"?"Vacant Position applies to each selected date.":"Half Leave applies to P5–P8 on each selected date."}else{E("durationHelp").textContent="Choose Full Day, Half Day or Custom Period Range.";E("dutyFrom").disabled=true;E("dutyTo").disabled=true}refreshLeaveCategoryUi(true)}
 function chooseDutyDuration(type,btn){if(!(selectedStatus==="od"||selectedStatus==="special"))return;selectedDuration=type;document.querySelectorAll(".durationBtns button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");let custom=type==="custom";E("dutyFrom").disabled=!custom;E("dutyTo").disabled=!custom;if(!custom){E("dutyFrom").value="";E("dutyTo").value=""}E("durationHelp").textContent=type==="full"?"Whole day selected. Period range is disabled.":type==="half"?"Half day selected: P5–P8. Period range is disabled.":"Select both From Period and To Period."}
 function setLeaveEditUi(editing){
  editingLeavePlanId=editing?String(editing):"";
@@ -630,7 +647,7 @@ function setLeaveEditUi(editing){
  if(save)save.textContent=editingLeavePlanId?"💾 Update Entry":"💾 Save";
  if(cancel)cancel.style.display=editingLeavePlanId?"inline-block":"none";
 }
-function clearStatusForm(){selectedStatus="";selectedDuration="";setLeaveEditUi("");E("leaveTeacher").value="";E("dutyFrom").value="";E("dutyTo").value="";E("dutyNote").value="";E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyDurationBox").classList.add("disabledBox");document.querySelectorAll(".leaveBtns button[data-leave-type],.durationBtns button").forEach(x=>x.classList.remove("active"));E("durationHelp").textContent="Choose On Duty or Special Assignment first.";resetLeaveDateSelection();E("statusMsg").textContent="Form cleared. Saved records were not deleted."}
+function clearStatusForm(){selectedStatus="";selectedDuration="";setLeaveEditUi("");E("leaveTeacher").value="";E("dutyFrom").value="";E("dutyTo").value="";E("dutyNote").value="";E("leaveCategory").value="";E("leaveUnits").value="";E("leaveCategory").disabled=true;E("leaveUnits").disabled=true;E("leaveCategoryBox").classList.add("disabledBox");E("dutyFrom").disabled=true;E("dutyTo").disabled=true;E("dutyDurationBox").classList.add("disabledBox");document.querySelectorAll(".leaveBtns button[data-leave-type],.durationBtns button").forEach(x=>x.classList.remove("active"));E("durationHelp").textContent="Choose On Duty or Special Assignment first.";resetLeaveDateSelection();refreshLeaveCategoryUi(false);E("statusMsg").textContent="Form cleared. Saved records were not deleted."}
 function cancelLeavePlanEdit(){clearStatusForm();E("statusMsg").textContent="Edit cancelled. No saved record was changed."}
 function editScheduledPlan(id){
  if(window.__vkvRole&&!['admin','manager'].includes(window.__vkvRole)){alert('This account cannot edit scheduled leave/status entries.');return}
@@ -649,7 +666,10 @@ function editScheduledPlan(id){
    if(dur==="custom"){E("dutyFrom").value=String(p.from||"");E("dutyTo").value=String(p.to||"")}
  }
  setLeaveEditUi(id);renderLeaveCalendar();
- E("statusMsg").textContent="Editing saved entry: "+leavePlanDateText(p)+". Change the dates or status, then tap Update Entry.";
+ E("leaveCategory").value=p.leaveCategory||"";
+ E("leaveUnits").value=(p.leaveUnits!==undefined&&p.leaveUnits!==null&&p.leaveUnits!=="")?String(p.leaveUnits):String(autoCalculatedLeaveUnits()||"");
+ refreshLeaveCategoryUi(false);
+ E("statusMsg").textContent="Editing saved entry: "+leavePlanDateText(p)+". Change the dates, category or status, then tap Update Entry.";
  E("leave").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function editScheduledPlanFromHistory(id){editScheduledPlan(id)}
@@ -668,7 +688,12 @@ async function saveStatusRecord(){
  const spec=selectedDateSpec();if(!spec){E("statusMsg").textContent="Select at least one date.";return}if(spec.invalid){E("statusMsg").textContent="From Date cannot be later than To Date.";return}
  const existing=editingLeavePlanId?cachedLeavePlans()[editingLeavePlanId]:null,wasEditing=!!existing;
  let rec={...(existing||{}),id:editingLeavePlanId||(c+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)),code:c,type:selectedStatus,...spec,active:true,createdAtMs:(existing&&existing.createdAtMs)||Date.now()},note=E("dutyNote").value.trim();
- delete rec.date;if(spec.mode!=="multiple")delete rec.dates;delete rec.from;delete rec.to;delete rec.duration;delete rec.note;
+ delete rec.date;if(spec.mode!=="multiple")delete rec.dates;delete rec.from;delete rec.to;delete rec.duration;delete rec.note;delete rec.leaveCategory;delete rec.leaveUnits;
+ if(selectedStatus==="full"||selectedStatus==="half"){
+   const cat=String(E("leaveCategory").value||"").trim().toUpperCase();if(!cat||!LEAVE_CATEGORY_LABELS[cat]){E("statusMsg").textContent="Select the leave category (VL / EL / CL / SEL / EOL / Maternity Leave).";return}
+   let units=Number(E("leaveUnits").value);if(!isFinite(units)||units<=0)units=autoCalculatedLeaveUnits();if(!units||units<=0){E("statusMsg").textContent="Enter the number of leave days.";return}
+   rec.leaveCategory=cat;rec.leaveUnits=Math.round(units*2)/2;
+ }
  if(selectedStatus==="od"||selectedStatus==="special"){
    if(!selectedDuration){E("statusMsg").textContent="Select Full Day, Half Day or Custom Period Range.";return}
    if(selectedDuration==="half"){rec.from=5;rec.to=8;rec.duration="half"}
@@ -736,7 +761,8 @@ function renderLeavePlansList(){
    const t=teacherByEffectiveCode(p.code),[state,cls]=leavePlanState(p),rep=planAppliesToDate(p,todayKey())?activeReplacementForOriginal(p.code,todayKey()):null;
    const coverage=rep?`<div class="leavePlanMeta"><b>Covered by ${esc(rep.tempName||rep.tempCode)}${rep.tempCode?" ("+esc(rep.tempCode)+")":""}</b> · no proxy is generated for the original teacher.</div>`:"";
    const pid=String(p.id).replace(/'/g,"&#39;");
-   return `<div class="leavePlanItem"><div><b>${esc(t?t.name:p.code)}</b> · ${esc(statusLabel(p))}<span class="planState ${cls}">${state}</span><div class="leavePlanMeta">${esc(leavePlanDateText(p))}${p.note?" · "+esc(p.note):""}</div>${coverage}</div>${canEdit?`<div class="actions" style="margin-top:0"><button onclick="editScheduledPlan('${pid}')">✏️ Edit / Dates</button><button class="dangerBtn" onclick="deleteScheduledPlan('${pid}')">Delete</button></div>`:""}</div>`;
+   const account=(p.type==="full"||p.type==="half")?`<div class="leavePlanMeta"><b>${esc(leaveCategoryLabel(p.leaveCategory)||"Uncategorised")}</b>${p.leaveUnits?` · ${esc(p.leaveUnits)} leave day${Number(p.leaveUnits)===1?"":"s"}`:""}</div>`:"";
+   return `<div class="leavePlanItem"><div><b>${esc(t?t.name:p.code)}</b> · ${esc(statusLabel(p))}<span class="planState ${cls}">${state}</span><div class="leavePlanMeta">${esc(leavePlanDateText(p))}${p.note?" · "+esc(p.note):""}</div>${account}${coverage}</div>${canEdit?`<div class="actions" style="margin-top:0"><button onclick="editScheduledPlan('${pid}')">✏️ Edit / Dates</button><button class="dangerBtn" onclick="deleteScheduledPlan('${pid}')">Delete</button></div>`:""}</div>`;
  }).join("");
 }
 async function deleteScheduledPlan(id){
@@ -769,7 +795,7 @@ function proxyRows(){
  });
  return rows.sort((a,b)=>a.period-b.period||a.teacher.localeCompare(b.teacher)||a.className.localeCompare(b.className));
 }
-function statusLabel(o){if(o.type==="full")return "Full Leave";if(o.type==="vacant")return "Vacant Position · Full Day";if(o.type==="half")return "Half Leave P5–P8";let base=o.type==="od"?"On Duty":"Special Assignment";let range=(o.duration==="half"||(o.from===5&&o.to===8))?"Half Day · P5–P8":(!o.from&&!o.to)?"Full Day":`P${o.from||1}–P${o.to||8}`;return base+" · "+range+(o.note?" · "+o.note:"")}
+function statusLabel(o){const cat=o&&o.leaveCategory?" · "+leaveCategoryLabel(o.leaveCategory):"";if(o.type==="full")return "Full Leave"+cat;if(o.type==="vacant")return "Vacant Position · Full Day";if(o.type==="half")return "Half Leave P5–P8"+cat;let base=o.type==="od"?"On Duty":"Special Assignment";let range=(o.duration==="half"||(o.from===5&&o.to===8))?"Half Day · P5–P8":(!o.from&&!o.to)?"Full Day":`P${o.from||1}–P${o.to||8}`;return base+" · "+range+(o.note?" · "+o.note:"")}
 function renderLeave(){let a=leaveData(),out=E("leaveResult");if(!a.length){out.innerHTML="No Leave, On Duty, Special Assignment or Vacant Position recorded today.";return}let day=todayName(),rows=proxyRows();let covered=[];let chips=a.map(o=>{let t=teacherByEffectiveCode(o.code),rep=activeReplacementForOriginal(o.code,todayKey());if(rep)covered.push({o,t,rep});return `<span class="tag">${esc(t?t.name:o.code)} · ${statusLabel(o)}${rep?` · Covered by ${esc(rep.tempName||rep.tempCode)}`:""}</span>`}).join("");let coverageNote=covered.length?`<div class="slotComplete" style="margin-top:10px">${covered.map(x=>`✓ ${esc(x.t?x.t.name:x.o.code)} remains recorded as ${esc(statusLabel(x.o))}; ${esc(x.rep.tempName||x.rep.tempCode)} is covering the leave vacancy, so the original teacher's periods do not enter proxy allotment.`).join("<br>")}</div>`:"";let details=rows.length?`<div class="table"><table><tr><th>Unavailable Teacher</th><th>Period</th><th>Class</th><th>Scheduled Period</th><th>Free Teachers for Proxy</th></tr>${rows.map(r=>`<tr><td>${esc(r.teacher)}</td><td>${PL(r.period)}<br><span class="small">${r.time}</span></td><td>${r.className}</td><td>${esc(r.entry)}</td><td>${r.free.slice(0,15).map(t=>`<span class="tag">${esc(t.name)} (${t.code})</span>`).join("")}</td></tr>`).join("")}</table></div>`:`<p>No affected teaching periods require proxy for ${day}.</p>`;out.innerHTML=`<div><b>Unavailable / Engaged for ${day}:</b><br>${chips}${coverageNote}</div><div class="proxycard"><div class="proxyhead">Periods Requiring Proxy · ${rows.length} timetable entr${rows.length===1?"y":"ies"}</div>${details}<div class="small">A teacher covered by an active leave-vacancy replacement remains shown on leave, but those covered periods are excluded from proxy requirements. If the replacement teacher is absent, the inherited periods become proxy requirements.</div></div>`}
 function proxyText(){
  const day=todayName(), date=displayDate(), a=Object.values(allotData()).filter(x=>x&&x.day===day).sort((x,y)=>Number(x.period)-Number(y.period)||String(x.name).localeCompare(String(y.name)));
@@ -1225,6 +1251,8 @@ window.renderMyProxyTodayFromPublished=renderMyProxyTodayFromPublished;
 window.refreshMyProxyBadge=refreshMyProxyBadge;
 window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 
+function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
+window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
  const w=window.open('admin-dashboard.html','vkvAdminDashboard');
  if(!w)location.href='admin-dashboard.html';
@@ -1925,7 +1953,7 @@ window.loadMyStatusCloud=async function(){
    const labelOf=x=>window.statusLabel?window.statusLabel(x):(x.type||'Status');
    const groups={current:[],upcoming:[],past:[]};items.forEach(x=>groups[stateOf(x)].push(x));
    groups.current.sort((a,b)=>dateText(a).localeCompare(dateText(b)));groups.upcoming.sort((a,b)=>dateText(a).localeCompare(dateText(b)));groups.past.sort((a,b)=>dateText(b).localeCompare(dateText(a)));
-   const section=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>Status</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.map(x=>'<tr><td>'+safe(labelOf(x))+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
+   const section=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.map(x=>'<tr><td>'+safe(labelOf(x))+'</td><td>'+safe(x.leaveCategory?leaveCategoryLabel(x.leaveCategory):'—')+'</td><td>'+safe((x.type==='full'||x.type==='half')?(x.leaveUnits||'—'):'—')+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
    if(!items.length){
      out.innerHTML='<div class="slotComplete">No approved Leave / OD / Special Assignment record is available for you yet.</div><div class="small">If an older approved record is missing, the Admin can run “Sync My Area Records” once from User Access & Roles.</div>';
    }else{
@@ -1938,6 +1966,33 @@ window.loadMyStatusCloud=async function(){
  }
 };
 
+
+window.exportLeaveExcelCloud=async function(){
+ if(!currentUser||!canEditStatus()){alert('Admin or Manager access is required to export the school leave register.');return}
+ if(!window.XLSX){alert('Excel export library is still loading. Please try again in a moment.');return}
+ const btn=document.getElementById('exportLeaveExcelBtn'),oldText=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='Preparing Excel…'}
+ try{
+   const qs=await getDocs(collection(db,'dailyRecords')),scheduled=[],manual=[];
+   qs.forEach(d=>{const data=d.data()||{};if(d.id===LEAVE_PLAN_DOC){Object.values(data.plans||{}).forEach(p=>{if(p&&p.active!==false&&PERSONAL_STATUS_TYPES.has(String(p.type||'')))scheduled.push({...p,_source:'Scheduled / Imported'})});return}const date=data.date||d.id;(data.statuses||[]).forEach(x=>{if(x&&PERSONAL_STATUS_TYPES.has(String(x.type||'')))manual.push({...x,date,_source:'Daily record'})})});
+   const teacherName=code=>{const t=teacherByEffectiveCode(code)||permanentTeacherByCode(code);return t?t.name:String(code||'')};
+   const leaveUnits=x=>{if(Number(x.leaveUnits)>0)return Number(x.leaveUnits);const count=x._source==='Daily record'?1:planDateKeys(x).length;if(x.type==='half')return count*0.5;if(x.type==='full')return count;return 0};
+   const recs=[];
+   for(const x of scheduled){const ds=planDateKeys(x),start=x.startDate||x.date||(ds[0]||''),end=x.endDate||start||(ds[ds.length-1]||'');recs.push({code:String(x.code||''),name:teacherName(x.code),type:String(x.type||''),status:statusLabel(x),category:String(x.leaveCategory||''),units:leaveUnits(x),from:start,to:end,specific:x.mode==='multiple'?(x.dates||[]).join(', '):'',duration:x.duration||'',periods:x.duration==='custom'?`P${x.from}–P${x.to}`:(x.duration==='half'?'P5–P8':''),note:x.note||'',reference:x.referenceNo||'',source:x._source})}
+   for(const x of manual){recs.push({code:String(x.code||''),name:teacherName(x.code),type:String(x.type||''),status:statusLabel(x),category:String(x.leaveCategory||''),units:leaveUnits(x),from:x.date||'',to:x.date||'',specific:'',duration:x.duration||'',periods:(x.from||x.to)?`P${x.from||1}–P${x.to||8}`:'',note:x.note||'',reference:x.referenceNo||'',source:x._source})}
+   recs.sort((a,b)=>String(a.from).localeCompare(String(b.from))||a.name.localeCompare(b.name));
+   const wb=XLSX.utils.book_new();
+   const history=[['Teacher Code','Teacher Name','Status','Leave Category','Leave Days','From Date','To Date','Specific Dates','Duration / Periods','Remarks','Reference No.','Source'],...recs.map(r=>[r.code,r.name,r.status,r.category?leaveCategoryLabel(r.category):'',r.units||'',r.from,r.to,r.specific,[r.duration,r.periods].filter(Boolean).join(' · '),r.note,r.reference,r.source])];
+   const hws=XLSX.utils.aoa_to_sheet(history);hws['!freeze']={xSplit:0,ySplit:1};hws['!cols']=[{wch:13},{wch:25},{wch:24},{wch:25},{wch:11},{wch:12},{wch:12},{wch:28},{wch:18},{wch:32},{wch:18},{wch:18}];XLSX.utils.book_append_sheet(wb,hws,'Leave_History');
+   const cats=['VL','EL','CL','SEL','EOL','MATERNITY'],sum=new Map();
+   for(const r of recs){if(!(r.type==='full'||r.type==='half'))continue;const k=r.code||r.name;if(!sum.has(k))sum.set(k,{code:r.code,name:r.name,VL:0,EL:0,CL:0,SEL:0,EOL:0,MATERNITY:0,UNCAT:0});const o=sum.get(k),c=cats.includes(r.category)?r.category:'UNCAT';o[c]+=Number(r.units||0)}
+   const srows=[['Teacher Code','Teacher Name','VL Used','EL Used','CL Used','CL Balance (12)','SEL Used','SEL Balance (10)','EOL Used','Maternity Used','Uncategorised','Total Leave Used'],...([...sum.values()].sort((a,b)=>a.name.localeCompare(b.name)).map(o=>[o.code,o.name,o.VL,o.EL,o.CL,12-o.CL,o.SEL,10-o.SEL,o.EOL,o.MATERNITY,o.UNCAT,o.VL+o.EL+o.CL+o.SEL+o.EOL+o.MATERNITY+o.UNCAT]))];
+   const sws=XLSX.utils.aoa_to_sheet(srows);sws['!freeze']={xSplit:0,ySplit:1};sws['!cols']=[{wch:13},{wch:25},...Array(10).fill({wch:16})];XLSX.utils.book_append_sheet(wb,sws,'Leave_Summary');
+   const months=new Map();for(const r of recs){if(!(r.type==='full'||r.type==='half')||!r.from)continue;let dates=[];if(r.specific)dates=String(r.specific).split(',').map(x=>x.trim()).filter(Boolean);else if(r.from&&r.to){for(let d=dateFromKey(r.from),last=dateFromKey(r.to);d<=last;d.setDate(d.getDate()+1))dates.push(dateKeyFromDate(d))}if(!dates.length)dates=[r.from];const perDate=Number(r.units||0)/(dates.length||1),c=cats.includes(r.category)?r.category:'UNCAT';for(const date of dates){const month=String(date).slice(0,7),key=(r.code||r.name)+'|'+month;if(!months.has(key))months.set(key,{code:r.code,name:r.name,month,VL:0,EL:0,CL:0,SEL:0,EOL:0,MATERNITY:0,UNCAT:0});months.get(key)[c]+=perDate}}
+   const mrows=[['Month','Teacher Code','Teacher Name','VL','EL','CL','SEL','EOL','Maternity','Uncategorised'],...([...months.values()].sort((a,b)=>a.month.localeCompare(b.month)||a.name.localeCompare(b.name)).map(o=>[o.month,o.code,o.name,o.VL,o.EL,o.CL,o.SEL,o.EOL,o.MATERNITY,o.UNCAT]))];const mws=XLSX.utils.aoa_to_sheet(mrows);mws['!freeze']={xSplit:0,ySplit:1};mws['!cols']=[{wch:11},{wch:13},{wch:25},...Array(7).fill({wch:14})];XLSX.utils.book_append_sheet(wb,mws,'Monthly_Summary');
+   const notes=XLSX.utils.aoa_to_sheet([['VKV Nalbari Leave Register Export'],['Generated',new Date().toLocaleString()],[],['Leave account logic'],['CL entitlement','12 days per year'],['SEL entitlement','10 days per year'],['VL / EL / Maternity','As per VKSPV / applicable school rules; export reports usage but does not assume a universal entitlement.'],['EOL','Usage reported; no fixed entitlement assumed.'],[],['Important'],['The app stores operational status (Leave / OD / Special) separately from leave-account category (VL / EL / CL / SEL / EOL / Maternity). This prevents duplicate maintenance of a timetable record and a separate leave spreadsheet.']]);XLSX.utils.book_append_sheet(wb,notes,'Notes');
+   XLSX.writeFile(wb,'VKV_Nalbari_Leave_Register_'+todayKey()+'.xlsx');
+ }catch(e){alert('Leave export failed: '+(e&&e.message?e.message:e))}finally{if(btn){btn.disabled=false;btn.textContent=oldText||'⬇ Export Leave Register (Excel)'}}
+};
 onAuthStateChanged(auth,async user=>{
  currentUser=user;currentProfile=null;
  loginBtn.style.display='inline-block';copyUidBtn.style.display='none';signOutBtn.style.display='none';

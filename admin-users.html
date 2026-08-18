@@ -7,7 +7,7 @@
 <style>
 :root{--ink:#18364e;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;--green:#2d7d46}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Segoe UI,Arial;color:#24394b}
-header{background:#1d5e89;color:#fff;padding:16px}.wrap{max-width:980px;margin:auto;padding:0 14px}
+header{background:#1d5e89;color:#fff;padding:16px}.wrap{max-width:980px;margin:auto;padding:0 14px}.headerline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.headerBack{background:#f2f7fa;color:#18364e;border-color:#d2e0e7}
 h1{font-size:1.35rem;margin:0}.sub{opacity:.9;font-size:.88rem;margin-top:3px}
 main{padding:18px 0 50px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d10}
 h2{color:var(--ink);margin:0 0 8px;font-size:1.15rem}.help{font-size:.88rem;color:#5f7180;line-height:1.45;margin-bottom:12px}
@@ -25,9 +25,9 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>VKV Nalbari · Administration</h1><div class="sub">User Access & Roles · Cloud v54.7</div></div></header>
+<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v55.0</div></div><a class="btn headerBack" href="admin-dashboard.html">← Admin Dashboard</a></div></header>
 <main class="wrap">
-<div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">This page opens separately so returning does not reload the timetable session.</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToTimetable">← Close & Return to Timetable</button></div></div>
+<div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">Admin Dashboard → User Access & Roles</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToDashboard">← Admin Dashboard</button></div></div>
 
 <div id="app">
   <div class="card">
@@ -163,19 +163,8 @@ async function verifyAdmin(user){
 }
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 
-$('backToTimetable').onclick=()=>{
- try{
-   if(window.opener && !window.opener.closed){
-     window.opener.focus();
-     window.close();
-     return;
-   }
- }catch(e){}
- if(history.length>1){
-   history.back();
- }else{
-   location.replace('index.html');
- }
+$('backToDashboard').onclick=()=>{
+ location.href='admin-dashboard.html';
 };
 
 onAuthStateChanged(auth,verifyAdmin);
