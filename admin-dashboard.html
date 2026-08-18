@@ -113,7 +113,8 @@ onAuthStateChanged(auth,async user=>{
  $('signInBtn').style.display='none';
  try{
    const ps=await getDoc(doc(db,'authorizedUsers',user.uid));
-   if(user.uid!=='6EyzsGOVIDc9060gi95nZD11NZs2'||!ps.exists()||ps.data().active!==true||ps.data().role!=='admin'){$('gateMsg').className='status warn';$('gateMsg').textContent='Admin Dashboard access is not available for this account.';return}
+   const adminEmail=String(user.email||'').trim().toLowerCase();
+   if(!ps.exists()||ps.data().active!==true||ps.data().role!=='admin'||adminEmail!=='REMOVED_EMAIL'){$('gateMsg').className='status warn';$('gateMsg').textContent='Admin Dashboard access is not available for this account.';return}
    profile=ps.data();
    await loadMaster();
    $('gate').style.display='none';$('app').style.display='block';showDashboard();
