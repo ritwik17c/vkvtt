@@ -152,7 +152,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
 
 </style></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v54</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v54.1</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -1384,7 +1384,14 @@ function applyRoleUI(){
    b.style.display=isAdmin()?'inline-block':'none';
  });
  const adminAccessBtn=document.getElementById('adminUserAccessBtn');
- if(adminAccessBtn)adminAccessBtn.style.display=(isAdmin()&&currentUser&&currentUser.uid==='6EyzsGOVIDc9060gi95nZD11NZs2')?'inline-block':'none';
+ if(adminAccessBtn){
+   const adminEmail=String(currentUser&&currentUser.email||'').trim().toLowerCase();
+   const isOwnerAdmin=isAdmin()&&currentUser&&(
+     currentUser.uid==='6EyzsGOVIDc9060gi95nZD11NZs2' ||
+     adminEmail==='ritwik.sir3@gmail.com'
+   );
+   adminAccessBtn.style.display=isOwnerAdmin?'inline-block':'none';
+ }
  const emailViewer=!!currentProfile.emailViewer;
  ['historyBtn','leaveOpsBtn','proxyWorkBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=emailViewer?'none':''});
 
