@@ -1,4 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>VKV Nalbari Timetable</title><style>
 :root{--ink:#18364e;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Segoe UI,Arial;color:#24394b}
 header{background:#1d5e89;color:white;padding:16px}.wrap{max-width:1050px;margin:auto}.head{display:flex;gap:12px;align-items:center}.logo{width:62px;height:62px;object-fit:contain;background:white;border-radius:50%;padding:3px}h1{font-size:1.35rem;margin:0}header small{opacity:.9}
@@ -165,7 +168,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v55.0</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v55.1</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -302,6 +305,14 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <div id="leaveCategoryBox" class="proxycard disabledBox">
 <div class="proxyhead">3. Leave Category &amp; Leave Account</div>
 <div class="small">Required for Full Leave / Half Leave. This lets the timetable app become the leave register too, so the same leave need not be entered again in a separate Excel sheet.</div>
+<div class="leaveBtns categoryQuickBtns" style="margin-top:10px">
+<button data-leave-category="VL" onclick="chooseLeaveCategory('VL',this)">VL</button>
+<button data-leave-category="EL" onclick="chooseLeaveCategory('EL',this)">EL</button>
+<button data-leave-category="CL" onclick="chooseLeaveCategory('CL',this)">CL</button>
+<button data-leave-category="SEL" onclick="chooseLeaveCategory('SEL',this)">SEL</button>
+<button data-leave-category="EOL" onclick="chooseLeaveCategory('EOL',this)">EOL</button>
+<button data-leave-category="MATERNITY" onclick="chooseLeaveCategory('MATERNITY',this)">Maternity Leave</button>
+</div>
 <div class="controls">
 <div><label>Leave Category</label><select id="leaveCategory" onchange="refreshLeaveCategoryUi(false)"><option value="">Select…</option><option value="VL">VL</option><option value="EL">EL</option><option value="CL">CL</option><option value="SEL">SEL</option><option value="EOL">EOL</option><option value="MATERNITY">Maternity Leave</option></select></div>
 <div><label>Leave Days</label><input id="leaveUnits" type="number" min="0" step="0.5" placeholder="Auto calculated"><div class="small">Auto-calculated from the selected dates; you may correct it when school leave-counting rules require a different figure.</div></div>
@@ -521,7 +532,10 @@ function leaveCategoryLabel(v){return LEAVE_CATEGORY_LABELS[String(v||"").toUppe
 function leaveDateCountFromSpec(spec){if(!spec||spec.invalid)return 0;if(spec.mode==="multiple")return (spec.dates||[]).length;return dateRangeDays(spec.startDate,spec.endDate||spec.startDate)}
 function autoCalculatedLeaveUnits(){const n=leaveDateCountFromSpec(selectedDateSpec());if(selectedStatus==="half")return n*0.5;if(selectedStatus==="full")return n;return 0}
 function autoFillLeaveUnits(){const el=E("leaveUnits");if(!el)return;const n=autoCalculatedLeaveUnits();el.value=n?String(n):"";refreshLeaveCategoryUi(false)}
-function refreshLeaveCategoryUi(auto=false){const box=E("leaveCategoryBox"),cat=E("leaveCategory"),units=E("leaveUnits"),hint=E("leaveAccountHint"),isLeave=selectedStatus==="full"||selectedStatus==="half";if(box)box.classList.toggle("disabledBox",!isLeave);if(cat)cat.disabled=!isLeave;if(units)units.disabled=!isLeave;if(!isLeave){if(cat)cat.value="";if(units)units.value="";if(hint)hint.textContent="Leave category does not apply to OD / Special Assignment / Vacant Position.";return}if(auto&&units&&document.activeElement!==units){const n=autoCalculatedLeaveUnits();units.value=n?String(n):""}if(hint){const c=cat&&cat.value?leaveCategoryLabel(cat.value):"Select the leave category";const n=units&&units.value?Number(units.value):0;hint.textContent=c+(n?" · "+n+" leave day"+(n===1?"":"s"):"")}}
+function chooseLeaveCategory(cat,btn){
+ const sel=E("leaveCategory");if(!sel||sel.disabled)return;sel.value=cat;document.querySelectorAll(".categoryQuickBtns button").forEach(x=>x.classList.toggle("active",x===btn));refreshLeaveCategoryUi(false);
+}
+function refreshLeaveCategoryUi(auto=false){const box=E("leaveCategoryBox"),cat=E("leaveCategory"),units=E("leaveUnits"),hint=E("leaveAccountHint"),isLeave=selectedStatus==="full"||selectedStatus==="half";if(box)box.classList.toggle("disabledBox",!isLeave);if(cat)cat.disabled=!isLeave;if(units)units.disabled=!isLeave;document.querySelectorAll(".categoryQuickBtns button").forEach(x=>{x.disabled=!isLeave;x.classList.toggle("active",isLeave&&cat&&x.dataset.leaveCategory===cat.value)});if(!isLeave){if(cat)cat.value="";if(units)units.value="";if(hint)hint.textContent="Leave category does not apply to OD / Special Assignment / Vacant Position.";return}if(auto&&units&&document.activeElement!==units){const n=autoCalculatedLeaveUnits();units.value=n?String(n):""}if(hint){const c=cat&&cat.value?leaveCategoryLabel(cat.value):"Select the leave category";const n=units&&units.value?Number(units.value):0;hint.textContent=c+(n?" · "+n+" leave day"+(n===1?"":"s"):"")}}
 let editingLeavePlanId="";
 let proxyPeriod=1;
 
@@ -1254,8 +1268,8 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html';
+ const w=window.open('admin-dashboard.html?v=55.1','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=55.1';
 }
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
 function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=todayKey();let h=historyData()[inp.value],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${inp.value} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=teacherByEffectiveCode(o.code,inp.value);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
@@ -2034,7 +2048,7 @@ onAuthStateChanged(auth,async user=>{
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
    if(!snap.exists()){
      showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
-     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=55.1">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
      return;
    }
    const masterDoc=snap.data();

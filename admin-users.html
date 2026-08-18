@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>VKV Nalbari · Administration · User Access & Roles</title>
 <style>
 :root{--ink:#18364e;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;--green:#2d7d46}
@@ -25,7 +28,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 </style>
 </head>
 <body>
-<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v55.0</div></div><a class="btn headerBack" href="admin-dashboard.html">← Admin Dashboard</a></div></header>
+<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v55.1</div></div><a class="btn headerBack" href="admin-dashboard.html?v=55.1">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">Admin Dashboard → User Access & Roles</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToDashboard">← Admin Dashboard</button></div></div>
 
@@ -164,7 +167,7 @@ async function verifyAdmin(user){
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 
 $('backToDashboard').onclick=()=>{
- location.href='admin-dashboard.html';
+ location.href='admin-dashboard.html?v=55.1';
 };
 
 onAuthStateChanged(auth,verifyAdmin);
