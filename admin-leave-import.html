@@ -9,13 +9,22 @@
 <title>VKV Nalbari · Approved Leave History Import</title>
 <style>
 :root{--ink:#18364e;--deep:#1d638e;--bg:#edf6f1;--line:#cbdce5;--muted:#667b89;--green:#246a35;--greenbg:#e7f6ea;--amber:#785515;--amberbg:#fff6dc;--red:#8b2d2d;--redbg:#fdecec;--bluebg:#eef7fb}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#263d4e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}header{background:var(--deep);color:#fff;padding:18px 16px}.wrap{max-width:1100px;margin:auto}.headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:1.45rem;margin:0}.subtitle{opacity:.92;margin-top:4px}.btn,button,input{font:inherit}.btn,button{font-weight:750;border:1px solid #b9ced9;border-radius:11px;padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none}.btn:hover,button:hover{filter:brightness(.98)}button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--deep);color:#fff;border-color:var(--deep)}.green{background:var(--greenbg);color:var(--green);border-color:#a9d4b2}main{padding:18px 14px 60px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d0e}h2{margin:0 0 7px;color:var(--ink);font-size:1.18rem}h3{margin:15px 0 7px;color:var(--ink)}.help{font-size:.9rem;line-height:1.55;color:var(--muted)}.box{margin:12px 0;padding:12px 13px;background:var(--bluebg);border-radius:12px;line-height:1.5}.ok{background:var(--greenbg);border:1px solid #a9d4b2;color:var(--green)}.warn{background:var(--amberbg);border:1px solid #e4c873;color:var(--amber)}.error{background:var(--redbg);border:1px solid #e5b7b7;color:var(--red)}.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}input[type=file]{padding:10px;border:1px solid #c7d5de;border-radius:10px;background:#fbfefd;max-width:100%}.tablewrap{overflow:auto;margin-top:12px;border:1px solid #dce7ec;border-radius:12px}table{border-collapse:collapse;width:100%;min-width:850px}th,td{border-bottom:1px solid #e4ecef;padding:8px 9px;text-align:left;font-size:.84rem;vertical-align:top}th{background:#edf5f9;color:var(--ink);position:sticky;top:0}tr:last-child td{border-bottom:0}.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.75rem;font-weight:800}.ready{background:#e7f6ea;color:#246a35}.warning{background:#fff6dc;color:#785515}.duplicate{background:#eef1f3;color:#5d6870}.invalid{background:#fdecec;color:#8b2d2d}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.metric{background:#f6fafc;border:1px solid #dde8ed;border-radius:12px;padding:11px}.metric b{display:block;font-size:1.3rem;color:var(--deep)}.metric span{font-size:.78rem;color:var(--muted)}.uid{font-family:ui-monospace,Consolas,monospace;word-break:break-all}.divider{height:1px;background:#e3ecef;margin:20px 0}.small{font-size:.8rem;color:var(--muted)}.importTop{position:sticky;top:8px;z-index:20;background:#fff;border:1px solid #bcd5e1;border-radius:13px;padding:10px 12px;box-shadow:0 5px 16px #17324d18;margin:10px 0}.importTop .actions{margin-top:0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#263d4e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}header{background:var(--deep);color:#fff;padding:18px 16px}.wrap{max-width:1100px;margin:auto}.headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:1.45rem;margin:0}.subtitle{opacity:.92;margin-top:4px}.btn,button,input{font:inherit}.btn,button{font-weight:750;border:1px solid #b9ced9;border-radius:11px;padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none}.btn:hover,button:hover{filter:brightness(.98)}button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--deep);color:#fff;border-color:var(--deep)}.green{background:var(--greenbg);color:var(--green);border-color:#a9d4b2}main{padding:18px 14px 60px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d0e}h2{margin:0 0 7px;color:var(--ink);font-size:1.18rem}h3{margin:15px 0 7px;color:var(--ink)}.help{font-size:.9rem;line-height:1.55;color:var(--muted)}.box{margin:12px 0;padding:12px 13px;background:var(--bluebg);border-radius:12px;line-height:1.5}.ok{background:var(--greenbg);border:1px solid #a9d4b2;color:var(--green)}.warn{background:var(--amberbg);border:1px solid #e4c873;color:var(--amber)}.error{background:var(--redbg);border:1px solid #e5b7b7;color:var(--red)}.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}input[type=file]{padding:10px;border:1px solid #c7d5de;border-radius:10px;background:#fbfefd;max-width:100%}.tablewrap{overflow:auto;margin-top:12px;border:1px solid #dce7ec;border-radius:12px}table{border-collapse:collapse;width:100%;min-width:850px}th,td{border-bottom:1px solid #e4ecef;padding:8px 9px;text-align:left;font-size:.84rem;vertical-align:top}th{background:#edf5f9;color:var(--ink);position:sticky;top:0}tr:last-child td{border-bottom:0}.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.75rem;font-weight:800}.ready{background:#e7f6ea;color:#246a35}.warning{background:#fff6dc;color:#785515}.duplicate{background:#eef1f3;color:#5d6870}.invalid{background:#fdecec;color:#8b2d2d}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.metric{background:#f6fafc;border:1px solid #dde8ed;border-radius:12px;padding:11px}.metric b{display:block;font-size:1.3rem;color:var(--deep)}.metric span{font-size:.78rem;color:var(--muted)}.uid{font-family:ui-monospace,Consolas,monospace;word-break:break-all}.divider{height:1px;background:#e3ecef;margin:20px 0}.small{font-size:.8rem;color:var(--muted)}.importTop{position:sticky;top:8px;z-index:20;background:#fff;border:1px solid #bcd5e1;border-radius:13px;padding:10px 12px;box-shadow:0 5px 16px #17324d18;margin:10px 0}
+.reviewCard{border:1px solid #e4c873;background:#fffdf5;border-radius:14px;padding:13px;margin:10px 0}
+.reviewGrid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:8px;margin-top:10px}
+.reviewGrid label{font-size:.76rem;font-weight:750;color:var(--muted)}
+.reviewGrid input,.reviewGrid select{width:100%;margin-top:4px;padding:8px;border:1px solid #c7d5de;border-radius:8px;background:#fff}
+.reviewActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.reviewActions button{padding:7px 9px;font-size:.82rem}
+.resolved{background:#e7f6ea;border-color:#a9d4b2}
+.excluded{background:#f3f5f6;border-color:#d4dde1}
+@media(max-width:760px){.reviewGrid{grid-template-columns:1fr 1fr}}.importTop .actions{margin-top:0}
 @media(max-width:700px){.metrics{grid-template-columns:1fr 1fr}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Approved Leave History Import · v57.0</div></div><a class="btn" href="admin-dashboard.html?v=57.0">← Admin Dashboard</a></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Approved Leave History Import · v58.0</div></div><a class="btn" href="admin-dashboard.html?v=58.0">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="status" class="box">Checking sign-in…</div>
 <div id="tools" hidden>
@@ -40,6 +49,12 @@
       <div class="metric"><b id="mErr">0</b><span>Need correction</span></div><div class="metric"><b id="mAccounting">0</b><span>Accounting only</span></div>
     </div>
     <div id="previewWrap" class="tablewrap" hidden><table><thead><tr><th>Row</th><th>Teacher</th><th>Status</th><th>Leave Category</th><th>Leave Days</th><th>Date(s)</th><th>Duration</th><th>Remarks / Ref.</th><th>Check</th></tr></thead><tbody id="previewBody"></tbody></table></div>
+    <section id="reviewSection" class="card" hidden style="margin-top:18px">
+      <h2>🛠 Review & Correct Import Errors</h2>
+      <p class="help">Resolve each ambiguous legacy record here without editing the original workbook. Changes exist only in this preview until you confirm the final import. You may correct dates/days/category, retain the item as non-dated legacy accounting, or explicitly exclude it.</p>
+      <div class="box warn"><b>No guessing.</b> The app will revalidate every correction. Final import remains blocked while any unresolved error is left.</div>
+      <div id="reviewList"></div>
+    </section>
     <div id="accountingWrap" class="tablewrap" hidden>
       <table><thead><tr><th>Teacher</th><th>Month</th><th>Category</th><th>Units</th><th>Why it is separate</th><th>Source Row</th></tr></thead><tbody id="accountingBody"></tbody></table>
     </div>
@@ -55,7 +70,7 @@ import{getFirestore,doc,getDoc,getDocs,collection,setDoc,serverTimestamp,writeBa
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id),status=$('status'),tools=$('tools');
-let user=null,master=null,masterWrapped=false,leavePreview=[],existingPlans={},legacyImportNotes=[],legacyAccountingPreview=[],existingLegacyAccounting=[],linkedEmailsByCode={};
+let user=null,master=null,masterWrapped=false,leavePreview=[],existingPlans={},legacyImportNotes=[],legacyAccountingPreview=[],existingLegacyAccounting=[],linkedEmailsByCode={},reviewResolutions={};
 const SESSION_START='2026-04-01',SESSION_END='2027-03-31';
 const LEAVE_PLAN_DOC='__leavePlans';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -185,15 +200,92 @@ function validateHistoryRows(rows){
   out.push({row:rowNo,state:warnings.length?'warning':'ready',issues,warnings,teacher:t,plan,raw:r});
  });return out;
 }
+
+function reviewKey(x){return `${x.row}|${hashString(JSON.stringify(x.raw||{}))}`}
+function monthFromNote(p){const m=String(p?.note||'').match(/·\s*([A-Z]+)\s*$/i);return m?m[1].toUpperCase():'LEGACY'}
+function resolutionFor(x){return reviewResolutions[reviewKey(x)]||null}
+function effectivePreview(){
+ return leavePreview.map(x=>{
+   const r=resolutionFor(x);
+   if(!r)return x;
+   if(r.action==='exclude')return {...x,state:'excluded',issues:['Explicitly excluded by Admin during import review.'],warnings:[]};
+   if(r.action==='legacy')return {...x,state:'accounting',issues:['Retained as non-dated legacy accounting by Admin during import review.'],warnings:[]};
+   if(r.action==='correct'&&r.validated)return {...r.validated,resolutionApplied:true};
+   return x;
+ });
+}
+function correctedRawFromCard(x,card){
+ const raw={...(x.raw||{})};
+ const q=sel=>card.querySelector(sel)?.value??'';
+ raw['Status Type']=q('[data-f=status]');
+ raw['Leave Category']=q('[data-f=category]');
+ raw['Leave Days']=q('[data-f=days]');
+ raw['From Date']=q('[data-f=from]');
+ raw['To Date']=q('[data-f=to]');
+ raw['Specific Dates']=q('[data-f=dates]');
+ raw['Remarks']=q('[data-f=remarks]');
+ delete raw.__legacyAmbiguous;
+ return raw;
+}
+function renderReview(){
+ const errs=leavePreview.filter(x=>x.state==='error');
+ $('reviewSection').hidden=!errs.length;
+ if(!errs.length){$('reviewList').innerHTML='';return}
+ $('reviewList').innerHTML=errs.map((x,idx)=>{
+   const p=x.plan||{},r=resolutionFor(x),cls=r?.action==='exclude'?' excluded':r?.action?' resolved':'';
+   const stateText=r?.action==='correct'?(r.validated&&r.validated.state!=='error'?'Corrected & revalidated':'Correction still has errors'):r?.action==='legacy'?'Will be retained as legacy accounting':r?.action==='exclude'?'Will be excluded from this import':'Unresolved';
+   const cats=['VL','EL','CL','SEL','EOL','Maternity Leave'].map(c=>`<option ${leaveCategoryLabel(p.leaveCategory||'')===c||String(p.leaveCategory||'').toUpperCase()===c.toUpperCase()?'selected':''}>${c}</option>`).join('');
+   return `<div class="reviewCard${cls}" data-review="${esc(reviewKey(x))}">
+     <div><b>Source row ${x.row} · ${esc(x.teacher?.name||'Unknown teacher')}</b> <span class="badge ${r?.action?'ready':'invalid'}">${esc(stateText)}</span></div>
+     <div class="small" style="margin-top:5px">${(x.issues||[]).map(esc).join('<br>')}</div>
+     <div class="reviewGrid">
+       <label>Status<select data-f="status"><option ${p.type==='full'?'selected':''}>Full Leave</option><option ${p.type==='half'?'selected':''}>Half Leave</option><option ${p.type==='od'?'selected':''}>OD</option><option ${p.type==='special'?'selected':''}>Special Assignment</option></select></label>
+       <label>Leave Category<select data-f="category">${cats}</select></label>
+       <label>Leave Days<input data-f="days" type="number" min="0" step="0.5" value="${esc(p.leaveUnits||'')}"></label>
+       <label>From Date<input data-f="from" type="date" value="${esc(p.startDate||'')}"></label>
+       <label>To Date<input data-f="to" type="date" value="${esc(p.endDate||p.startDate||'')}"></label>
+       <label style="grid-column:span 2">Specific Dates (dd/mm/yyyy, comma separated)<input data-f="dates" value="${esc(p.mode==='multiple'?(p.dates||[]).map(displayDate).join(', '):'')}"></label>
+       <label style="grid-column:span 2">Remarks<input data-f="remarks" value="${esc(p.note||'')}"></label>
+     </div>
+     <div class="reviewActions">
+       <button data-act="apply" class="green">✓ Apply correction & revalidate</button>
+       <button data-act="legacy">📚 Keep as legacy accounting</button>
+       <button data-act="exclude">⊘ Exclude from import</button>
+       ${r?'<button data-act="reset">↺ Reset decision</button>':''}
+     </div>
+   </div>`
+ }).join('');
+ $('reviewList').querySelectorAll('.reviewCard').forEach(card=>{
+   const key=card.dataset.review,x=errs.find(e=>reviewKey(e)===key);
+   card.querySelectorAll('button[data-act]').forEach(btn=>btn.onclick=()=>{
+     const act=btn.dataset.act;
+     if(act==='reset'){delete reviewResolutions[key];renderPreview();return}
+     if(act==='exclude'){if(confirm(`Exclude source row ${x.row} from this import? The original Excel file will not be changed.`)){reviewResolutions[key]={action:'exclude'};renderPreview()}return}
+     if(act==='legacy'){
+       const p=x.plan||{};
+       if(!p.leaveCategory||!p.leaveUnits){alert('A leave category and positive Leave Days/Units are required before this can be retained as legacy accounting.');return}
+       if(confirm(`Retain ${x.teacher?.name||'this teacher'} · ${leaveCategoryLabel(p.leaveCategory)} ${p.leaveUnits} as NON-DATED legacy accounting?\n\nIt will not create leave dates or proxies.`)){reviewResolutions[key]={action:'legacy'};renderPreview()}return
+     }
+     if(act==='apply'){
+       const raw=correctedRawFromCard(x,card),v=validateHistoryRows([raw])[0];
+       reviewResolutions[key]={action:'correct',raw,validated:v};
+       if(v.state==='error')alert('This correction still has validation errors. Please review the highlighted problem and correct it again.');
+       renderPreview();return
+     }
+   })
+ })
+}
+
 function renderPreview(){
- const total=leavePreview.length,ready=leavePreview.filter(x=>x.state==='ready'||x.state==='warning').length,dup=leavePreview.filter(x=>x.state==='duplicate').length,err=leavePreview.filter(x=>x.state==='error').length,acct=legacyAccountingPreview.length;
+ const effective=effectivePreview(),total=leavePreview.length,ready=effective.filter(x=>x.state==='ready'||x.state==='warning').length,dup=effective.filter(x=>x.state==='duplicate').length,err=effective.filter(x=>x.state==='error').length,excluded=effective.filter(x=>x.state==='excluded').length,reviewAccounting=effective.filter(x=>x.state==='accounting').length,acct=legacyAccountingPreview.length+reviewAccounting;
  $('mRows').textContent=total;$('mReady').textContent=ready;$('mDup').textContent=dup;$('mErr').textContent=err;$('mAccounting').textContent=acct;$('metrics').hidden=false;$('previewWrap').hidden=!total;$('topImportBar').hidden=!(total||acct);
  const blocked=err>0||(!ready&&!acct);$('importHistory').disabled=blocked;$('importHistory').textContent=err?`⚠ Correct ${err} error row${err===1?'':'s'} before import`:(ready&&acct?`✅ Confirm Import · ${ready} dated + ${acct} accounting`:ready?`✅ Confirm Import · ${ready} record${ready===1?'':'s'}`:`✅ Import ${acct} accounting item${acct===1?'':'s'}`);
  $('importSafetyText').innerHTML=err?`<b>Import blocked for safety.</b> ${err} error row${err===1?' needs':'s need'} correction before anything is saved. Accounting-only items are also held until the workbook passes validation.`:(acct?`<b>Separated historical accounting:</b> ${acct} non-dated item${acct===1?' is':'s are'} kept outside dated leave events. No date will be invented.`:`Validation passed. Duplicates are skipped automatically; warning rows are importable after review.`);
  $('downloadErrors').hidden=err===0;
- $('previewBody').innerHTML=leavePreview.map(x=>{const p=x.plan||{},badge=x.state==='ready'?'<span class="badge ready">Ready</span>':x.state==='warning'?'<span class="badge warning">Ready · warning</span>':x.state==='duplicate'?'<span class="badge duplicate">Duplicate</span>':'<span class="badge invalid">Error</span>';const msg=[...(x.issues||[]),...(x.warnings||[])].map(esc).join('<br>');return `<tr><td>${x.row}</td><td>${x.teacher?`<b>${esc(x.teacher.name)}</b><br><span class="small">${esc(x.teacher.code)}</span>`:'—'}</td><td>${esc(statusLabel(p.type||''))}</td><td>${esc(p.leaveCategory?leaveCategoryLabel(p.leaveCategory):'—')}</td><td>${esc((p.type==='full'||p.type==='half')?(p.leaveUnits||'—'):'—')}</td><td>${p.startDate?esc(dateText(p)):'—'}</td><td>${esc(durationText(p))}</td><td>${esc(p.note||'')}${p.referenceNo?`<br><span class="small">Ref: ${esc(p.referenceNo)}</span>`:''}</td><td>${badge}${msg?`<div class="small" style="margin-top:4px">${msg}</div>`:''}</td></tr>`}).join('');
+ $('previewBody').innerHTML=effective.map(x=>{const p=x.plan||{},badge=x.state==='ready'?'<span class="badge ready">Ready</span>':x.state==='warning'?'<span class="badge warning">Ready · warning</span>':x.state==='duplicate'?'<span class="badge duplicate">Duplicate</span>':x.state==='excluded'?'<span class="badge duplicate">Excluded</span>':x.state==='accounting'?'<span class="badge warning">Accounting only</span>':'<span class="badge invalid">Error</span>';const msg=[...(x.issues||[]),...(x.warnings||[])].map(esc).join('<br>');return `<tr><td>${x.row}</td><td>${x.teacher?`<b>${esc(x.teacher.name)}</b><br><span class="small">${esc(x.teacher.code)}</span>`:'—'}</td><td>${esc(statusLabel(p.type||''))}</td><td>${esc(p.leaveCategory?leaveCategoryLabel(p.leaveCategory):'—')}</td><td>${esc((p.type==='full'||p.type==='half')?(p.leaveUnits||'—'):'—')}</td><td>${p.startDate?esc(dateText(p)):'—'}</td><td>${esc(durationText(p))}</td><td>${esc(p.note||'')}${p.referenceNo?`<br><span class="small">Ref: ${esc(p.referenceNo)}</span>`:''}</td><td>${badge}${msg?`<div class="small" style="margin-top:4px">${msg}</div>`:''}</td></tr>`}).join('');
  $('accountingWrap').hidden=!acct;$('accountingBody').innerHTML=legacyAccountingPreview.map(x=>`<tr><td><b>${esc(x.teacherName)}</b><br><span class="small">${esc(x.teacherCode)}</span></td><td>${esc(x.month)}</td><td>${esc(leaveCategoryLabel(x.category))}</td><td>${esc(x.units)}</td><td>${esc(x.reason)}</td><td>${esc(x.rowNum||'—')}</td></tr>`).join('');
- $('leaveSummary').className='box '+(err?'warn':'ok');$('leaveSummary').innerHTML=err?`<b>Import blocked.</b> <b>${ready}</b> dated record${ready===1?' is':'s are'} otherwise valid; <b>${dup}</b> duplicate${dup===1?'':'s'} will be skipped; <b>${err}</b> error row${err===1?' must':'s must'} be corrected first; <b>${acct}</b> legacy accounting item${acct===1?' is':'s are'} held separately.`:`Validation passed: <b>${ready}</b> dated record${ready===1?'':'s'} ready; <b>${dup}</b> duplicate${dup===1?'':'s'} will be skipped; <b>${acct}</b> non-dated legacy accounting item${acct===1?' is':'s are'} kept separately.`;
+ $('leaveSummary').className='box '+(err?'warn':'ok');$('leaveSummary').innerHTML=err?`<b>Import blocked.</b> <b>${ready}</b> dated record${ready===1?' is':'s are'} ready after review; <b>${dup}</b> duplicate${dup===1?'':'s'} will be skipped; <b>${err}</b> unresolved error${err===1?' remains':'s remain'}; <b>${acct}</b> legacy accounting item${acct===1?' is':'s are'} separated.${excluded?` <b>${excluded}</b> item${excluded===1?' is':'s are'} explicitly excluded.`:''}`:`Validation/review passed: <b>${ready}</b> dated record${ready===1?'':'s'} ready; <b>${dup}</b> duplicate${dup===1?'':'s'} skipped; <b>${acct}</b> non-dated legacy accounting item${acct===1?' is':'s are'} separated.${excluded?` <b>${excluded}</b> explicitly excluded.`:''}`;
+ renderReview();
 }
 
 const LEGACY_MONTHS={JANUARY:1,FEBRUARY:2,MARCH:3,APRIL:4,MAY:5,JUNE:6,JULY:7,AUGUST:8,SEPTEMBER:9,OCTOBER:10,NOVEMBER:11,DECEMBER:12};
@@ -292,7 +384,7 @@ function legacyRowsFromWorkbook(wb){
 }
 function isTemplateMatrix(matrix){for(let r=0;r<Math.min(matrix.length,8);r++){const hs=(matrix[r]||[]).map(legacyHeader);if(hs.includes('TEACHERCODE')&&hs.some(x=>x==='STATUSTYPE'||x==='OPERATIONALSTATUS'))return true}return false}
 $('leaveFile').onchange=async()=>{
- leavePreview=[];legacyAccountingPreview=[];$('importResult').innerHTML='';const f=$('leaveFile').files[0];if(!f){$('leaveSummary').className='box';$('leaveSummary').textContent='Select a completed Excel file to preview it.';return}
+ reviewResolutions={};leavePreview=[];legacyAccountingPreview=[];$('importResult').innerHTML='';const f=$('leaveFile').files[0];if(!f){$('leaveSummary').className='box';$('leaveSummary').textContent='Select a completed Excel file to preview it.';return}
  try{
   if(!window.XLSX)throw new Error('Excel library has not loaded yet.');
   const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});let rows=[],format='';
@@ -300,10 +392,10 @@ $('leaveFile').onchange=async()=>{
   else{const first=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(first,{header:1,defval:'',raw:false,dateNF:'dd/mm/yyyy'});if(isTemplateMatrix(matrix)){rows=XLSX.utils.sheet_to_json(first,{defval:'',raw:true});format='Tabular leave history';legacyImportNotes=[];}else{rows=legacyRowsFromWorkbook(wb);format='Existing VKV month-wise leave statement';}}
   if(!rows.length&&!legacyAccountingPreview.length)throw new Error('No recognisable leave-history rows were found. Use the app template or the existing VKV month-wise leave statement.');
   if(legacyAccountingPreview.length){const seenLegacy=new Set();legacyAccountingPreview=legacyAccountingPreview.filter(x=>{const k=canonicalLegacyAccounting(x);if(seenLegacy.has(k))return false;seenLegacy.add(k);return true})}
-  const lp=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));existingPlans=lp.exists()?(lp.data().plans||{}):{};try{const la=await getDocs(collection(db,'legacyLeaveAccounting'));existingLegacyAccounting=[];la.forEach(d=>existingLegacyAccounting.push({id:d.id,...(d.data()||{})}));}catch(e){existingLegacyAccounting=[]}leavePreview=validateHistoryRows(rows);renderPreview();$('leaveSummary').innerHTML='<b>'+esc(format)+'</b> detected.<br>'+$('leaveSummary').innerHTML;const note=$('legacyNotes');if(legacyImportNotes.length){note.hidden=false;note.className='box warn';note.innerHTML='<b>'+legacyImportNotes.length+' non-dated / non-convertible legacy item'+(legacyImportNotes.length===1?'':'s')+' not prepared for import.</b><br><span class="small">These are not silently imported. First examples:<br>'+legacyImportNotes.slice(0,8).map(esc).join('<br>')+(legacyImportNotes.length>8?'<br>…and '+(legacyImportNotes.length-8)+' more.':'')+'</span>'}else note.hidden=true;
+  const lp=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));existingPlans=lp.exists()?(lp.data().plans||{}):{};try{const la=await getDocs(collection(db,'legacyLeaveAccounting'));existingLegacyAccounting=[];la.forEach(d=>existingLegacyAccounting.push({id:d.id,...(d.data()||{})}));}catch(e){existingLegacyAccounting=[]}leavePreview=validateHistoryRows(rows);renderPreview();$('leaveSummary').innerHTML='<b>'+esc(format)+'</b> detected.<br>'+$('leaveSummary').innerHTML;const note=$('legacyNotes');if(legacyImportNotes.length){note.hidden=false;note.className='box warn';note.innerHTML='<b>'+legacyImportNotes.length+' non-dated / non-convertible legacy item'+(legacyImportNotes.length===1?'':'s')+' separated for review/import.</b><br><span class="small">These are not silently imported. First examples:<br>'+legacyImportNotes.slice(0,8).map(esc).join('<br>')+(legacyImportNotes.length>8?'<br>…and '+(legacyImportNotes.length-8)+' more.':'')+'</span>'}else note.hidden=true;
  }catch(e){$('leaveSummary').className='box error';$('leaveSummary').textContent='Could not read this Excel file: '+(e.message||e);$('previewWrap').hidden=true;$('metrics').hidden=true;$('importHistory').disabled=true}
 };
-$('clearLeaveFile').onclick=()=>{$('leaveFile').value='';leavePreview=[];legacyImportNotes=[];legacyAccountingPreview=[];$('previewWrap').hidden=true;$('accountingWrap').hidden=true;$('metrics').hidden=true;$('topImportBar').hidden=true;$('legacyNotes').hidden=true;$('downloadErrors').hidden=true;$('importHistory').disabled=true;$('leaveSummary').className='box';$('leaveSummary').textContent='Select a completed Excel file to preview it. Nothing is saved until you confirm the import.';$('importResult').innerHTML=''};
+$('clearLeaveFile').onclick=()=>{$('leaveFile').value='';leavePreview=[];legacyImportNotes=[];legacyAccountingPreview=[];reviewResolutions={};$('previewWrap').hidden=true;$('accountingWrap').hidden=true;$('metrics').hidden=true;$('topImportBar').hidden=true;$('legacyNotes').hidden=true;$('downloadErrors').hidden=true;$('importHistory').disabled=true;$('leaveSummary').className='box';$('leaveSummary').textContent='Select a completed Excel file to preview it. Nothing is saved until you confirm the import.';$('importResult').innerHTML=''};
 
 async function writePersonalProjection(plans){
  const ops=[];let projected=0,unlinked=0;
@@ -332,18 +424,20 @@ async function writeApprovedPlanProjection(plans){
 }
 $('importHistory').onclick=async()=>{
  if(!user)return;
- const errors=leavePreview.filter(x=>x.state==='error'),candidates=leavePreview.filter(x=>x.state==='ready'||x.state==='warning').map(x=>x.plan);
- if(errors.length){alert(`Import blocked. Please correct ${errors.length} error row${errors.length===1?'':'s'} and upload the corrected workbook again.`);return}
- if(!candidates.length&&!legacyAccountingPreview.length)return;
+ const effective=effectivePreview(),errors=effective.filter(x=>x.state==='error'),candidates=effective.filter(x=>x.state==='ready'||x.state==='warning').map(x=>x.plan);
+ const reviewAccounting=effective.filter(x=>x.state==='accounting').map(x=>{const p=x.plan||{};return{teacherCode:x.teacher?.code||p.code||'',teacherName:x.teacher?.name||'',month:monthFromNote(p),category:p.leaveCategory||'',units:Number(p.leaveUnits||0),reason:'Admin-reviewed legacy item retained as non-dated accounting; no date was invented.',rowNum:x.row}});
+ const allAccounting=[...legacyAccountingPreview,...reviewAccounting];
+ if(errors.length){alert(`Import blocked. ${errors.length} unresolved error row${errors.length===1?' remains':'s remain'}. Resolve, retain as legacy accounting, or explicitly exclude each one.`);return}
+ if(!candidates.length&&!allAccounting.length)return;
  const datedText=candidates.length?`${candidates.length} dated approved record${candidates.length===1?'':'s'}`:'';
- const acctText=legacyAccountingPreview.length?`${legacyAccountingPreview.length} legacy accounting item${legacyAccountingPreview.length===1?'':'s'}`:'';
+ const acctText=allAccounting.length?`${allAccounting.length} legacy accounting item${allAccounting.length===1?'':'s'}`:'';
  if(!confirm(`Confirm this import?\n\n${[datedText,acctText].filter(Boolean).join(' + ')} will be saved.\n\nDated records become approved Leave / OD / Special events. Legacy accounting items remain NON-DATED and are stored separately. No dates will be invented.`))return;
  $('importHistory').disabled=true;$('importResult').innerHTML='<div class="box">Importing validated records…</div>';
  try{
    const ref=doc(db,'dailyRecords',LEAVE_PLAN_DOC),snap=await getDoc(ref),latest=snap.exists()?(snap.data().plans||{}):{},sigs=new Set(Object.values(latest).filter(Boolean).map(canonicalPlan));
    const fresh=candidates.filter(p=>!sigs.has(canonicalPlan(p)));
    const accountingBySig=new Set(existingLegacyAccounting.map(canonicalLegacyAccounting));
-   const freshAccounting=legacyAccountingPreview.filter(x=>!accountingBySig.has(canonicalLegacyAccounting(x)));
+   const freshAccounting=allAccounting.filter(x=>!accountingBySig.has(canonicalLegacyAccounting(x)));
    const merged={...latest};const importBatchId=`imp_${Date.now()}_${hashString((user.uid||'')+todayKey())}`;
    fresh.forEach(p=>{merged[p.id]={...p,importBatchId,importedAtMs:Date.now(),importedBy:user.uid,importedByEmail:user.email||''}});
    if(fresh.length)await setDoc(ref,{date:LEAVE_PLAN_DOC,dayName:'Scheduled Leave / Status Plans',plans:merged,updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:true});
@@ -352,7 +446,7 @@ $('importHistory').onclick=async()=>{
    existingPlans=merged;existingLegacyAccounting=[...existingLegacyAccounting,...freshAccounting.map(x=>({...x,id:legacyAccountingId(x)}))];
    const dates=fresh.reduce((n,p)=>n+planDateKeys(p).length,0);const parts=[];if(fresh.length)parts.push(`${fresh.length} dated record${fresh.length===1?'':'s'} imported, covering ${dates} teacher-date${dates===1?'':'s'}`);if(freshAccounting.length)parts.push(`${freshAccounting.length} legacy accounting item${freshAccounting.length===1?'':'s'} stored separately`);if(!parts.length)parts.push('Nothing new was imported because all validated items already exist');
    $('importResult').innerHTML=`<div class="box ok"><b>Import completed safely.</b><br>${parts.join('. ')}. ${approvedCount} approved-register record${approvedCount===1?'':'s'} updated. ${projection.projected} My Area projection${projection.projected===1?'':'s'} written.${projection.unlinked?`<br>${projection.unlinked} imported record${projection.unlinked===1?' has':'s have'} no linked teacher email yet; they can be backfilled later with <b>Sync My Area Records</b>.`:''}</div>`;
-   leavePreview=validateHistoryRows(leavePreview.map(x=>x.raw));renderPreview();$('importHistory').disabled=true;
+   renderPreview();$('importHistory').disabled=true;
  }catch(e){$('importResult').innerHTML='<div class="box error"><b>Import failed.</b><br>'+esc(e.message||e)+'</div>';$('importHistory').disabled=false}
 };
 </script>
