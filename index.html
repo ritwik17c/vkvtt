@@ -168,7 +168,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v58.0</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v59.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -1268,12 +1268,12 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=56.1','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=56.1';
+ const w=window.open('admin-dashboard.html?v=59.0','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=59.0';
 }
 function openApprovedLeaveRegister(){
- const w=window.open('admin-leave.html?v=56.1','vkvApprovedLeave');
- if(!w)location.href='admin-leave.html?v=56.1';
+ const w=window.open('admin-leave.html?v=59.0','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=59.0';
 }
 window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
@@ -2077,7 +2077,7 @@ onAuthStateChanged(auth,async user=>{
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
    if(!snap.exists()){
      showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
-     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=56.1">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=59.0">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
      return;
    }
    const masterDoc=snap.data();
