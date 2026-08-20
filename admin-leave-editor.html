@@ -31,14 +31,15 @@ details.guide{border:1px solid #d9e5ea;border-radius:12px;background:#f9fcfd;pad
 </style>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave correction, date-wise editing & audit · Cloud v61.0</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=61.0">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=61.0">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave correction, date-wise editing & audit · Cloud v61.1</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=61.1">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=61.1">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
 <div id="app" hidden>
 <section class="card">
   <div class="sectionTitle"><div><h2>🧭 Leave Reconciliation Control</h2><div class="help">This editor is always available to the Principal/Admin. My Area leave history remains locked for staff while any parked legacy item still needs a dated resolution.</div></div><button id="refreshBtn">↻ Refresh</button></div>
-  <div id="controlStatus" class="status info">Loading reconciliation status…</div><div class="actions"><button id="syncMyAreaBtn">🔄 Sync My Area Leave Histories</button><span id="syncMyAreaMsg" class="small"></span></div>
+  <div id="controlStatus" class="status info">Loading reconciliation status…</div>
+  <div id="loadNotice" class="status warn hide"></div><div class="actions"><button id="syncMyAreaBtn">🔄 Sync My Area Leave Histories</button><span id="syncMyAreaMsg" class="small"></span></div>
   <div id="metrics" class="metrics"></div>
 </section>
 
@@ -110,7 +111,7 @@ import{getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,serverTimesta
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(cfg),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
 const $=id=>document.getElementById(id),safe=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[],editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
+let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[],loadWarnings=[],legacyLoadError='',editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
 const TYPES=new Set(['full','half','od','special']);
 const CATS=['VL','EL','CL','SEL','EOL','MATERNITY'];
 const catLabel=x=>String(x||'').toUpperCase()==='MATERNITY'?'Maternity Leave':String(x||'').toUpperCase();
@@ -144,21 +145,23 @@ async function verify(u){
  master=m.data().data||m.data();teachers=(master.teachers||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 async function loadAll(){
- const [lp,dr,la,ve,au]=await Promise.all([
-   getDoc(doc(db,'dailyRecords','__leavePlans')),
-   getDocs(collection(db,'dailyRecords')),
-   getDocs(collection(db,'legacyLeaveAccounting')),
-   getDocs(collection(db,'viewerEmails')),
-   getDocs(collection(db,'leaveAudit'))
- ]);
- plans=lp.exists()?(lp.data().plans||{}):{};
- manualRecords=[];dr.forEach(d=>{if(d.id==='__leavePlans')return;const data=d.data()||{},date=data.date||d.id;(data.statuses||[]).forEach((s,i)=>{if(s&&TYPES.has(String(s.type||'')))manualRecords.push({...s,_kind:'manual',_date:date,_docId:d.id,_index:i})})});
- legacy=[];la.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}));
- viewerEmails=[];ve.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
- audit=[];au.forEach(d=>audit.push({id:d.id,...(d.data()||{})}));
- await normaliseLegacyStates();
- await syncLeaveControl();
- populateSelectors();renderAll();
+ loadWarnings=[];legacyLoadError='';
+ plans={};manualRecords=[];legacy=[];viewerEmails=[];audit=[];
+ // v61.1 deliberately loads each source independently. One denied optional collection
+ // must never leave the Pending Legacy section stuck on “Loading…”.
+ try{const lp=await getDoc(doc(db,'dailyRecords','__leavePlans'));plans=lp.exists()?(lp.data().plans||{}):{}}catch(e){loadWarnings.push('Scheduled leave plans could not be read: '+(e.message||e))}
+ try{const dr=await getDocs(collection(db,'dailyRecords'));dr.forEach(d=>{if(d.id==='__leavePlans')return;const data=d.data()||{},date=data.date||d.id;(data.statuses||[]).forEach((st,i)=>{if(st&&TYPES.has(String(st.type||'')))manualRecords.push({...st,_kind:'manual',_date:date,_docId:d.id,_index:i})})})}catch(e){loadWarnings.push('Daily approved-status records could not be read: '+(e.message||e))}
+ try{const la=await getDocs(collection(db,'legacyLeaveAccounting'));la.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}))}catch(e){legacyLoadError='Legacy leave accounting could not be read: '+(e.message||e);loadWarnings.push(legacyLoadError)}
+ try{const ve=await getDocs(collection(db,'viewerEmails'));ve.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}))}catch(e){loadWarnings.push('Teacher email links could not be read: '+(e.message||e))}
+ try{const au=await getDocs(collection(db,'leaveAudit'));au.forEach(d=>audit.push({id:d.id,...(d.data()||{})}))}catch(e){loadWarnings.push('Leave audit history could not be read. This usually means the v61 Firestore rules have not yet been published. '+(e.message||e))}
+ try{await normaliseLegacyStates()}catch(e){loadWarnings.push('Legacy state normalisation could not be saved: '+(e.message||e))}
+ try{await syncLeaveControl()}catch(e){loadWarnings.push('Leave publication control could not be updated. Publish firestore.rules.v61.1.txt before final reconciliation. '+(e.message||e))}
+ populateSelectors();renderAll();renderLoadNotice();
+}
+function renderLoadNotice(){
+ const el=$('loadNotice');if(!el)return;
+ if(!loadWarnings.length){el.classList.add('hide');el.textContent='';return}
+ el.className='status warn';el.innerHTML='<b>Some leave data services need attention.</b><br>'+loadWarnings.map(safe).join('<br>');
 }
 async function normaliseLegacyStates(){
  const missing=legacy.filter(x=>!x.resolutionStatus);if(!missing.length)return;
@@ -204,6 +207,7 @@ function renderControl(){
  $('pendingBadge').className='pill '+(p?'warn':'ok');
 }
 function renderPending(){
+ if(legacyLoadError){$('pendingBadge').textContent='Load failed';$('pendingBadge').className='pill warn';$('pendingList').innerHTML=`<div class="status error"><b>Pending legacy items could not be loaded.</b><br>${safe(legacyLoadError)}<br><br>Check/publish the supplied Firestore rules, then press Refresh.</div>`;return}
  const rows=pendingItems().sort((a,b)=>Number(a.rowNum||999)-Number(b.rowNum||999)||String(a.teacherName||'').localeCompare(String(b.teacherName||'')));
  if(!rows.length){$('pendingList').innerHTML='<div class="empty"><b>No pending leave resolution remains.</b><br>My Area leave history can be visible. This editor remains available for future corrections.</div>';return}
  $('pendingList').innerHTML=rows.map(x=>`<div class="pendingCard">
@@ -389,7 +393,7 @@ $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 $('refreshBtn').onclick=async()=>{try{await loadAll()}catch(e){alert(e.message||e)}};
 $('newBtn').onclick=startNew;$('cancelBtn').onclick=clearEditor;$('addRowBtn').onclick=()=>addDateRow({type:'full',units:1});$('saveBtn').onclick=saveEditor;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
 ['filterTeacher','filterType','filterFrom'].forEach(id=>$(id).onchange=renderRecords);$('filterSearch').oninput=renderRecords;
-onAuthStateChanged(auth,async u=>{user=u;$('signInBtn').style.display='none';if(!u){$('gateMsg').className='status warn';$('gateMsg').textContent='You are not signed in.';$('signInBtn').style.display='inline-block';return}try{await verify(u);$('gate').hidden=true;$('app').hidden=false;await loadAll()}catch(e){$('gateMsg').className='status error';$('gateMsg').innerHTML='<b>Access not available.</b><br>'+safe(e.message||e)}})
+onAuthStateChanged(auth,async u=>{user=u;$('signInBtn').style.display='none';if(!u){$('gateMsg').className='status warn';$('gateMsg').textContent='You are not signed in.';$('signInBtn').style.display='inline-block';return}try{await verify(u);$('gate').hidden=true;$('app').hidden=false;await loadAll()}catch(e){$('gateMsg').className='status error';$('gateMsg').innerHTML='<b>Access not available.</b><br>'+safe(e.message||e);if(!$('app').hidden){$('controlStatus').className='status error';$('controlStatus').textContent='Leave Master Editor could not finish loading: '+(e.message||e)}}})
 </script>
 </body>
 </html>
