@@ -53,6 +53,19 @@ th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
 @media(max-width:900px){.exportCards{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.exportCards,.grid2,.grid3{grid-template-columns:1fr}}
 </style>
+<script>
+(function(){
+  const CURRENT_APP_VERSION = '64.2';
+  try{
+    const u=new URL(window.location.href);
+    if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
+      u.searchParams.set('v',CURRENT_APP_VERSION);
+      history.replaceState(null,'',u.pathname+u.search+u.hash);
+    }
+  }catch(_){}
+})();
+</script>
+
 </head>
 <body>
 <header>

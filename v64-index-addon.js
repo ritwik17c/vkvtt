@@ -1,5 +1,5 @@
 /*
-VKV Nalbari Timetable — Cloud v64.1 proxy-navigation patch
+VKV Nalbari Timetable — Cloud v64.2 proxy-navigation patch
 
 Place in repository root and load after the existing index.html scripts:
 <script src="v64-index-addon.js"></script>
