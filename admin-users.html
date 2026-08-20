@@ -26,9 +26,22 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 .code{font-family:ui-monospace,Consolas,monospace;font-size:.8rem;word-break:break-all}.pill{display:inline-block;padding:3px 7px;border-radius:999px;background:#e9f3f7;font-size:.78rem}
 #app{display:none}
 </style>
+<script>
+(function(){
+  const CURRENT_APP_VERSION = '64.2';
+  try{
+    const u=new URL(window.location.href);
+    if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
+      u.searchParams.set('v',CURRENT_APP_VERSION);
+      history.replaceState(null,'',u.pathname+u.search+u.hash);
+    }
+  }catch(_){}
+})();
+</script>
+
 </head>
 <body>
-<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v62.0</div></div><a class="btn headerBack" href="admin-dashboard.html?v=64.1">← Admin Dashboard</a></div></header>
+<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v64.2</div></div><a class="btn headerBack" href="admin-dashboard.html?v=64.2">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">Admin Dashboard → User Access & Roles</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToDashboard">← Admin Dashboard</button></div></div>
 
@@ -167,7 +180,7 @@ async function verifyAdmin(user){
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 
 $('backToDashboard').onclick=()=>{
- location.href='admin-dashboard.html?v=64.1';
+ location.href='admin-dashboard.html?v=64.2';
 };
 
 onAuthStateChanged(auth,verifyAdmin);

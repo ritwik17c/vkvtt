@@ -73,6 +73,12 @@ details.guide summary::-webkit-details-marker,details.moreTools summary::-webkit
 .integrityMetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:10px 0}
 .integrityMetric{border:1px solid #dce7ec;border-radius:12px;padding:10px;background:#f8fbfc}
 .integrityMetric b{display:block;font-size:1.3rem;color:var(--deep)}
+.legacyEditBar{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.legacyEditBar button{font-size:.82rem}
+.dangerOutline{background:#fff;border-color:#d77;color:#8b2d2d}
+.duplicateTools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.duplicatePreview{font-size:.88rem;color:var(--muted)}
+
 .rowHead,.dateRow{display:grid;grid-template-columns:1.15fr 1.15fr 1.15fr .7fr 1.05fr .8fr .8fr 1.6fr auto;gap:7px;align-items:end}
 .rowHead{font-size:.76rem;color:var(--muted);font-weight:750;padding:0 3px 4px}
 .dateRow{padding:9px 0;border-top:1px solid #e3edf1}
@@ -116,9 +122,23 @@ body.quick-mode .wrap{max-width:none}
 @media(max-width:640px){.rangeEntryRow{grid-template-columns:1fr}}
 
 </style>
+
+<script>
+(function(){
+  const CURRENT_APP_VERSION = '64.2';
+  try{
+    const u = new URL(window.location.href);
+    if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
+      u.searchParams.set('v', CURRENT_APP_VERSION);
+      history.replaceState(null, '', u.pathname + u.search + u.hash);
+    }
+  }catch(_){}
+})();
+</script>
+
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.1</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.1">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.1">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.2</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.2">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.2">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
@@ -197,15 +217,57 @@ body.quick-mode .wrap{max-width:none}
     </div>
   </div>
 
-  <div class="reconcileBar"><span id="reconcileText" class="pill"></span><span id="reconcileBreakdown" class="reconcileDetail"></span></div>
+  <div class="reconcileBar"><span id="reconcileText" class="pill"></span><span id="reconcileBreakdown" class="reconcileDetail"></span><button id="correctExpectedBtn" class="amber hide" type="button">✏ Correct Expected Units</button></div>
 
   <div class="actions"><button id="saveBtn" class="primary">💾 Save Approved Record</button><button id="archiveBtn" class="danger hide">Archive original record</button></div>
   <div id="saveMsg" class="status info hide"></div>
 </section>
 
+<section class="card quick-hide" id="vlBulkSection">
+  <div class="sectionTitle">
+    <div>
+      <h2>🌴 Vacation Leave (VL) Bulk Tools</h2>
+      <div class="help">Apply one standard VL value to eligible VL cards in one operation. Individual exceptions for training, official duty, joining/leaving dates or other approved adjustments are preserved.</div>
+    </div>
+  </div>
+  <div class="grid2">
+    <label>Month
+      <select id="vlBulkMonth">
+        <option>APRIL</option><option>MAY</option><option>JUNE</option><option>JULY</option><option>AUGUST</option><option>SEPTEMBER</option><option>OCTOBER</option><option>NOVEMBER</option><option>DECEMBER</option><option>JANUARY</option><option>FEBRUARY</option><option>MARCH</option>
+      </select>
+    </label>
+    <label>Standard VL units
+      <input id="vlBulkUnits" type="number" min="0" step="0.5" value="14">
+    </label>
+  </div>
+  <div class="actions">
+    <button id="previewVlBulkBtn">👁 Preview Standard VL</button>
+    <button id="applyVlBulkBtn" class="primary">✅ Apply Standard VL to Non-Exceptions</button>
+  </div>
+  <div id="vlBulkMsg" class="status info">No bulk VL action has been run.</div>
+  <div id="vlBulkPreview"></div>
+</section>
+
 <section class="card quick-hide">
   <div class="sectionTitle"><div><h2>📚 Final / Non-Dated Legacy Accounting</h2><div class="help">Accounting-only records remain non-operational and do not create proxies.</div></div></div>
   <div id="finalAccountingList"></div>
+</section>
+
+<section class="card quick-hide" id="leaveIntegritySection">
+  <div class="sectionTitle">
+    <div>
+      <h2>🧹 Leave Integrity Checker & Duplicate Remover</h2>
+      <div class="help">Scans approved dated leave for exact duplicates and overlapping contradictions. Safe same-kind exact duplicates can be archived in bulk; cross-source or contradictory records remain for review.</div>
+    </div>
+    <button id="runIntegrityBtn">↻ Re-scan</button>
+  </div>
+  <div id="integritySummary" class="status info">Scanning leave records…</div>
+  <div id="integrityMetrics" class="integrityMetrics"></div>
+  <div class="duplicateTools">
+    <button id="removeSafeDuplicatesBtn" class="danger">🧹 Remove Safe Exact Duplicates</button>
+    <span id="duplicateToolMsg" class="duplicatePreview"></span>
+  </div>
+  <div id="integrityResults"></div>
 </section>
 
 <section class="card quick-hide">
@@ -363,16 +425,20 @@ function renderPending(){
   <div class="cardTop"><div><div class="cardTitle">${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)} <span class="pill">${safe(x.teacherCode||'')}</span></div>
   <div class="meta"><b>${safe(x.month||'Unknown month')}</b> · ${safe(catLabel(x.category))} · <b>${safe(x.units)} unit${Number(x.units)===1?'':'s'}</b> · Source row ${safe(x.rowNum||'—')}<br>${safe(x.reason||'Legacy accounting item')}</div></div><span class="pill warn">Pending</span></div>
   <div class="status warn"><b>Verify first.</b> The combined leave-unit total must equal ${safe(x.units)}. You may use one date, multiple ranges, staggered dates, or a mixture.</div>
-  <div class="actions"><button class="primary" data-resolve="${safe(x.id)}">🛠 Resolve with dated records</button><button class="amber" data-final="${safe(x.id)}">📚 Confirm as final non-dated accounting</button></div>
+  <div class="actions"><button class="primary" data-resolve="${safe(x.id)}">🛠 Resolve with dated records</button><button class="amber" data-edit-units="${safe(x.id)}">✏ Correct expected units</button><button class="amber" data-final="${safe(x.id)}">📚 Confirm as final non-dated accounting</button><button class="dangerOutline" data-delete-legacy="${safe(x.id)}">🗑 Delete erroneous card</button></div>
  </div>`).join('');
  document.querySelectorAll('[data-resolve]').forEach(b=>b.onclick=()=>startPending(b.dataset.resolve));
+ document.querySelectorAll('[data-edit-units]').forEach(b=>b.onclick=()=>correctLegacyExpectedUnits(b.dataset.editUnits));
  document.querySelectorAll('[data-final]').forEach(b=>b.onclick=()=>finaliseAccounting(b.dataset.final));
+ document.querySelectorAll('[data-delete-legacy]').forEach(b=>b.onclick=()=>deleteErroneousLegacyCard(b.dataset.deleteLegacy));
 }
 function renderFinalAccounting(){
  const rows=finalItems().sort((a,b)=>String(a.teacherName||'').localeCompare(String(b.teacherName||''))||String(a.month||'').localeCompare(String(b.month||'')));
  if(!rows.length){$('finalAccountingList').innerHTML='<div class="empty">No final accounting-only items.</div>';return}
- $('finalAccountingList').innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Month</th><th>Category</th><th>Units</th><th>Status / reason</th><th>Action</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<br><span class="small">${safe(x.teacherCode||'')}</span></td><td>${safe(x.month||'—')}</td><td>${safe(catLabel(x.category))}</td><td>${safe(x.units||'—')}</td><td>${safe(x.resolutionStatus==='resolved-dated'?'Resolved into dated leave':(x.resolutionNote||x.reason||'Final accounting only'))}</td><td>${x.resolutionStatus==='resolved-dated'?'<span class="pill ok">Resolved</span>':`<button data-reopen="${safe(x.id)}">Reopen as Pending</button>`}</td></tr>`).join('')}</tbody></table></div>`;
+ $('finalAccountingList').innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Month</th><th>Category</th><th>Units</th><th>Status / reason</th><th>Action</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<br><span class="small">${safe(x.teacherCode||'')}</span></td><td>${safe(x.month||'—')}</td><td>${safe(catLabel(x.category))}</td><td>${safe(x.units||'—')}</td><td>${safe(x.resolutionStatus==='resolved-dated'?'Resolved into dated leave':(x.resolutionNote||x.reason||'Final accounting only'))}</td><td>${x.resolutionStatus==='resolved-dated'?'<span class="pill ok">Resolved</span>':`${String(x.category||'').toUpperCase()==='VL'?`<button data-vl-edit="${safe(x.id)}">✏ Edit VL / Mark Exception</button> `:''}<button data-reopen="${safe(x.id)}">Reopen as Pending</button> <button class="dangerOutline" data-delete-final="${safe(x.id)}">Delete erroneous item</button>`}</td></tr>`).join('')}</tbody></table></div>`;
  document.querySelectorAll('[data-reopen]').forEach(b=>b.onclick=()=>reopenPending(b.dataset.reopen));
+ document.querySelectorAll('[data-delete-final]').forEach(b=>b.onclick=()=>deleteErroneousLegacyCard(b.dataset.deleteFinal));
+ document.querySelectorAll('[data-vl-edit]').forEach(b=>b.onclick=()=>editVlException(b.dataset.vlEdit));
 }
 function filteredRecords(){
  let arr=[...activePlans().map(p=>({...p,_kind:'plan'})),...manualRecords.map(m=>({...m}))],
@@ -398,7 +464,118 @@ function renderAudit(){
  const rows=audit.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0)).slice(0,30);
  $('auditList').innerHTML=rows.length?rows.map(x=>`<div class="auditItem"><b>${safe(x.action||'Leave edit')}</b> · ${safe(x.teacherName||x.teacherCode||'')} ${x.teacherCode?`(${safe(x.teacherCode)})`:''}<br><span class="small">${safe(x.reason||'No reason recorded')} · ${safe(x.adminEmail||'Admin')} · ${safe(x.whenText||'')}</span></div>`).join(''):'<div class="empty">No Leave Master Editor audit entries yet.</div>';
 }
-function renderAll(){renderControl();renderPending();renderRecords();renderFinalAccounting();renderAudit()}
+function renderAll(){renderControl();renderPending();renderRecords();renderFinalAccounting();renderLeaveIntegrity();renderAudit();updateExpectedCorrectionButton();if($('vlBulkPreview'))renderVlBulkPreview()}
+
+
+function updateExpectedCorrectionButton(){
+ const b=$('correctExpectedBtn');if(!b)return;
+ b.classList.toggle('hide',!(editorState.pendingId&&editorState.expectedUnits!==null));
+ if(editorState.pendingId&&editorState.expectedUnits!==null)b.textContent=`✏ Correct Expected Units (${editorState.expectedUnits})`;
+}
+async function writeLeaveAudit(action,teacherCode,teacherName,reason,extra={}){
+ const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+ const ad={action,teacherCode:teacherCode||'',teacherName:teacherName||teacherCode||'',reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),...extra};
+ await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});return aid;
+}
+async function correctLegacyExpectedUnits(id){
+ const x=legacy.find(a=>a.id===id);if(!x)return;
+ const current=Number(x.units||0);
+ const raw=prompt(`CORRECT EXPECTED LEAVE UNITS\n\n${x.teacherName||x.teacherCode}\n${x.month||''} · ${catLabel(x.category)}\nCurrent expected units: ${current}\n\nEnter the verified correct total:`,String(current));
+ if(raw===null)return;
+ const n=Number(raw);
+ if(!Number.isFinite(n)||n<0||Math.round(n*2)!==n*2){alert('Enter a valid leave-unit total in 0.5 increments.');return}
+ if(Math.abs(n-current)<0.001){alert('No change made.');return}
+ const why=prompt('Enter the evidence/reason for correcting the expected legacy total:','Verified against original leave record / attendance / sanction.');
+ if(!why||why.trim().length<5)return;
+ if(!confirm(`Change expected legacy total from ${current} to ${n}?\n\nThis changes only the legacy reconciliation target. It does not invent dates and does not rewrite the Master Timetable.`))return;
+ await setDoc(doc(db,'legacyLeaveAccounting',id),{
+   units:n,
+   originalUnits:x.originalUnits??current,
+   expectedUnitsCorrected:true,
+   expectedUnitsCorrectedAt:serverTimestamp(),
+   expectedUnitsCorrectedBy:user.uid,
+   expectedUnitsCorrectedByEmail:user.email||'',
+   expectedUnitsCorrectionReason:why.trim()
+ },{merge:true});
+ x.originalUnits=x.originalUnits??current;x.units=n;x.expectedUnitsCorrected=true;x.expectedUnitsCorrectionReason=why.trim();
+ if(editorState.pendingId===id){editorState.expectedUnits=n;updateReconcile();updateExpectedCorrectionButton()}
+ await writeLeaveAudit('Corrected legacy expected leave units',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,why.trim(),{legacyId:id,beforeUnits:current,afterUnits:n});
+ await syncLeaveControl();renderAll();
+}
+async function deleteErroneousLegacyCard(id){
+ const x=legacy.find(a=>a.id===id);if(!x)return;
+ const why=prompt(`DELETE ERRONEOUS LEGACY CARD\n\n${x.teacherName||x.teacherCode}\n${x.month||''} · ${catLabel(x.category)} · ${x.units} unit(s)\n\nEnter why this card is erroneous/redundant:`,'Duplicate / erroneous legacy accounting item.');
+ if(!why||why.trim().length<5)return;
+ if(!confirm('First confirmation: remove this card from all active/pending legacy calculations?'))return;
+ if(!confirm('FINAL CONFIRMATION\n\nThe card will disappear from Pending/Final Accounting views, but an audit trail will be preserved. Continue?'))return;
+ await setDoc(doc(db,'legacyLeaveAccounting',id),{
+   active:false,
+   resolutionStatus:'deleted-error',
+   deletedAsErrorAt:serverTimestamp(),
+   deletedAsErrorBy:user.uid,
+   deletedAsErrorByEmail:user.email||'',
+   deletedAsErrorReason:why.trim()
+ },{merge:true});
+ x.active=false;x.resolutionStatus='deleted-error';x.deletedAsErrorReason=why.trim();
+ if(editorState.pendingId===id)clearEditor();
+ await writeLeaveAudit('Deleted erroneous legacy leave card',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,why.trim(),{legacyId:id,before:x});
+ await syncLeaveControl();renderAll();
+}
+
+
+function eligibleVlItems(){
+ const month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase();
+ return legacy.filter(x=>x.active!==false&&String(x.category||'').toUpperCase()==='VL'&&String(x.month||'').toUpperCase()===month&&x.resolutionStatus!=='resolved-dated'&&x.resolutionStatus!=='deleted-error');
+}
+function renderVlBulkPreview(){
+ const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),box=$('vlBulkPreview'),msg=$('vlBulkMsg');
+ if(!box||!msg)return;
+ if(!Number.isFinite(standard)||standard<0){msg.className='status error';msg.textContent='Enter a valid standard VL value.';box.innerHTML='';return}
+ if(!items.length){msg.className='status warn';msg.textContent='No eligible VL accounting cards found for the selected month.';box.innerHTML='';return}
+ const exceptions=items.filter(x=>x.vlException===true),normal=items.filter(x=>!x.vlException);
+ msg.className='status info';msg.innerHTML=`<b>${items.length}</b> VL card${items.length===1?'':'s'} found · <b>${normal.length}</b> will receive standard ${standard} · <b>${exceptions.length}</b> exception${exceptions.length===1?'':'s'} will be preserved.`;
+ box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Current</th><th>Proposed</th><th>Exception?</th><th>Reason</th></tr></thead><tbody>${items.map(x=>`<tr><td>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<div class="small">${safe(x.teacherCode||'')}</div></td><td>${safe(x.units)}</td><td>${x.vlException?'<span class="pill warn">Keep current</span>':safe(standard)}</td><td>${x.vlException?'Yes':'No'}</td><td>${safe(x.vlExceptionReason||'')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+async function applyVlBulk(){
+ const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase();
+ if(!Number.isFinite(standard)||standard<0){alert('Enter a valid standard VL value.');return}
+ const targets=items.filter(x=>!x.vlException);
+ if(!targets.length){alert('No non-exception VL cards are available for bulk update.');return}
+ if(!confirm(`Apply standard VL ${standard} to ${targets.length} ${month} VL card${targets.length===1?'':'s'}?\n\nCards marked as exceptions will NOT be changed.`))return;
+ if(!confirm(`FINAL CONFIRMATION\n\nUpdate ${targets.length} VL record${targets.length===1?'':'s'} to ${standard} unit${standard===1?'':'s'} each?`))return;
+ let changed=0;
+ for(const x of targets){
+   const before=Number(x.units||0);
+   await setDoc(doc(db,'legacyLeaveAccounting',x.id),{
+     units:standard,standardVlApplied:true,standardVlMonth:month,
+     standardVlAppliedAt:serverTimestamp(),standardVlAppliedBy:user.uid,
+     standardVlAppliedByEmail:user.email||''
+   },{merge:true});
+   x.units=standard;x.standardVlApplied=true;changed++;
+   await writeLeaveAudit('Applied standard VL',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,`Standard ${month} VL set to ${standard}.`,{legacyId:x.id,beforeUnits:before,afterUnits:standard});
+ }
+ await syncLeaveControl();renderAll();renderVlBulkPreview();
+ $('vlBulkMsg').className='status ok';$('vlBulkMsg').textContent=`Standard VL ${standard} applied to ${changed} non-exception record${changed===1?'':'s'}.`;
+}
+async function editVlException(id){
+ const x=legacy.find(a=>a.id===id);if(!x)return;
+ const current=Number(x.units||0);
+ const raw=prompt(`EDIT VACATION LEAVE\n\n${x.teacherName||x.teacherCode}\n${x.month||''} VL\nCurrent units: ${current}\n\nEnter the verified VL units for this teacher:`,String(current));
+ if(raw===null)return;
+ const n=Number(raw);
+ if(!Number.isFinite(n)||n<0||Math.round(n*2)!==n*2){alert('Enter a valid VL value in 0.5 increments.');return}
+ const reason=prompt('Reason for individual VL exception (e.g. training / official duty):',x.vlExceptionReason||'Official duty / training during vacation.');
+ if(!reason||reason.trim().length<3)return;
+ if(!confirm(`Save ${x.teacherName||x.teacherCode} as a VL exception with ${n} unit${n===1?'':'s'}?\n\nFuture bulk standard-VL actions will preserve this card.`))return;
+ const before=current;
+ await setDoc(doc(db,'legacyLeaveAccounting',id),{
+   units:n,vlException:true,vlExceptionReason:reason.trim(),
+   vlExceptionAt:serverTimestamp(),vlExceptionBy:user.uid,vlExceptionByEmail:user.email||''
+ },{merge:true});
+ x.units=n;x.vlException=true;x.vlExceptionReason=reason.trim();
+ await writeLeaveAudit('Edited VL exception',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,reason.trim(),{legacyId:id,beforeUnits:before,afterUnits:n});
+ await syncLeaveControl();renderAll();renderVlBulkPreview();
+}
 
 function defaultUnitsForType(type){if(type==='full')return 1;if(type==='half')return 0.5;return 0}
 function addDateRow(data={}){
@@ -522,7 +699,7 @@ function integrityActionButtons(x,side){
 function renderLeaveIntegrity(){
  const r=scanLeaveIntegrity(),issues=r.exact.length+r.conflicts.length;
  $('integritySummary').className='status '+(issues?'warn':'ok');
- $('integritySummary').innerHTML=issues?`<b>${issues} integrity issue${issues===1?'':'s'} found.</b> Exact duplicates can be archived individually after review. Contradictions require manual review.`:`<b>No duplicate or overlapping contradictory leave records detected.</b> ${r.entries.length} dated approved record instance${r.entries.length===1?' was':'s were'} checked.`;
+ $('integritySummary').innerHTML=issues?`<b>${issues} integrity issue${issues===1?'':'s'} found.</b> Exact duplicates can be reviewed individually; the Duplicate Remover can bulk-archive only safe same-kind exact duplicates. Contradictions require manual review.`:`<b>No duplicate or overlapping contradictory leave records detected.</b> ${r.entries.length} dated approved record instance${r.entries.length===1?' was':'s were'} checked.`;
  $('integrityMetrics').innerHTML=`<div class="integrityMetric"><b>${r.entries.length}</b><span>Dated instances scanned</span></div><div class="integrityMetric"><b>${r.exact.length}</b><span>Exact duplicates</span></div><div class="integrityMetric"><b>${r.conflicts.length}</b><span>Overlapping conflicts</span></div><div class="integrityMetric"><b>${pendingItems().length}</b><span>Pending legacy resolutions</span></div>`;
  const rows=[...r.exact.map(x=>({...x,kind:'Exact duplicate'})),...r.conflicts.map(x=>({...x,kind:'Overlap / contradiction'}))];
  if(!rows.length){$('integrityResults').innerHTML='';return}
@@ -539,6 +716,55 @@ async function cleanupIntegrityEntry(kind,key){
  if(kind==='manual')await archiveManual(key,true);else await archivePlan(key,true);
 }
 
+
+function safeDuplicateGroups(){
+ const entries=integrityEntries(),groups=new Map();
+ for(const e of entries){
+   const sig=exactIntegritySig(e),k=e.kind+'|'+sig;
+   if(!groups.has(k))groups.set(k,[]);
+   groups.get(k).push(e);
+ }
+ return [...groups.values()].filter(g=>g.length>1);
+}
+async function removeSafeExactDuplicates(){
+ const groups=safeDuplicateGroups();
+ if(!groups.length){$('duplicateToolMsg').textContent='No safe same-kind exact duplicates found.';return}
+ const removable=[];
+ for(const g of groups){
+   // Keep one record. Only whole-record duplicates of the same storage kind are bulk-cleaned.
+   // For plans, avoid deleting a plan solely because one expanded date duplicates another plan:
+   // require all duplicate candidates to have the same record id grouping signature at the plan level.
+   if(g[0].kind==='manual'){
+     for(let i=1;i<g.length;i++)removable.push(g[i]);
+   }else{
+     const byId=[...new Map(g.map(x=>[x.id,x])).values()];
+     if(byId.length>1){
+       // Verify the full plan content is substantively the same before bulk archive.
+       const planSig=id=>{
+         const p=plans[id];if(!p)return'';
+         return [p.code,p.type,String(p.leaveCategory||''),Number(p.leaveUnits||0),Number(p.from||0),Number(p.to||0),planDates(p).slice().sort().join(',')].join('|')
+       };
+       const buckets=new Map();
+       for(const e of byId){const ps=planSig(e.id);if(!buckets.has(ps))buckets.set(ps,[]);buckets.get(ps).push(e)}
+       for(const arr of buckets.values())if(arr.length>1)for(let i=1;i<arr.length;i++)removable.push(arr[i]);
+     }
+   }
+ }
+ // Dedupe removal targets by kind/id.
+ const targets=[...new Map(removable.map(x=>[x.kind+'|'+x.id,x])).values()];
+ if(!targets.length){$('duplicateToolMsg').textContent='Duplicates exist, but none qualify for safe bulk removal. Review them individually.';return}
+ if(!confirm(`SAFE DUPLICATE REMOVER\n\n${targets.length} redundant exact record${targets.length===1?'':'s'} can be archived while one original is kept in each group.\n\nCross-source and contradictory overlaps will NOT be removed.\n\nContinue to preview confirmation?`))return;
+ const names=targets.slice(0,8).map(x=>`${teacherByCode(x.code)?.name||x.code} · ${displayDate(x.date)} · ${x.label}`).join('\n');
+ if(!confirm(`FINAL CONFIRMATION\n\nArchive ${targets.length} safe exact duplicate record${targets.length===1?'':'s'}?\n\n${names}${targets.length>8?`\n…and ${targets.length-8} more`:''}\n\nAn audit trail will be kept.`))return;
+ let done=0;
+ for(const x of targets){
+   if(x.kind==='manual')await archiveManual(x.key,true);else await archivePlan(x.key,true);
+   done++;
+ }
+ await loadAll();
+ $('duplicateToolMsg').textContent=`Removed ${done} safe exact duplicate record${done===1?'':'s'}; one original was retained in each group.`;
+}
+
 function proposedIntegrity(rows,code){
  const replace=new Set(editorState.originalIds.map(String)),manualKeyOld=editorState.manualOriginal?manualKey(editorState.manualOriginal):'',
  existing=integrityEntries().filter(x=>String(x.code)===String(code)&&!replace.has(String(x.id))&&String(x.id)!==manualKeyOld),exact=[],conflict=[];
@@ -547,7 +773,7 @@ function proposedIntegrity(rows,code){
 }
 function clearEditor(){
  editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};$('dateRows').innerHTML='';$('editTeacher').value='';$('editReason').value='';resetTools();
- if(!QUICK_MODE)$('editorPanel').classList.add('hide');$('editorWarning').classList.add('hide');$('saveMsg').classList.add('hide');$('archiveBtn').classList.add('hide')
+ if(!QUICK_MODE)$('editorPanel').classList.add('hide');$('editorWarning').classList.add('hide');$('saveMsg').classList.add('hide');$('archiveBtn').classList.add('hide');updateExpectedCorrectionButton()
 }
 function openEditor(title,source){
  $('editorTitle').textContent=title;$('editorSource').textContent=source||'';$('editorPanel').classList.remove('hide');$('saveMsg').classList.add('hide');
@@ -559,7 +785,7 @@ function startPending(id){
  $('dateRows').innerHTML='';resetTools();$('editTeacher').value=x.teacherCode||'';$('editReason').value=`Legacy correction verified for source row ${x.rowNum||'—'}`;
  addDateRow({type:'full',category:String(x.category||'').toUpperCase(),units:1});
  $('editorWarning').className='status warn';$('editorWarning').innerHTML=`<b>Pending legacy item:</b> ${safe(x.month||'')} · ${safe(catLabel(x.category))} ${safe(x.units)}. Enter genuine verified date(s) only. Combined leave units must equal ${safe(x.units)} before saving.`;
- openEditor(`Resolve pending leave · ${x.teacherName||x.teacherCode}`,`Source row ${x.rowNum||'—'} · ${x.reason||''}`);updateReconcile();
+ openEditor(`Resolve pending leave · ${x.teacherName||x.teacherCode}`,`Source row ${x.rowNum||'—'} · ${x.reason||''}`);updateReconcile();updateExpectedCorrectionButton();
 }
 function startEditPlan(id){
  const p=plans[id];if(!p)return;const t=teacherByCode(p.code)||{name:p.code},ds=planDates(p);
@@ -696,7 +922,14 @@ $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 $('refreshBtn').onclick=async()=>{try{await loadAll()}catch(e){alert(e.message||e)}};
 $('newBtn').onclick=startNew;$('cancelBtn').onclick=clearEditor;$('addOneDateBtn').onclick=()=>addDateRow({date:todayIso(),type:'full',units:1});
 $('addRangeRowBtn').onclick=()=>addRangeRow();
-$('saveBtn').onclick=saveEditor;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
+$('saveBtn').onclick=saveEditor;
+$('correctExpectedBtn').onclick=()=>{if(editorState.pendingId)correctLegacyExpectedUnits(editorState.pendingId)};
+$('runIntegrityBtn').onclick=()=>{renderLeaveIntegrity();$('duplicateToolMsg').textContent='Scan refreshed.'};
+$('removeSafeDuplicatesBtn').onclick=removeSafeExactDuplicates;
+$('previewVlBulkBtn').onclick=renderVlBulkPreview;
+$('applyVlBulkBtn').onclick=applyVlBulk;
+$('vlBulkMonth').onchange=renderVlBulkPreview;
+$('vlBulkUnits').oninput=renderVlBulkPreview;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
 ['filterTeacher','filterType'].forEach(id=>$(id).onchange=renderRecords);$('filterFrom').onblur=()=>{normaliseDateInput($('filterFrom'));renderRecords()};$('filterSearch').oninput=renderRecords;
 
 onAuthStateChanged(auth,async u=>{

@@ -28,6 +28,19 @@ td input[type=checkbox]{width:18px;height:18px;cursor:pointer}.rowBtns{display:f
 @media(max-width:850px){.profiles{grid-template-columns:1fr 1fr}.timeGrid{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
 @media(max-width:520px){.profiles,.timeGrid{grid-template-columns:1fr}}
 </style>
+<script>
+(function(){
+  const CURRENT_APP_VERSION = '64.2';
+  try{
+    const u=new URL(window.location.href);
+    if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
+      u.searchParams.set('v',CURRENT_APP_VERSION);
+      history.replaceState(null,'',u.pathname+u.search+u.hash);
+    }
+  }catch(_){}
+})();
+</script>
+
 </head>
 <body>
 <header><div class="wrap head"><div><h1>VKV Nalbari · Administration</h1><div class="sub">🗓 Schedule Profiles</div></div><button id="backAdmin">← Admin Dashboard</button></div></header>
