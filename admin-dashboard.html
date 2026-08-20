@@ -15,7 +15,7 @@
 </style>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v61.0</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v61.1</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Administrator Verification</h2><div id="gateMsg" class="status">Checking Admin access…</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 <div id="app">
@@ -26,6 +26,7 @@
     <div class="tiles">
       <div class="tile" data-open="masterEditor"><b>📅 Master Timetable</b><span>Edit a permanent timetable slot without changing the original roster structure.</span></div>
       <div class="tile" id="openSchedules"><b>🗓 Schedule Profiles</b><span>Normal, Heat Wave and other timing profiles.</span></div>
+      <div class="tile" id="openIntegrity" style="background:#fff8e8;border-color:#e5c979"><b>🛡 Timetable Integrity Check</b><span>Compare Master Timetable, active schedule and teacher-duty slots; identify suppressed assignments and combined-period proxy risks.</span></div>
       <div class="tile" data-open="replacements"><b>👩‍🏫 Temporary Leave-Vacancy Replacements</b><span>Assign a temporary local teacher for a defined period without adding that person to the main roster.</span></div>
       <div class="tile" data-open="teachers"><b>👥 Teachers & Workload</b><span>Permanent teacher directory and current master teaching load.</span></div>
       <div class="tile" data-open="classes"><b>🏫 Classes & Sections</b><span>Current class/section structure and scheduled entries.</span></div>
@@ -112,7 +113,7 @@ function displayDate(k){const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/)
 function displayDateTime(ms){const d=new Date(Number(ms)||0);if(isNaN(d))return'';const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function displayDatesInText(x){return String(x||'').replace(/(\d{4})-(\d{2})-(\d{2})/g,(_,y,m,d)=>`${d}/${m}/${y}`)}
 function msg(id,text,kind='ok'){const el=$(id);el.style.display='block';el.className='status '+kind;el.innerHTML=text}
-function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=61.0'}
+function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=61.1'}
 $('homeBtn').onclick=goTimetableHome;
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
@@ -209,7 +210,9 @@ function renderOverview(){const session=masterDoc.session||'2026-27';$('overview
 function showDashboard(){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('dashboardHome').style.display='block';window.scrollTo({top:0,behavior:'smooth'})}
 function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const el=$(id);if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'})}}
 document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>showPanel(el.dataset.open));document.querySelectorAll('[data-back-dashboard]').forEach(el=>el.onclick=showDashboard);
-$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=61.0';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=61.0';$('openUsers').onclick=()=>location.href='admin-users.html?v=61.0';$('openImport').onclick=()=>location.href='admin-import.html?v=61.0';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=61.0';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=61.0';$('openExport').onclick=()=>location.href='admin-export.html?v=61.0';
+$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=61.1';
+$('openIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=61.1';
+$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=61.1';$('openUsers').onclick=()=>location.href='admin-users.html?v=61.1';$('openImport').onclick=()=>location.href='admin-import.html?v=61.1';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=61.1';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=61.1';$('openExport').onclick=()=>location.href='admin-export.html?v=61.1';
 $('downloadBackup').onclick=()=>{const blob=new Blob([JSON.stringify(master,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='VKV_Nalbari_Master_Timetable_Backup_'+todayKey()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 </script>
 </body>
