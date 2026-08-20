@@ -129,7 +129,7 @@ body.quick-mode .wrap{max-width:none}
 
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '64.4';
+  const CURRENT_APP_VERSION = '64.5';
   try{
     const u = new URL(window.location.href);
     if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
@@ -142,7 +142,7 @@ body.quick-mode .wrap{max-width:none}
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.4</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.4">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.4">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.5</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.5">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.5">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
@@ -187,6 +187,9 @@ body.quick-mode .wrap{max-width:none}
     <div><label>Search</label><input id="filterSearch" placeholder="Teacher, remarks, source…"></div>
   </div>
   <div id="recordList" style="margin-top:12px"></div>
+<div class="actions" style="justify-content:center;margin-top:10px">
+  <button id="loadMoreRecordsBtn" class="hide">Load More Leave Records</button>
+</div>
 </section>
 
 <section id="editorPanel" class="card hide">
@@ -286,7 +289,7 @@ body.quick-mode .wrap{max-width:none}
 </section>
 
 <section class="card quick-hide">
-  <h2>🧾 Recent Leave Edit Audit</h2>
+  <h2>🧾 Recent Leave Edit Audit</h2><div class="actions"><button id="loadAuditBtn">Load / Refresh Audit</button></div>
   <div class="help">Most recent Principal/Admin changes recorded by this editor.</div>
   <div id="auditList" style="margin-top:10px"></div>
 </section>
@@ -306,7 +309,7 @@ const QUICK_MODE=new URLSearchParams(location.search).get('quick')==='1';
 if(QUICK_MODE)document.body.classList.add('quick-mode');
 
 let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[];
-let coreLoaded=false,secondaryLoaded=false,bulkDeleteSelection=new Set();
+let coreLoaded=false,secondaryLoaded=false,bulkDeleteSelection=new Set(),recordRenderLimit=40;
 let editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
 const TYPES=new Set(['full','half','od','special']);
 const CATS=['VL','EL','CL','SEL','EOL','MATERNITY'];
@@ -394,10 +397,9 @@ async function loadSecondaryData(force=false){
  if(secondaryLoaded&&!force)return;
  const results=await Promise.allSettled([
    getDocs(collection(db,'dailyRecords')),
-   getDocs(collection(db,'viewerEmails')),
-   getDocs(collection(db,'leaveAudit'))
+   getDocs(collection(db,'viewerEmails'))
  ]);
- const [drR,veR,auR]=results;
+ const [drR,veR]=results;
  manualRecords=[];
  if(drR.status==='fulfilled')drR.value.forEach(d=>{
    if(d.id==='__leavePlans')return;
@@ -408,10 +410,8 @@ async function loadSecondaryData(force=false){
  });
  viewerEmails=[];
  if(veR.status==='fulfilled')veR.value.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
- audit=[];
- if(auR.status==='fulfilled')auR.value.forEach(d=>audit.push({id:d.id,...(d.data()||{})}));
- secondaryLoaded=true;window.__leaveAuditLoaded=true;
- renderRecords();renderAudit();
+ secondaryLoaded=true;
+ renderRecords();
 }
 async function normaliseLegacyStates(){
  const missing=legacy.filter(x=>!x.resolutionStatus);if(!missing.length)return;
@@ -492,15 +492,38 @@ function filteredRecords(){
 }
 function manualKey(m){return `${m._docId}|${m._index}|${m._date}|${m.code||''}`}
 function renderRecords(){
- const arr=filteredRecords();
- if(!arr.length){$('recordList').innerHTML='<div class="empty">No approved record matches the current filters.</div>';return}
- $('recordList').innerHTML=arr.map(p=>{
+ const arr=filteredRecords(),visible=arr.slice(0,recordRenderLimit);
+ if(!arr.length){
+   $('recordList').innerHTML='<div class="empty">No approved record matches the current filters.</div>';
+   if($('loadMoreRecordsBtn'))$('loadMoreRecordsBtn').classList.add('hide');
+   return
+ }
+ $('recordList').innerHTML=visible.map(p=>{
   const tt=teacherByCode(p.code)||{name:p.code},ds=p._kind==='manual'?[p._date]:planDates(p),past=ds.some(d=>d<todayIso()),future=ds.some(d=>d>todayIso()),dateText=p._kind==='manual'?displayDate(p._date):recordText(p),source=p._kind==='manual'?'Daily approved status':(p.source||'Scheduled / approved'),key=p._kind==='manual'?manualKey(p):p.id;
   return `<div class="recordCard ${bulkDeleteSelection.has(p._kind+"|"+key)?"bulkMarked":""}"><label class="small"><input class="bulkSelect" type="checkbox" data-bulk-del="${p._kind}|${safe(key)}" ${bulkDeleteSelection.has(p._kind+"|"+key)?"checked":""}> Select erroneous</label><div class="cardTop"><div><div class="cardTitle">${safe(tt.name)} <span class="pill">${safe(p.code)}</span></div><div class="meta">${safe(statusText(p))}${p.leaveCategory?' · '+safe(catLabel(p.leaveCategory)):''}${p.leaveUnits?` · ${safe(p.leaveUnits)} leave unit${Number(p.leaveUnits)===1?'':'s'}`:''}<br><b>${safe(dateText)}</b>${p.note?'<br>'+safe(p.note):''}<br><span class="small">Source: ${safe(source)}</span></div></div><div>${past?'<span class="pill">Past</span>':''}${future?'<span class="pill warn">Future</span>':''}${p._kind==='manual'?'<span class="pill violet">Daily record</span>':''}</div></div><div class="actions"><button class="primary" data-edit-kind="${p._kind}" data-edit-key="${safe(key)}">✏ Full Edit</button><button class="danger" data-archive-kind="${p._kind}" data-archive-key="${safe(key)}">Remove / Archive</button></div></div>`
  }).join('');
  document.querySelectorAll('[data-edit-key]').forEach(b=>b.onclick=()=>b.dataset.editKind==='manual'?startEditManual(b.dataset.editKey):startEditPlan(b.dataset.editKey));
  document.querySelectorAll('[data-archive-key]').forEach(b=>b.onclick=()=>b.dataset.archiveKind==='manual'?archiveManual(b.dataset.archiveKey):archivePlan(b.dataset.archiveKey));
+ const more=$('loadMoreRecordsBtn');
+ if(more){
+   more.classList.toggle('hide',visible.length>=arr.length);
+   more.textContent=visible.length<arr.length?`Load More (${arr.length-visible.length} remaining)`:'All records shown';
+ }
+ wireBulkDeleteSelection();updateBulkDeleteCount();
 }
+async function loadAuditHistory(){
+ const btn=$('loadAuditBtn');if(btn){btn.disabled=true;btn.textContent='Loading Audit…'}
+ try{
+   const qs=await getDocs(collection(db,'leaveAudit'));
+   audit=[];qs.forEach(d=>audit.push({id:d.id,...(d.data()||{})}));
+   window.__leaveAuditLoaded=true;renderAudit();
+ }catch(e){
+   $('auditList').innerHTML=`<div class="empty">Audit history could not load: ${safe(e.message||e)}</div>`;
+ }finally{
+   if(btn){btn.disabled=false;btn.textContent='Load / Refresh Audit'}
+ }
+}
+
 function renderAudit(){
  const rows=audit.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0)).slice(0,30);
  $('auditList').innerHTML=rows.length?rows.map(x=>`<div class="auditItem"><b>${safe(x.action||'Leave edit')}</b> · ${safe(x.teacherName||x.teacherCode||'')} ${x.teacherCode?`(${safe(x.teacherCode)})`:''}<br><span class="small">${safe(x.reason||'No reason recorded')} · ${safe(x.adminEmail||'Admin')} · ${safe(x.whenText||'')}</span></div>`).join(''):'<div class="empty">No Leave Master Editor audit entries yet.</div>';
@@ -792,27 +815,28 @@ function sameOperationalMeaning(a,b){
  return a.code===b.code&&a.date===b.date&&a.type===b.type&&sa[0]===sb[0]&&sa[1]===sb[1];
 }
 function scanLeaveIntegrity(){
- const entries=integrityEntries(),exact=[],probable=[],conflicts=[],seenExact=new Set();
- for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){
-   const a=entries[i],b=entries[j];
-   if(a.code!==b.code||a.date!==b.date||!spansOverlap(a,b))continue;
+ const entries=integrityEntries(),exact=[],probable=[],conflicts=[],seenExact=new Set(),groups=new Map();
+ for(const e of entries){
+   const k=`${e.code}|${e.date}`;
+   if(!groups.has(k))groups.set(k,[]);
+   groups.get(k).push(e);
+ }
+ for(const g of groups.values()){
+  for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){
+   const a=g[i],b=g[j];if(!spansOverlap(a,b))continue;
    const pair=[a.kind+'|'+a.key,b.kind+'|'+b.key].sort().join('||');
    if(exactIntegritySig(a)===exactIntegritySig(b)){
      if(!seenExact.has(pair)){exact.push({a,b});seenExact.add(pair)}
    }else if(sameOperationalMeaning(a,b)){
      probable.push({a,b});
-   }else{
-     conflicts.push({a,b});
-   }
+   }else conflicts.push({a,b});
+  }
  }
  return{entries,exact,probable,conflicts};
 }
 function integrityActionButtons(x,side){
  const e=x[side],other=x[side==='a'?'b':'a'],label=side.toUpperCase(),otherLabel=side==='a'?'B':'A';
- if(x.kind==='Exact duplicate'||x.kind==='Probable duplicate'){
-   return `<button class="smallbtn" data-keep-kind="${safe(e.kind)}" data-keep-key="${safe(e.key)}" data-remove-kind="${safe(other.kind)}" data-remove-key="${safe(other.key)}">Keep ${label} · Remove ${otherLabel}</button> <button class="smallbtn" data-editkeep-kind="${safe(e.kind)}" data-editkeep-key="${safe(e.key)}" data-editremove-kind="${safe(other.kind)}" data-editremove-key="${safe(other.key)}">Edit & Keep ${label}</button>`;
- }
- return `<button class="smallbtn" data-review-kind="${safe(e.kind)}" data-review-key="${safe(e.key)}">Full Edit ${label}</button>`;
+ return `<button class="smallbtn" data-keep-kind="${safe(e.kind)}" data-keep-key="${safe(e.key)}" data-remove-kind="${safe(other.kind)}" data-remove-key="${safe(other.key)}">Keep ${label} · Remove ${otherLabel}</button> <button class="smallbtn" data-editkeep-kind="${safe(e.kind)}" data-editkeep-key="${safe(e.key)}" data-editremove-kind="${safe(other.kind)}" data-editremove-key="${safe(other.key)}">Edit ${label} & Keep</button>`;
 }
 function renderLeaveIntegrity(){
  window.__leaveIntegrityRun=true;
@@ -1040,6 +1064,8 @@ $('runIntegrityBtn').onclick=async()=>{
  renderLeaveIntegrity();$('duplicateToolMsg').textContent='Scan refreshed.';
 };
 $('removeSafeDuplicatesBtn').onclick=removeSafeExactDuplicates;
+if($('loadMoreRecordsBtn'))$('loadMoreRecordsBtn').onclick=()=>{recordRenderLimit+=40;renderRecords()};
+if($('loadAuditBtn'))$('loadAuditBtn').onclick=loadAuditHistory;
 $('clearBulkDeleteBtn').onclick=()=>{bulkDeleteSelection.clear();renderAll()};
 $('bulkDeleteBtn').onclick=bulkDeleteErroneous;
 $('previewVlBulkBtn').onclick=renderVlBulkPreview;
@@ -1048,7 +1074,7 @@ $('vlBulkMonth').onchange=renderVlBulkPreview;
 $('vlBulkUnits').oninput=renderVlBulkPreview;
 $('vlBulkFrom').onchange=renderVlBulkPreview;
 $('vlBulkTo').onchange=renderVlBulkPreview;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
-['filterTeacher','filterType'].forEach(id=>$(id).onchange=renderRecords);$('filterFrom').onblur=()=>{normaliseDateInput($('filterFrom'));renderRecords()};$('filterSearch').oninput=renderRecords;
+['filterTeacher','filterType'].forEach(id=>$(id).onchange=renderRecords);$('filterFrom').onblur=()=>{normaliseDateInput($('filterFrom'));renderRecords()};$('filterSearch').oninput=()=>{recordRenderLimit=40;renderRecords()};
 
 onAuthStateChanged(auth,async u=>{
  user=u;$('signInBtn').style.display='none';
