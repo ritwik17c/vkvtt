@@ -8,7 +8,7 @@
 :root{--ink:#17364f;--muted:#617685;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;--greenbg:#e7f6ea;--amberbg:#fff7df;--redbg:#fdecec}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#263d4e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}header{background:#1d638e;color:#fff;padding:18px 16px}.wrap{max-width:1250px;margin:auto}h1{margin:0;font-size:1.5rem}.subtitle{opacity:.92;margin-top:4px}main{padding:18px 14px 70px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d0e}.top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}button,.btn{font:inherit;font-weight:750;border:1px solid #b9ced9;border-radius:11px;padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.metric{background:#f6fafc;border:1px solid #dde8ed;border-radius:12px;padding:11px}.metric b{display:block;font-size:1.35rem;color:var(--deep)}.metric span,.help{font-size:.82rem;color:var(--muted);line-height:1.45}.status{padding:11px 13px;border-radius:12px;margin:10px 0}.ok{background:var(--greenbg);border:1px solid #a9d4b2}.warn{background:var(--amberbg);border:1px solid #e4c873}.error{background:var(--redbg);border:1px solid #e5b7b7}.tablewrap{overflow:auto;border:1px solid #dce7ec;border-radius:12px;margin-top:10px}table{border-collapse:collapse;width:100%;min-width:850px}th,td{border-bottom:1px solid #e0e9ee;padding:8px;text-align:left;font-size:.82rem;vertical-align:top}th{background:#edf5f9;color:var(--ink)}.badge{display:inline-block;border-radius:999px;padding:3px 8px;background:#e9f3f7;font-size:.75rem;font-weight:750}.good{background:#dff2e4}.info{background:#eef7fb}.hide{display:none}.code{font-family:ui-monospace,Consolas,monospace}@media(max-width:850px){.metrics{grid-template-columns:1fr 1fr}}
 </style><script>
 (function(){
-  const CURRENT_APP_VERSION = '64.3';
+  const CURRENT_APP_VERSION = '64.4';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -20,7 +20,7 @@
 </script>
 
 </head>
-<body><header><div class="wrap top"><div><h1>VKV Nalbari · Timetable Integrity Checker</h1><div class="subtitle">Read-only master sanitation & cross-view duty verification · Cloud v64.3</div></div><a class="btn" href="admin-dashboard.html?v=64.3">← Admin Dashboard</a></div></header>
+<body><header><div class="wrap top"><div><h1>VKV Nalbari · Timetable Integrity Checker</h1><div class="subtitle">Read-only master sanitation & cross-view duty verification · Cloud v64.4</div></div><a class="btn" href="admin-dashboard.html?v=64.4">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <section id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status info">Please wait.</div><button id="signInBtn" class="hide">Sign in with Google</button></section>
 <div id="app" class="hide">

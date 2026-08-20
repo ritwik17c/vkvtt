@@ -78,6 +78,10 @@ details.guide summary::-webkit-details-marker,details.moreTools summary::-webkit
 .dangerOutline{background:#fff;border-color:#d77;color:#8b2d2d}
 .duplicateTools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
 .duplicatePreview{font-size:.88rem;color:var(--muted)}
+.bulkRemoveBar{position:sticky;top:8px;z-index:20;background:#fff7f7;border:1px solid #e0b7b7;border-radius:14px;padding:10px 12px;margin:10px 0}
+.bulkSelect{transform:scale(1.15);margin-right:6px}
+.bulkMarked{outline:2px solid #d88;outline-offset:2px}
+
 
 .rowHead,.dateRow{display:grid;grid-template-columns:1.15fr 1.15fr 1.15fr .7fr 1.05fr .8fr .8fr 1.6fr auto;gap:7px;align-items:end}
 .rowHead{font-size:.76rem;color:var(--muted);font-weight:750;padding:0 3px 4px}
@@ -125,7 +129,7 @@ body.quick-mode .wrap{max-width:none}
 
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '64.3';
+  const CURRENT_APP_VERSION = '64.4';
   try{
     const u = new URL(window.location.href);
     if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
@@ -138,7 +142,7 @@ body.quick-mode .wrap{max-width:none}
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.3</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.3">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.3">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.4</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.4">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.4">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
@@ -164,6 +168,11 @@ body.quick-mode .wrap{max-width:none}
 </section>
 
 
+<section class="bulkRemoveBar quick-hide" id="bulkRemoveBar">
+  <b>🗑 Bulk Erroneous Leave Cleanup</b>
+  <div class="small">Select verified wrong/redundant cards, then remove them from active calculations. Audit history is retained.</div>
+  <div class="actions"><button id="clearBulkDeleteBtn">Clear Selection</button><button id="bulkDeleteBtn" class="danger">Remove Selected Erroneous Cards</button><span id="bulkDeleteCount" class="pill">0 selected</span></div>
+</section>
 <section class="card quick-hide" id="pendingSection">
   <div class="sectionTitle"><div><h2>⏳ Pending Leave Resolutions</h2><div class="help">Legacy accounting items that still need genuine dated resolution.</div></div><span id="pendingBadge" class="pill warn">Loading…</span></div>
   <div id="pendingList"></div>
@@ -297,6 +306,7 @@ const QUICK_MODE=new URLSearchParams(location.search).get('quick')==='1';
 if(QUICK_MODE)document.body.classList.add('quick-mode');
 
 let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[];
+let coreLoaded=false,secondaryLoaded=false,bulkDeleteSelection=new Set();
 let editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
 const TYPES=new Set(['full','half','od','special']);
 const CATS=['VL','EL','CL','SEL','EOL','MATERNITY'];
@@ -354,29 +364,54 @@ function pendingItems(){return legacy.filter(x=>x&&x.active!==false&&resolutionS
 function finalItems(){return legacy.filter(x=>x&&x.active!==false&&resolutionState(x)!=='pending')}
 
 async function verify(u){
- const p=await getDoc(doc(db,'authorizedUsers',u.uid));
+ const [p,m]=await Promise.all([
+   getDoc(doc(db,'authorizedUsers',u.uid)),
+   getDoc(doc(db,'master','current'))
+ ]);
  if(!p.exists()||p.data().active!==true||String(p.data().role||'')!=='admin')throw new Error('Only the Principal/Admin account can open the Leave Master Editor.');
- const m=await getDoc(doc(db,'master','current'));if(!m.exists())throw new Error('Master timetable is not available.');
- master=m.data().data||m.data();teachers=(master.teachers||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+ if(!m.exists())throw new Error('Master timetable is not available.');
+ master=m.data().data||m.data();
+ teachers=(master.teachers||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 async function loadAll(){
- const results=await Promise.allSettled([
-  getDoc(doc(db,'dailyRecords','__leavePlans')),
-  getDocs(collection(db,'dailyRecords')),
-  getDocs(collection(db,'legacyLeaveAccounting')),
-  getDocs(collection(db,'viewerEmails')),
-  getDocs(collection(db,'leaveAudit'))
+ const core=await Promise.allSettled([
+   getDoc(doc(db,'dailyRecords','__leavePlans')),
+   getDocs(collection(db,'legacyLeaveAccounting'))
  ]);
- const [lpR,drR,laR,veR,auR]=results;
+ const [lpR,laR]=core;
  if(laR.status!=='fulfilled')throw new Error('Pending legacy leave records could not load. '+(laR.reason?.message||laR.reason||'Check Firestore rules.'));
- const lp=lpR.status==='fulfilled'?lpR.value:null,dr=drR.status==='fulfilled'?drR.value:null,la=laR.value,ve=veR.status==='fulfilled'?veR.value:null,au=auR.status==='fulfilled'?auR.value:null;
+ const lp=lpR.status==='fulfilled'?lpR.value:null,la=laR.value;
  plans=lp&&lp.exists()?(lp.data().plans||{}):{};
- manualRecords=[];
- if(dr)dr.forEach(d=>{if(d.id==='__leavePlans')return;const data=d.data()||{},date=data.date||d.id;(data.statuses||[]).forEach((s,i)=>{if(s&&TYPES.has(String(s.type||'')))manualRecords.push({...s,_kind:'manual',_date:date,_docId:d.id,_index:i})})});
  legacy=[];la.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}));
- viewerEmails=[];if(ve)ve.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
- audit=[];if(au)au.forEach(d=>audit.push({id:d.id,...(d.data()||{})}));
- await normaliseLegacyStates();await syncLeaveControl();populateSelectors();renderAll();
+ manualRecords=[];viewerEmails=[];audit=[];
+ coreLoaded=true;
+ populateSelectors();renderAll();
+ // Do not block the screen on secondary/history collections.
+ loadSecondaryData().catch(e=>console.warn('Deferred leave data:',e));
+ syncLeaveControl().catch(e=>console.warn('Leave control sync:',e));
+}
+async function loadSecondaryData(force=false){
+ if(secondaryLoaded&&!force)return;
+ const results=await Promise.allSettled([
+   getDocs(collection(db,'dailyRecords')),
+   getDocs(collection(db,'viewerEmails')),
+   getDocs(collection(db,'leaveAudit'))
+ ]);
+ const [drR,veR,auR]=results;
+ manualRecords=[];
+ if(drR.status==='fulfilled')drR.value.forEach(d=>{
+   if(d.id==='__leavePlans')return;
+   const data=d.data()||{},date=data.date||d.id;
+   (data.statuses||[]).forEach((x,i)=>{
+     if(x&&TYPES.has(String(x.type||'')))manualRecords.push({...x,_kind:'manual',_date:date,_docId:d.id,_index:i})
+   })
+ });
+ viewerEmails=[];
+ if(veR.status==='fulfilled')veR.value.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
+ audit=[];
+ if(auR.status==='fulfilled')auR.value.forEach(d=>audit.push({id:d.id,...(d.data()||{})}));
+ secondaryLoaded=true;window.__leaveAuditLoaded=true;
+ renderRecords();renderAudit();
 }
 async function normaliseLegacyStates(){
  const missing=legacy.filter(x=>!x.resolutionStatus);if(!missing.length)return;
@@ -427,7 +462,7 @@ function renderControl(){
 function renderPending(){
  const rows=pendingItems().sort((a,b)=>Number(a.rowNum||999)-Number(b.rowNum||999)||String(a.teacherName||'').localeCompare(String(b.teacherName||'')));
  if(!rows.length){$('pendingList').innerHTML='<div class="empty"><b>No pending leave resolution remains.</b></div>';return}
- $('pendingList').innerHTML=rows.map(x=>`<div class="pendingCard">
+ $('pendingList').innerHTML=rows.map(x=>`<div class="pendingCard ${bulkDeleteSelection.has("legacy|"+x.id)?"bulkMarked":""}"><label class="small"><input class="bulkSelect" type="checkbox" data-bulk-del="legacy|${safe(x.id)}" ${bulkDeleteSelection.has("legacy|"+x.id)?"checked":""}> Select erroneous</label>
   <div class="cardTop"><div><div class="cardTitle">${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)} <span class="pill">${safe(x.teacherCode||'')}</span></div>
   <div class="meta"><b>${safe(x.month||'Unknown month')}</b> · ${safe(catLabel(x.category))} · <b>${safe(x.units)} unit${Number(x.units)===1?'':'s'}</b> · Source row ${safe(x.rowNum||'—')}<br>${safe(x.reason||'Legacy accounting item')}</div></div><span class="pill warn">Pending</span></div>
   <div class="status warn"><b>Verify first.</b> The combined leave-unit total must equal ${safe(x.units)}. You may use one date, multiple ranges, staggered dates, or a mixture.</div>
@@ -441,7 +476,7 @@ function renderPending(){
 function renderFinalAccounting(){
  const rows=finalItems().sort((a,b)=>String(a.teacherName||'').localeCompare(String(b.teacherName||''))||String(a.month||'').localeCompare(String(b.month||'')));
  if(!rows.length){$('finalAccountingList').innerHTML='<div class="empty">No final accounting-only items.</div>';return}
- $('finalAccountingList').innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Month</th><th>Category</th><th>Units</th><th>Status / reason</th><th>Action</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<br><span class="small">${safe(x.teacherCode||'')}</span></td><td>${safe(x.month||'—')}</td><td>${safe(catLabel(x.category))}</td><td>${safe(x.units||'—')}</td><td>${safe(x.resolutionStatus==='resolved-dated'?'Resolved into dated leave':(x.resolutionNote||x.reason||'Final accounting only'))}</td><td>${x.resolutionStatus==='resolved-dated'?'<span class="pill ok">Resolved</span>':`${String(x.category||'').toUpperCase()==='VL'?`<button data-vl-edit="${safe(x.id)}">✏ Edit VL / Mark Exception</button> `:''}<button data-reopen="${safe(x.id)}">Reopen as Pending</button> <button class="dangerOutline" data-delete-final="${safe(x.id)}">Delete erroneous item</button>`}</td></tr>`).join('')}</tbody></table></div>`;
+ $('finalAccountingList').innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Month</th><th>Category</th><th>Units</th><th>Status / reason</th><th>Action</th></tr></thead><tbody>${rows.map(x=>`<tr class="${bulkDeleteSelection.has("legacy|"+x.id)?"bulkMarked":""}"><td><label class="small"><input class="bulkSelect" type="checkbox" data-bulk-del="legacy|${safe(x.id)}" ${bulkDeleteSelection.has("legacy|"+x.id)?"checked":""}> erroneous</label><br>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<br><span class="small">${safe(x.teacherCode||'')}</span></td><td>${safe(x.month||'—')}</td><td>${safe(catLabel(x.category))}</td><td>${safe(x.units||'—')}</td><td>${safe(x.resolutionStatus==='resolved-dated'?'Resolved into dated leave':(x.resolutionNote||x.reason||'Final accounting only'))}</td><td>${x.resolutionStatus==='resolved-dated'?'<span class="pill ok">Resolved</span>':`${String(x.category||'').toUpperCase()==='VL'?`<button data-vl-edit="${safe(x.id)}">✏ Edit VL / Mark Exception</button> `:''}<button data-reopen="${safe(x.id)}">Reopen as Pending</button> <button class="dangerOutline" data-delete-final="${safe(x.id)}">Delete erroneous item</button>`}</td></tr>`).join('')}</tbody></table></div>`;
  document.querySelectorAll('[data-reopen]').forEach(b=>b.onclick=()=>reopenPending(b.dataset.reopen));
  document.querySelectorAll('[data-delete-final]').forEach(b=>b.onclick=()=>deleteErroneousLegacyCard(b.dataset.deleteFinal));
  document.querySelectorAll('[data-vl-edit]').forEach(b=>b.onclick=()=>editVlException(b.dataset.vlEdit));
@@ -461,7 +496,7 @@ function renderRecords(){
  if(!arr.length){$('recordList').innerHTML='<div class="empty">No approved record matches the current filters.</div>';return}
  $('recordList').innerHTML=arr.map(p=>{
   const tt=teacherByCode(p.code)||{name:p.code},ds=p._kind==='manual'?[p._date]:planDates(p),past=ds.some(d=>d<todayIso()),future=ds.some(d=>d>todayIso()),dateText=p._kind==='manual'?displayDate(p._date):recordText(p),source=p._kind==='manual'?'Daily approved status':(p.source||'Scheduled / approved'),key=p._kind==='manual'?manualKey(p):p.id;
-  return `<div class="recordCard"><div class="cardTop"><div><div class="cardTitle">${safe(tt.name)} <span class="pill">${safe(p.code)}</span></div><div class="meta">${safe(statusText(p))}${p.leaveCategory?' · '+safe(catLabel(p.leaveCategory)):''}${p.leaveUnits?` · ${safe(p.leaveUnits)} leave unit${Number(p.leaveUnits)===1?'':'s'}`:''}<br><b>${safe(dateText)}</b>${p.note?'<br>'+safe(p.note):''}<br><span class="small">Source: ${safe(source)}</span></div></div><div>${past?'<span class="pill">Past</span>':''}${future?'<span class="pill warn">Future</span>':''}${p._kind==='manual'?'<span class="pill violet">Daily record</span>':''}</div></div><div class="actions"><button class="primary" data-edit-kind="${p._kind}" data-edit-key="${safe(key)}">Edit</button><button class="danger" data-archive-kind="${p._kind}" data-archive-key="${safe(key)}">Archive</button></div></div>`
+  return `<div class="recordCard ${bulkDeleteSelection.has(p._kind+"|"+key)?"bulkMarked":""}"><label class="small"><input class="bulkSelect" type="checkbox" data-bulk-del="${p._kind}|${safe(key)}" ${bulkDeleteSelection.has(p._kind+"|"+key)?"checked":""}> Select erroneous</label><div class="cardTop"><div><div class="cardTitle">${safe(tt.name)} <span class="pill">${safe(p.code)}</span></div><div class="meta">${safe(statusText(p))}${p.leaveCategory?' · '+safe(catLabel(p.leaveCategory)):''}${p.leaveUnits?` · ${safe(p.leaveUnits)} leave unit${Number(p.leaveUnits)===1?'':'s'}`:''}<br><b>${safe(dateText)}</b>${p.note?'<br>'+safe(p.note):''}<br><span class="small">Source: ${safe(source)}</span></div></div><div>${past?'<span class="pill">Past</span>':''}${future?'<span class="pill warn">Future</span>':''}${p._kind==='manual'?'<span class="pill violet">Daily record</span>':''}</div></div><div class="actions"><button class="primary" data-edit-kind="${p._kind}" data-edit-key="${safe(key)}">✏ Full Edit</button><button class="danger" data-archive-kind="${p._kind}" data-archive-key="${safe(key)}">Remove / Archive</button></div></div>`
  }).join('');
  document.querySelectorAll('[data-edit-key]').forEach(b=>b.onclick=()=>b.dataset.editKind==='manual'?startEditManual(b.dataset.editKey):startEditPlan(b.dataset.editKey));
  document.querySelectorAll('[data-archive-key]').forEach(b=>b.onclick=()=>b.dataset.archiveKind==='manual'?archiveManual(b.dataset.archiveKey):archivePlan(b.dataset.archiveKey));
@@ -470,7 +505,21 @@ function renderAudit(){
  const rows=audit.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0)).slice(0,30);
  $('auditList').innerHTML=rows.length?rows.map(x=>`<div class="auditItem"><b>${safe(x.action||'Leave edit')}</b> · ${safe(x.teacherName||x.teacherCode||'')} ${x.teacherCode?`(${safe(x.teacherCode)})`:''}<br><span class="small">${safe(x.reason||'No reason recorded')} · ${safe(x.adminEmail||'Admin')} · ${safe(x.whenText||'')}</span></div>`).join(''):'<div class="empty">No Leave Master Editor audit entries yet.</div>';
 }
-function renderAll(){renderControl();renderPending();renderRecords();renderFinalAccounting();renderLeaveIntegrity();renderAudit();updateExpectedCorrectionButton();if($('vlBulkPreview'))renderVlBulkPreview()}
+function renderAll(){
+ renderControl();renderPending();renderRecords();renderFinalAccounting();
+ updateExpectedCorrectionButton();
+ if($('vlBulkPreview'))renderVlBulkPreview();
+ if($('integritySummary')&&!window.__leaveIntegrityRun){
+   $('integritySummary').className='status info';
+   $('integritySummary').innerHTML='<b>Integrity scan not run yet.</b> Click Re-scan when you need duplicate/overlap analysis.';
+   $('integrityMetrics').innerHTML='';
+   $('integrityResults').innerHTML='';
+ }
+ if($('auditList')&&!window.__leaveAuditLoaded){
+   $('auditList').innerHTML='<div class="empty">Audit history will load on demand.</div>';
+ }
+ wireBulkDeleteSelection();updateBulkDeleteCount();
+}
 
 
 function updateExpectedCorrectionButton(){
@@ -595,6 +644,41 @@ async function editVlException(id){
  await syncLeaveControl();renderAll();
 }
 
+
+function updateBulkDeleteCount(){
+ const e=$('bulkDeleteCount');if(e)e.textContent=`${bulkDeleteSelection.size} selected`;
+}
+function wireBulkDeleteSelection(){
+ document.querySelectorAll('[data-bulk-del]').forEach(cb=>cb.onchange=()=>{
+  const k=cb.dataset.bulkDel;
+  if(cb.checked)bulkDeleteSelection.add(k);else bulkDeleteSelection.delete(k);
+  updateBulkDeleteCount();
+  const c=cb.closest('.recordCard,.pendingCard,tr');if(c)c.classList.toggle('bulkMarked',cb.checked);
+ });
+}
+async function bulkDeleteErroneous(){
+ if(!bulkDeleteSelection.size){alert('Select one or more erroneous cards first.');return}
+ const reason=prompt('Reason/evidence for removing the selected erroneous records:','Verified erroneous / redundant leave record.');
+ if(!reason||reason.trim().length<5)return;
+ const items=[...bulkDeleteSelection];
+ if(!confirm(`Remove ${items.length} selected erroneous record${items.length===1?'':'s'} from active leave/proxy calculations?\n\nAudit history will be retained.`))return;
+ if(!confirm('FINAL CONFIRMATION\n\nProceed with the selected cleanup?'))return;
+ for(const item of items){
+  const pos=item.indexOf('|'),kind=item.slice(0,pos),key=item.slice(pos+1);
+  if(kind==='legacy'){
+   const x=legacy.find(a=>a.id===key);if(!x)continue;
+   const before={...x};
+   await setDoc(doc(db,'legacyLeaveAccounting',key),{active:false,resolutionStatus:'deleted-error',deletedAsErrorAt:serverTimestamp(),deletedAsErrorBy:user.uid,deletedAsErrorByEmail:user.email||'',deletedAsErrorReason:reason.trim()},{merge:true});
+   x.active=false;x.resolutionStatus='deleted-error';
+   await writeLeaveAudit('Removed erroneous legacy leave card',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,reason.trim(),{legacyId:key,before,bulkCleanup:true});
+  }else{
+   await removeDuplicateRecord(kind,key);
+  }
+ }
+ bulkDeleteSelection.clear();
+ renderAll();renderLeaveIntegrity();
+}
+
 function defaultUnitsForType(type){if(type==='full')return 1;if(type==='half')return 0.5;return 0}
 function addDateRow(data={}){
  const row=document.createElement('div');row.className='dateRow';
@@ -703,26 +787,44 @@ function integrityEntries(){
  return out;
 }
 function exactIntegritySig(x){const sp=periodSpan(x);return[x.code,x.date,x.type,x.category,Number(x.units||0),sp[0],sp[1]].join('|')}
+function sameOperationalMeaning(a,b){
+ const sa=periodSpan(a),sb=periodSpan(b);
+ return a.code===b.code&&a.date===b.date&&a.type===b.type&&sa[0]===sb[0]&&sa[1]===sb[1];
+}
 function scanLeaveIntegrity(){
- const entries=integrityEntries(),exact=[],conflicts=[],seen=new Map();
- for(const x of entries){const sig=exactIntegritySig(x);if(seen.has(sig))exact.push({a:seen.get(sig),b:x});else seen.set(sig,x)}
- const groups=new Map();for(const x of entries){const k=x.code+'|'+x.date;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)}
- for(const arr of groups.values())for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){const a=arr[i],b=arr[j];if(exactIntegritySig(a)===exactIntegritySig(b))continue;if(spansOverlap(a,b))conflicts.push({a,b})}
- return{entries,exact,conflicts};
+ const entries=integrityEntries(),exact=[],probable=[],conflicts=[],seenExact=new Set();
+ for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){
+   const a=entries[i],b=entries[j];
+   if(a.code!==b.code||a.date!==b.date||!spansOverlap(a,b))continue;
+   const pair=[a.kind+'|'+a.key,b.kind+'|'+b.key].sort().join('||');
+   if(exactIntegritySig(a)===exactIntegritySig(b)){
+     if(!seenExact.has(pair)){exact.push({a,b});seenExact.add(pair)}
+   }else if(sameOperationalMeaning(a,b)){
+     probable.push({a,b});
+   }else{
+     conflicts.push({a,b});
+   }
+ }
+ return{entries,exact,probable,conflicts};
 }
 function integrityActionButtons(x,side){
  const e=x[side],other=x[side==='a'?'b':'a'],label=side.toUpperCase(),otherLabel=side==='a'?'B':'A';
- if(x.kind==='Exact duplicate'){
+ if(x.kind==='Exact duplicate'||x.kind==='Probable duplicate'){
    return `<button class="smallbtn" data-keep-kind="${safe(e.kind)}" data-keep-key="${safe(e.key)}" data-remove-kind="${safe(other.kind)}" data-remove-key="${safe(other.key)}">Keep ${label} · Remove ${otherLabel}</button> <button class="smallbtn" data-editkeep-kind="${safe(e.kind)}" data-editkeep-key="${safe(e.key)}" data-editremove-kind="${safe(other.kind)}" data-editremove-key="${safe(other.key)}">Edit & Keep ${label}</button>`;
  }
- return `<button class="smallbtn" data-review-kind="${safe(e.kind)}" data-review-key="${safe(e.key)}">Review ${label}</button>`;
+ return `<button class="smallbtn" data-review-kind="${safe(e.kind)}" data-review-key="${safe(e.key)}">Full Edit ${label}</button>`;
 }
 function renderLeaveIntegrity(){
- const r=scanLeaveIntegrity(),issues=r.exact.length+r.conflicts.length;
+ window.__leaveIntegrityRun=true;
+ const r=scanLeaveIntegrity(),issues=r.exact.length+r.probable.length+r.conflicts.length;
  $('integritySummary').className='status '+(issues?'warn':'ok');
- $('integritySummary').innerHTML=issues?`<b>${issues} integrity issue${issues===1?'':'s'} found.</b> Exact duplicates can be reviewed individually; the Duplicate Remover can bulk-archive only safe same-kind exact duplicates. Contradictions require manual review.`:`<b>No duplicate or overlapping contradictory leave records detected.</b> ${r.entries.length} dated approved record instance${r.entries.length===1?' was':'s were'} checked.`;
- $('integrityMetrics').innerHTML=`<div class="integrityMetric"><b>${r.entries.length}</b><span>Dated instances scanned</span></div><div class="integrityMetric"><b>${r.exact.length}</b><span>Exact duplicates</span></div><div class="integrityMetric"><b>${r.conflicts.length}</b><span>Overlapping conflicts</span></div><div class="integrityMetric"><b>${pendingItems().length}</b><span>Pending legacy resolutions</span></div>`;
- const rows=[...r.exact.map(x=>({...x,kind:'Exact duplicate'})),...r.conflicts.map(x=>({...x,kind:'Overlap / contradiction'}))];
+ $('integritySummary').innerHTML=issues?`<b>${issues} integrity issue${issues===1?'':'s'} found.</b> Exact and probable duplicates can be resolved by choosing which record to keep. Other contradictions require full edit/review.`:`<b>No duplicate or overlapping contradictory leave records detected.</b> ${r.entries.length} dated approved record instance${r.entries.length===1?' was':'s were'} checked.`;
+ $('integrityMetrics').innerHTML=`<div class="integrityMetric"><b>${r.entries.length}</b><span>Dated instances scanned</span></div><div class="integrityMetric"><b>${r.exact.length}</b><span>Exact duplicates</span></div><div class="integrityMetric"><b>${r.probable.length}</b><span>Probable duplicates</span></div><div class="integrityMetric"><b>${r.conflicts.length}</b><span>Other conflicts</span></div>`;
+ const rows=[
+   ...r.exact.map(x=>({...x,kind:'Exact duplicate'})),
+   ...r.probable.map(x=>({...x,kind:'Probable duplicate'})),
+   ...r.conflicts.map(x=>({...x,kind:'Overlap / contradiction'}))
+ ];
  if(!rows.length){$('integrityResults').innerHTML='';return}
  $('integrityResults').innerHTML='<div class="tablewrap"><table><thead><tr><th>Issue</th><th>Teacher</th><th>Date</th><th>Record A</th><th>Record B</th><th>Resolve / review</th></tr></thead><tbody>'+rows.map(x=>{
   const t=teacherByCode(x.a.code)||{name:x.a.code};
@@ -732,7 +834,10 @@ function renderLeaveIntegrity(){
  document.querySelectorAll('[data-keep-key]').forEach(b=>b.onclick=()=>keepOneRemoveOther(b.dataset.keepKind,b.dataset.keepKey,b.dataset.removeKind,b.dataset.removeKey,false));
  document.querySelectorAll('[data-editkeep-key]').forEach(b=>b.onclick=()=>keepOneRemoveOther(b.dataset.editkeepKind,b.dataset.editkeepKey,b.dataset.editremoveKind,b.dataset.editremoveKey,true));
 }
-function reviewIntegrityEntry(kind,key){kind==='manual'?startEditManual(key):startEditPlan(key)}
+async function reviewIntegrityEntry(kind,key){
+ if(kind==='manual'&&!secondaryLoaded)await loadSecondaryData();
+ kind==='manual'?startEditManual(key):startEditPlan(key)
+}
 async function cleanupIntegrityEntry(kind,key){
  if(!confirm('Remove this redundant exact duplicate from active leave records? One audit-preserved historical record will remain.'))return;
  if(kind==='manual')await archiveManual(key,true);else await archivePlan(key,true);
@@ -743,56 +848,28 @@ async function removeDuplicateRecord(kind,key){
 async function keepOneRemoveOther(keepKind,keepKey,removeKind,removeKey,editAfter=false){
  const keepLabel=keepKind==='manual'?'Daily approved status':'Approved leave plan';
  const removeLabel=removeKind==='manual'?'Daily approved status':'Approved leave plan';
- if(!confirm(`EXACT DUPLICATE RESOLUTION\n\nKeep: ${keepLabel}\nRemove redundant: ${removeLabel}\n\nThe removed duplicate will disappear from active calculations, while the audit trail is preserved. Continue?`))return;
+ if(!confirm(`DUPLICATE / OVERLAP RESOLUTION\n\nKeep: ${keepLabel}\nRemove: ${removeLabel}\n\nThe removed record will stop affecting active leave/proxy calculations. Audit history is preserved. Continue?`))return;
  await removeDuplicateRecord(removeKind,removeKey);
- await loadAll();
  if(editAfter){
    if(keepKind==='manual')startEditManual(keepKey);else startEditPlan(keepKey);
-   $('duplicateToolMsg').textContent='Redundant duplicate removed. The retained record is now open for editing.';
+   $('duplicateToolMsg').textContent='Redundant record removed. The retained record is open for full editing.';
  }else{
-   $('duplicateToolMsg').textContent='Exact duplicate resolved: one record kept, one redundant record removed with audit history preserved.';
-   renderLeaveIntegrity();
+   $('duplicateToolMsg').textContent='Resolved: one record retained and one redundant record removed.';
+   renderRecords();renderLeaveIntegrity();
  }
 }
-
 
 function safeDuplicateGroups(){
- const entries=integrityEntries(),groups=new Map();
- for(const e of entries){
-   const sig=exactIntegritySig(e);
-   if(!groups.has(sig))groups.set(sig,[]);
-   groups.get(sig).push(e);
- }
- return [...groups.values()].filter(g=>g.length>1);
+ const r=scanLeaveIntegrity();
+ return [...r.exact,...r.probable].map(x=>[x.a,x.b]);
 }
 async function removeSafeExactDuplicates(){
+ if(!secondaryLoaded)await loadSecondaryData();
  const groups=safeDuplicateGroups();
- if(!groups.length){$('duplicateToolMsg').textContent='No exact duplicate groups found.';return}
- const targets=[];
- for(const g of groups){
-   const keep=g.find(x=>x.kind==='plan')||g[0];
-   const keepKey=keep.kind+'|'+keep.id;
-   const seen=new Set([keepKey]);
-   for(const e of g){
-     const k=e.kind+'|'+e.id;
-     if(seen.has(k))continue;
-     seen.add(k);targets.push(e);
-   }
- }
- const unique=[...new Map(targets.map(x=>[x.kind+'|'+x.id,x])).values()];
- if(!unique.length){$('duplicateToolMsg').textContent='Duplicate instances were found, but no redundant stored record can be removed safely.';return}
- const preview=groups.slice(0,8).map(g=>{
-   const t=teacherByCode(g[0].code)?.name||g[0].code;
-   return `${t} · ${displayDate(g[0].date)} · ${g[0].label} · ${g.length} copies`;
- }).join('\n');
- if(!confirm(`SAFE EXACT DUPLICATE REMOVER\n\n${groups.length} exact duplicate group${groups.length===1?'':'s'} found. ${unique.length} redundant stored record${unique.length===1?'':'s'} will be removed while one canonical record is retained in each group.\n\n${preview}${groups.length>8?`\n…and ${groups.length-8} more groups`:''}\n\nContradictory/overlapping non-identical records will NOT be removed. Continue?`))return;
- if(!confirm(`FINAL CONFIRMATION\n\nRemove ${unique.length} redundant exact duplicate record${unique.length===1?'':'s'} from active leave calculations?\n\nAudit history will be preserved.`))return;
- let done=0;
- for(const e of unique){await removeDuplicateRecord(e.kind,e.key);done++}
- await loadAll();
- $('duplicateToolMsg').textContent=`Resolved ${groups.length} exact duplicate group${groups.length===1?'':'s'}; removed ${done} redundant record${done===1?'':'s'} and retained one canonical record per group.`;
+ if(!groups.length){$('duplicateToolMsg').textContent='No exact or probable duplicate pairs found.';renderLeaveIntegrity();return}
+ $('duplicateToolMsg').textContent='Use Keep A / Remove B or Keep B / Remove A in the table below. Bulk auto-removal is intentionally disabled for safety.';
+ renderLeaveIntegrity();
 }
-
 function proposedIntegrity(rows,code){
  const replace=new Set(editorState.originalIds.map(String)),manualKeyOld=editorState.manualOriginal?manualKey(editorState.manualOriginal):'',
  existing=integrityEntries().filter(x=>String(x.code)===String(code)&&!replace.has(String(x.id))&&String(x.id)!==manualKeyOld),exact=[],conflict=[];
@@ -818,8 +895,14 @@ function startPending(id){
 function startEditPlan(id){
  const p=plans[id];if(!p)return;const t=teacherByCode(p.code)||{name:p.code},ds=planDates(p);
  editorState={mode:'edit',originalIds:[id],manualOriginal:null,pendingId:'',expectedUnits:null};$('dateRows').innerHTML='';resetTools();$('editTeacher').value=p.code||'';$('editReason').value='';
- const each=p.type==='half'?0.5:(p.type==='full'?Number(p.leaveUnits||1):0);
- ds.forEach(d=>addDateRow({date:d,type:p.type,category:p.leaveCategory||'',units:ds.length>1&&p.type==='full'?1:each,from:p.from||0,to:p.to||0,note:p.note||'',part:p.type==='half'?(Number(p.from||5)<=4?'am':'pm'):(p.duration==='custom'?'custom':(Number(p.from||0)===1&&Number(p.to||0)===4?'am':Number(p.from||0)===5&&Number(p.to||0)===8?'pm':'full'))}));
+ const part=p.type==='half'?(Number(p.from||5)<=4?'am':'pm'):(p.duration==='custom'?'custom':(Number(p.from||0)===1&&Number(p.to||0)===4?'am':Number(p.from||0)===5&&Number(p.to||0)===8?'pm':'full'));
+ const contiguous=(p.mode!=='multiple'&&p.startDate&&p.endDate&&p.startDate!==p.endDate);
+ if(contiguous){
+   addRangeRow({fromDate:p.startDate,toDate:p.endDate,type:p.type,category:p.leaveCategory||'',from:p.from||0,to:p.to||0,note:p.note||'',part});
+ }else{
+   const each=p.type==='half'?0.5:(p.type==='full'?(ds.length>1?1:Number(p.leaveUnits||1)):0);
+   ds.forEach(d=>addDateRow({date:d,type:p.type,category:p.leaveCategory||'',units:each,from:p.from||0,to:p.to||0,note:p.note||'',part}));
+ }
  $('editorWarning').className='status warn';$('editorWarning').innerHTML='<b>Editing an approved record.</b> Saving converts it to date-level records so each date may carry its own category/status.';
  $('archiveBtn').classList.remove('hide');$('archiveBtn').onclick=()=>archivePlan(id);
  openEditor(`Edit approved leave · ${t.name}`,`${statusText(p)} · ${recordText(p)} · Source: ${p.source||'approved'}`);updateReconcile();
@@ -947,13 +1030,18 @@ async function archivePlan(id,skipFirstConfirm=false){
 }
 
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
-$('refreshBtn').onclick=async()=>{try{await loadAll()}catch(e){alert(e.message||e)}};
+$('refreshBtn').onclick=async()=>{try{secondaryLoaded=false;window.__leaveAuditLoaded=false;window.__leaveIntegrityRun=false;await loadAll()}catch(e){alert(e.message||e)}};
 $('newBtn').onclick=startNew;$('cancelBtn').onclick=clearEditor;$('addOneDateBtn').onclick=()=>addDateRow({date:todayIso(),type:'full',units:1});
 $('addRangeRowBtn').onclick=()=>addRangeRow();
 $('saveBtn').onclick=saveEditor;
 $('correctExpectedBtn').onclick=()=>{if(editorState.pendingId)correctLegacyExpectedUnits(editorState.pendingId)};
-$('runIntegrityBtn').onclick=()=>{renderLeaveIntegrity();$('duplicateToolMsg').textContent='Scan refreshed.'};
+$('runIntegrityBtn').onclick=async()=>{
+ if(!secondaryLoaded)await loadSecondaryData();
+ renderLeaveIntegrity();$('duplicateToolMsg').textContent='Scan refreshed.';
+};
 $('removeSafeDuplicatesBtn').onclick=removeSafeExactDuplicates;
+$('clearBulkDeleteBtn').onclick=()=>{bulkDeleteSelection.clear();renderAll()};
+$('bulkDeleteBtn').onclick=bulkDeleteErroneous;
 $('previewVlBulkBtn').onclick=renderVlBulkPreview;
 $('applyVlBulkBtn').onclick=applyVlBulk;
 $('vlBulkMonth').onchange=renderVlBulkPreview;
@@ -966,7 +1054,9 @@ onAuthStateChanged(auth,async u=>{
  user=u;$('signInBtn').style.display='none';
  if(!u){$('gateMsg').className='status warn';$('gateMsg').textContent='You are not signed in.';$('signInBtn').style.display='inline-block';return}
  try{
-  await verify(u);$('gate').hidden=true;$('app').hidden=false;await loadAll();
+  $('gateMsg').textContent='Verifying Admin access and loading core leave data…';
+  await verify(u);$('gate').hidden=true;$('app').hidden=false;
+  await loadAll();
   if(QUICK_MODE)startNew();
  }catch(e){$('gateMsg').className='status error';$('gateMsg').innerHTML='<b>Access not available.</b><br>'+safe(e.message||e)}
 });
