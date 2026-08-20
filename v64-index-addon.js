@@ -1,5 +1,5 @@
 /*
-VKV Nalbari Timetable — Cloud v64.0 proxy-navigation patch
+VKV Nalbari Timetable — Cloud v64.1 proxy-navigation patch
 
 Place in repository root and load after the existing index.html scripts:
 <script src="v64-index-addon.js"></script>
@@ -16,8 +16,8 @@ Place in repository root and load after the existing index.html scripts:
   function apply(){
     const published=document.getElementById('publishedProxyBtn');
     if(published){
-      published.innerHTML="✅ Today’s Proxy Classes";
-      published.title="Complete school-wide proxy list after allotment/finalisation.";
+      published.innerHTML="✅ Today’s Proxy Allotment (All Teachers)";
+      published.title="Complete school-wide proxy allotment for all teachers. The button remains available even before finalisation.";
     }
 
     const my=document.getElementById('myProxyTodayBtn');
