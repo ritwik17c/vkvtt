@@ -125,7 +125,7 @@ body.quick-mode .wrap{max-width:none}
 
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '64.2';
+  const CURRENT_APP_VERSION = '64.3';
   try{
     const u = new URL(window.location.href);
     if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
@@ -138,7 +138,7 @@ body.quick-mode .wrap{max-width:none}
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.2</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.2">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.2">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.3</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.3">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.3">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
@@ -238,6 +238,12 @@ body.quick-mode .wrap{max-width:none}
     </label>
     <label>Standard VL units
       <input id="vlBulkUnits" type="number" min="0" step="0.5" value="14">
+    </label>
+    <label>VL From Date
+      <input id="vlBulkFrom" type="date">
+    </label>
+    <label>VL To Date
+      <input id="vlBulkTo" type="date">
     </label>
   </div>
   <div class="actions">
@@ -527,54 +533,66 @@ function eligibleVlItems(){
  const month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase();
  return legacy.filter(x=>x.active!==false&&String(x.category||'').toUpperCase()==='VL'&&String(x.month||'').toUpperCase()===month&&x.resolutionStatus!=='resolved-dated'&&x.resolutionStatus!=='deleted-error');
 }
+function vlBulkRange(){return{from:String($('vlBulkFrom')?.value||''),to:String($('vlBulkTo')?.value||'')}}
 function renderVlBulkPreview(){
- const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),box=$('vlBulkPreview'),msg=$('vlBulkMsg');
+ const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),box=$('vlBulkPreview'),msg=$('vlBulkMsg'),range=vlBulkRange();
  if(!box||!msg)return;
  if(!Number.isFinite(standard)||standard<0){msg.className='status error';msg.textContent='Enter a valid standard VL value.';box.innerHTML='';return}
+ const rangeOk=range.from&&range.to&&range.from<=range.to;
  if(!items.length){msg.className='status warn';msg.textContent='No eligible VL accounting cards found for the selected month.';box.innerHTML='';return}
  const exceptions=items.filter(x=>x.vlException===true),normal=items.filter(x=>!x.vlException);
- msg.className='status info';msg.innerHTML=`<b>${items.length}</b> VL card${items.length===1?'':'s'} found · <b>${normal.length}</b> will receive standard ${standard} · <b>${exceptions.length}</b> exception${exceptions.length===1?'':'s'} will be preserved.`;
- box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Current</th><th>Proposed</th><th>Exception?</th><th>Reason</th></tr></thead><tbody>${items.map(x=>`<tr><td>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<div class="small">${safe(x.teacherCode||'')}</div></td><td>${safe(x.units)}</td><td>${x.vlException?'<span class="pill warn">Keep current</span>':safe(standard)}</td><td>${x.vlException?'Yes':'No'}</td><td>${safe(x.vlExceptionReason||'')}</td></tr>`).join('')}</tbody></table></div>`;
+ msg.className='status '+(rangeOk?'info':'warn');
+ msg.innerHTML=`<b>${items.length}</b> VL card${items.length===1?'':'s'} found · <b>${normal.length}</b> will receive standard ${standard} · <b>${exceptions.length}</b> exception${exceptions.length===1?'':'s'} preserved.${rangeOk?` Standard range: <b>${displayDate(range.from)}–${displayDate(range.to)}</b>.`:' Select a valid VL From/To date range before applying.'}`;
+ box.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Teacher</th><th>Current units</th><th>Proposed units</th><th>VL date range</th><th>Exception?</th><th>Reason</th></tr></thead><tbody>${items.map(x=>`<tr><td>${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)}<div class="small">${safe(x.teacherCode||'')}</div></td><td>${safe(x.units)}</td><td>${x.vlException?'<span class="pill warn">Keep exception</span>':safe(standard)}</td><td>${x.vlException?`${safe(displayDate(x.vlFromDate||''))}${x.vlToDate?'–'+safe(displayDate(x.vlToDate)):''}`:(rangeOk?`${safe(displayDate(range.from))}–${safe(displayDate(range.to))}`:'—')}</td><td>${x.vlException?'Yes':'No'}</td><td>${safe(x.vlExceptionReason||'')}</td></tr>`).join('')}</tbody></table></div>`;
 }
 async function applyVlBulk(){
- const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase();
+ const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase(),range=vlBulkRange();
  if(!Number.isFinite(standard)||standard<0){alert('Enter a valid standard VL value.');return}
+ if(!range.from||!range.to||range.from>range.to){alert('Select a valid VL From Date and To Date before applying.');return}
  const targets=items.filter(x=>!x.vlException);
  if(!targets.length){alert('No non-exception VL cards are available for bulk update.');return}
- if(!confirm(`Apply standard VL ${standard} to ${targets.length} ${month} VL card${targets.length===1?'':'s'}?\n\nCards marked as exceptions will NOT be changed.`))return;
- if(!confirm(`FINAL CONFIRMATION\n\nUpdate ${targets.length} VL record${targets.length===1?'':'s'} to ${standard} unit${standard===1?'':'s'} each?`))return;
+ if(!confirm(`Apply standard ${month} VL to ${targets.length} teacher${targets.length===1?'':'s'}?\n\nVL range: ${displayDate(range.from)} to ${displayDate(range.to)}\nVL units: ${standard}\n\nCards marked as exceptions will NOT be changed.`))return;
+ if(!confirm(`FINAL CONFIRMATION\n\nUpdate ${targets.length} VL record${targets.length===1?'':'s'} with this standard date range and unit total?`))return;
  let changed=0;
  for(const x of targets){
-   const before=Number(x.units||0);
+   const before={units:Number(x.units||0),vlFromDate:x.vlFromDate||'',vlToDate:x.vlToDate||''};
    await setDoc(doc(db,'legacyLeaveAccounting',x.id),{
-     units:standard,standardVlApplied:true,standardVlMonth:month,
+     units:standard,vlFromDate:range.from,vlToDate:range.to,vlHasVerifiedRange:true,
+     standardVlApplied:true,standardVlMonth:month,
      standardVlAppliedAt:serverTimestamp(),standardVlAppliedBy:user.uid,
      standardVlAppliedByEmail:user.email||''
    },{merge:true});
-   x.units=standard;x.standardVlApplied=true;changed++;
-   await writeLeaveAudit('Applied standard VL',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,`Standard ${month} VL set to ${standard}.`,{legacyId:x.id,beforeUnits:before,afterUnits:standard});
+   Object.assign(x,{units:standard,vlFromDate:range.from,vlToDate:range.to,vlHasVerifiedRange:true,standardVlApplied:true});changed++;
+   await writeLeaveAudit('Applied standard VL',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,`Standard ${month} VL: ${displayDate(range.from)}–${displayDate(range.to)}, ${standard} units.`,{legacyId:x.id,before,after:{units:standard,vlFromDate:range.from,vlToDate:range.to}});
  }
- await syncLeaveControl();renderAll();renderVlBulkPreview();
- $('vlBulkMsg').className='status ok';$('vlBulkMsg').textContent=`Standard VL ${standard} applied to ${changed} non-exception record${changed===1?'':'s'}.`;
+ await syncLeaveControl();renderAll();
+ $('vlBulkMsg').className='status ok';$('vlBulkMsg').textContent=`Standard VL applied to ${changed} non-exception record${changed===1?'':'s'} for ${displayDate(range.from)}–${displayDate(range.to)}.`;
 }
 async function editVlException(id){
  const x=legacy.find(a=>a.id===id);if(!x)return;
  const current=Number(x.units||0);
- const raw=prompt(`EDIT VACATION LEAVE\n\n${x.teacherName||x.teacherCode}\n${x.month||''} VL\nCurrent units: ${current}\n\nEnter the verified VL units for this teacher:`,String(current));
+ const raw=prompt(`EDIT VACATION LEAVE EXCEPTION\n\n${x.teacherName||x.teacherCode}\n${x.month||''} VL\nCurrent units: ${current}\n\nEnter the verified VL units for this teacher:`,String(current));
  if(raw===null)return;
  const n=Number(raw);
  if(!Number.isFinite(n)||n<0||Math.round(n*2)!==n*2){alert('Enter a valid VL value in 0.5 increments.');return}
+ const from=prompt('VL From Date (DD/MM/YYYY):',displayDate(x.vlFromDate||$('vlBulkFrom')?.value||''));
+ if(from===null)return;
+ const to=prompt('VL To Date (DD/MM/YYYY):',displayDate(x.vlToDate||$('vlBulkTo')?.value||''));
+ if(to===null)return;
+ const fromIso=parseDisplayDate(from),toIso=parseDisplayDate(to);
+ if(!fromIso||!toIso||fromIso>toIso){alert('Enter a valid From/To date range in DD/MM/YYYY.');return}
  const reason=prompt('Reason for individual VL exception (e.g. training / official duty):',x.vlExceptionReason||'Official duty / training during vacation.');
  if(!reason||reason.trim().length<3)return;
- if(!confirm(`Save ${x.teacherName||x.teacherCode} as a VL exception with ${n} unit${n===1?'':'s'}?\n\nFuture bulk standard-VL actions will preserve this card.`))return;
- const before=current;
+ if(!confirm(`Save VL exception?\n\n${x.teacherName||x.teacherCode}\n${displayDate(fromIso)}–${displayDate(toIso)}\n${n} VL units\n\nFuture bulk VL actions will preserve this card.`))return;
+ const before={units:current,vlFromDate:x.vlFromDate||'',vlToDate:x.vlToDate||''};
  await setDoc(doc(db,'legacyLeaveAccounting',id),{
-   units:n,vlException:true,vlExceptionReason:reason.trim(),
+   units:n,vlFromDate:fromIso,vlToDate:toIso,vlHasVerifiedRange:true,
+   vlException:true,vlExceptionReason:reason.trim(),
    vlExceptionAt:serverTimestamp(),vlExceptionBy:user.uid,vlExceptionByEmail:user.email||''
  },{merge:true});
- x.units=n;x.vlException=true;x.vlExceptionReason=reason.trim();
- await writeLeaveAudit('Edited VL exception',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,reason.trim(),{legacyId:id,beforeUnits:before,afterUnits:n});
- await syncLeaveControl();renderAll();renderVlBulkPreview();
+ Object.assign(x,{units:n,vlFromDate:fromIso,vlToDate:toIso,vlHasVerifiedRange:true,vlException:true,vlExceptionReason:reason.trim()});
+ await writeLeaveAudit('Edited VL exception',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,reason.trim(),{legacyId:id,before,after:{units:n,vlFromDate:fromIso,vlToDate:toIso}});
+ await syncLeaveControl();renderAll();
 }
 
 function defaultUnitsForType(type){if(type==='full')return 1;if(type==='half')return 0.5;return 0}
@@ -693,8 +711,11 @@ function scanLeaveIntegrity(){
  return{entries,exact,conflicts};
 }
 function integrityActionButtons(x,side){
- const e=x[side],label=side.toUpperCase();
- return `<button class="smallbtn" data-review-kind="${safe(e.kind)}" data-review-key="${safe(e.key)}">Review ${label}</button>${x.kind==='Exact duplicate'?` <button class="smallbtn danger" data-clean-kind="${safe(e.kind)}" data-clean-key="${safe(e.key)}">Archive ${label}</button>`:''}`;
+ const e=x[side],other=x[side==='a'?'b':'a'],label=side.toUpperCase(),otherLabel=side==='a'?'B':'A';
+ if(x.kind==='Exact duplicate'){
+   return `<button class="smallbtn" data-keep-kind="${safe(e.kind)}" data-keep-key="${safe(e.key)}" data-remove-kind="${safe(other.kind)}" data-remove-key="${safe(other.key)}">Keep ${label} · Remove ${otherLabel}</button> <button class="smallbtn" data-editkeep-kind="${safe(e.kind)}" data-editkeep-key="${safe(e.key)}" data-editremove-kind="${safe(other.kind)}" data-editremove-key="${safe(other.key)}">Edit & Keep ${label}</button>`;
+ }
+ return `<button class="smallbtn" data-review-kind="${safe(e.kind)}" data-review-key="${safe(e.key)}">Review ${label}</button>`;
 }
 function renderLeaveIntegrity(){
  const r=scanLeaveIntegrity(),issues=r.exact.length+r.conflicts.length;
@@ -703,66 +724,73 @@ function renderLeaveIntegrity(){
  $('integrityMetrics').innerHTML=`<div class="integrityMetric"><b>${r.entries.length}</b><span>Dated instances scanned</span></div><div class="integrityMetric"><b>${r.exact.length}</b><span>Exact duplicates</span></div><div class="integrityMetric"><b>${r.conflicts.length}</b><span>Overlapping conflicts</span></div><div class="integrityMetric"><b>${pendingItems().length}</b><span>Pending legacy resolutions</span></div>`;
  const rows=[...r.exact.map(x=>({...x,kind:'Exact duplicate'})),...r.conflicts.map(x=>({...x,kind:'Overlap / contradiction'}))];
  if(!rows.length){$('integrityResults').innerHTML='';return}
- $('integrityResults').innerHTML='<div class="tablewrap"><table><thead><tr><th>Issue</th><th>Teacher</th><th>Date</th><th>Record A</th><th>Record B</th><th>Safe actions</th></tr></thead><tbody>'+rows.map(x=>{
+ $('integrityResults').innerHTML='<div class="tablewrap"><table><thead><tr><th>Issue</th><th>Teacher</th><th>Date</th><th>Record A</th><th>Record B</th><th>Resolve / review</th></tr></thead><tbody>'+rows.map(x=>{
   const t=teacherByCode(x.a.code)||{name:x.a.code};
   return `<tr><td><b>${safe(x.kind)}</b></td><td>${safe(t.name)} (${safe(x.a.code)})</td><td>${safe(displayDate(x.a.date))}</td><td>${safe(x.a.label)}${x.a.category?' · '+safe(catLabel(x.a.category)):''}<br><span class="small">${safe(x.a.source)}</span></td><td>${safe(x.b.label)}${x.b.category?' · '+safe(catLabel(x.b.category)):''}<br><span class="small">${safe(x.b.source)}</span></td><td>${integrityActionButtons(x,'a')}<br style="margin-bottom:5px">${integrityActionButtons(x,'b')}</td></tr>`
  }).join('')+'</tbody></table></div>';
  document.querySelectorAll('[data-review-key]').forEach(b=>b.onclick=()=>reviewIntegrityEntry(b.dataset.reviewKind,b.dataset.reviewKey));
- document.querySelectorAll('[data-clean-key]').forEach(b=>b.onclick=()=>cleanupIntegrityEntry(b.dataset.cleanKind,b.dataset.cleanKey));
+ document.querySelectorAll('[data-keep-key]').forEach(b=>b.onclick=()=>keepOneRemoveOther(b.dataset.keepKind,b.dataset.keepKey,b.dataset.removeKind,b.dataset.removeKey,false));
+ document.querySelectorAll('[data-editkeep-key]').forEach(b=>b.onclick=()=>keepOneRemoveOther(b.dataset.editkeepKind,b.dataset.editkeepKey,b.dataset.editremoveKind,b.dataset.editremoveKey,true));
 }
 function reviewIntegrityEntry(kind,key){kind==='manual'?startEditManual(key):startEditPlan(key)}
 async function cleanupIntegrityEntry(kind,key){
- if(!confirm('Archive this exact duplicate record? The record will be removed from active calculations but the change will be preserved in the audit trail.'))return;
+ if(!confirm('Remove this redundant exact duplicate from active leave records? One audit-preserved historical record will remain.'))return;
  if(kind==='manual')await archiveManual(key,true);else await archivePlan(key,true);
+}
+async function removeDuplicateRecord(kind,key){
+ if(kind==='manual')await archiveManual(key,true);else await archivePlan(key,true);
+}
+async function keepOneRemoveOther(keepKind,keepKey,removeKind,removeKey,editAfter=false){
+ const keepLabel=keepKind==='manual'?'Daily approved status':'Approved leave plan';
+ const removeLabel=removeKind==='manual'?'Daily approved status':'Approved leave plan';
+ if(!confirm(`EXACT DUPLICATE RESOLUTION\n\nKeep: ${keepLabel}\nRemove redundant: ${removeLabel}\n\nThe removed duplicate will disappear from active calculations, while the audit trail is preserved. Continue?`))return;
+ await removeDuplicateRecord(removeKind,removeKey);
+ await loadAll();
+ if(editAfter){
+   if(keepKind==='manual')startEditManual(keepKey);else startEditPlan(keepKey);
+   $('duplicateToolMsg').textContent='Redundant duplicate removed. The retained record is now open for editing.';
+ }else{
+   $('duplicateToolMsg').textContent='Exact duplicate resolved: one record kept, one redundant record removed with audit history preserved.';
+   renderLeaveIntegrity();
+ }
 }
 
 
 function safeDuplicateGroups(){
  const entries=integrityEntries(),groups=new Map();
  for(const e of entries){
-   const sig=exactIntegritySig(e),k=e.kind+'|'+sig;
-   if(!groups.has(k))groups.set(k,[]);
-   groups.get(k).push(e);
+   const sig=exactIntegritySig(e);
+   if(!groups.has(sig))groups.set(sig,[]);
+   groups.get(sig).push(e);
  }
  return [...groups.values()].filter(g=>g.length>1);
 }
 async function removeSafeExactDuplicates(){
  const groups=safeDuplicateGroups();
- if(!groups.length){$('duplicateToolMsg').textContent='No safe same-kind exact duplicates found.';return}
- const removable=[];
+ if(!groups.length){$('duplicateToolMsg').textContent='No exact duplicate groups found.';return}
+ const targets=[];
  for(const g of groups){
-   // Keep one record. Only whole-record duplicates of the same storage kind are bulk-cleaned.
-   // For plans, avoid deleting a plan solely because one expanded date duplicates another plan:
-   // require all duplicate candidates to have the same record id grouping signature at the plan level.
-   if(g[0].kind==='manual'){
-     for(let i=1;i<g.length;i++)removable.push(g[i]);
-   }else{
-     const byId=[...new Map(g.map(x=>[x.id,x])).values()];
-     if(byId.length>1){
-       // Verify the full plan content is substantively the same before bulk archive.
-       const planSig=id=>{
-         const p=plans[id];if(!p)return'';
-         return [p.code,p.type,String(p.leaveCategory||''),Number(p.leaveUnits||0),Number(p.from||0),Number(p.to||0),planDates(p).slice().sort().join(',')].join('|')
-       };
-       const buckets=new Map();
-       for(const e of byId){const ps=planSig(e.id);if(!buckets.has(ps))buckets.set(ps,[]);buckets.get(ps).push(e)}
-       for(const arr of buckets.values())if(arr.length>1)for(let i=1;i<arr.length;i++)removable.push(arr[i]);
-     }
+   const keep=g.find(x=>x.kind==='plan')||g[0];
+   const keepKey=keep.kind+'|'+keep.id;
+   const seen=new Set([keepKey]);
+   for(const e of g){
+     const k=e.kind+'|'+e.id;
+     if(seen.has(k))continue;
+     seen.add(k);targets.push(e);
    }
  }
- // Dedupe removal targets by kind/id.
- const targets=[...new Map(removable.map(x=>[x.kind+'|'+x.id,x])).values()];
- if(!targets.length){$('duplicateToolMsg').textContent='Duplicates exist, but none qualify for safe bulk removal. Review them individually.';return}
- if(!confirm(`SAFE DUPLICATE REMOVER\n\n${targets.length} redundant exact record${targets.length===1?'':'s'} can be archived while one original is kept in each group.\n\nCross-source and contradictory overlaps will NOT be removed.\n\nContinue to preview confirmation?`))return;
- const names=targets.slice(0,8).map(x=>`${teacherByCode(x.code)?.name||x.code} · ${displayDate(x.date)} · ${x.label}`).join('\n');
- if(!confirm(`FINAL CONFIRMATION\n\nArchive ${targets.length} safe exact duplicate record${targets.length===1?'':'s'}?\n\n${names}${targets.length>8?`\n…and ${targets.length-8} more`:''}\n\nAn audit trail will be kept.`))return;
+ const unique=[...new Map(targets.map(x=>[x.kind+'|'+x.id,x])).values()];
+ if(!unique.length){$('duplicateToolMsg').textContent='Duplicate instances were found, but no redundant stored record can be removed safely.';return}
+ const preview=groups.slice(0,8).map(g=>{
+   const t=teacherByCode(g[0].code)?.name||g[0].code;
+   return `${t} · ${displayDate(g[0].date)} · ${g[0].label} · ${g.length} copies`;
+ }).join('\n');
+ if(!confirm(`SAFE EXACT DUPLICATE REMOVER\n\n${groups.length} exact duplicate group${groups.length===1?'':'s'} found. ${unique.length} redundant stored record${unique.length===1?'':'s'} will be removed while one canonical record is retained in each group.\n\n${preview}${groups.length>8?`\n…and ${groups.length-8} more groups`:''}\n\nContradictory/overlapping non-identical records will NOT be removed. Continue?`))return;
+ if(!confirm(`FINAL CONFIRMATION\n\nRemove ${unique.length} redundant exact duplicate record${unique.length===1?'':'s'} from active leave calculations?\n\nAudit history will be preserved.`))return;
  let done=0;
- for(const x of targets){
-   if(x.kind==='manual')await archiveManual(x.key,true);else await archivePlan(x.key,true);
-   done++;
- }
+ for(const e of unique){await removeDuplicateRecord(e.kind,e.key);done++}
  await loadAll();
- $('duplicateToolMsg').textContent=`Removed ${done} safe exact duplicate record${done===1?'':'s'}; one original was retained in each group.`;
+ $('duplicateToolMsg').textContent=`Resolved ${groups.length} exact duplicate group${groups.length===1?'':'s'}; removed ${done} redundant record${done===1?'':'s'} and retained one canonical record per group.`;
 }
 
 function proposedIntegrity(rows,code){
@@ -905,7 +933,7 @@ async function archiveManual(key,skipFirstConfirm=false){
  if(!skipFirstConfirm&&!confirm(`ARCHIVE DAILY APPROVED STATUS\n\n${tt.name}\n${statusText(m)} · ${displayDate(m._date)}\n\nIt will be removed from active leave/proxy calculations but preserved in the audit. Continue?`))return;
  const past=await hasPublishedPast([m._date]);if(past.length&&!confirm(`A published proxy exists on ${displayDate(m._date)}. Archiving will NOT rewrite that historical proxy.\n\nContinue?`))return;
  await removeManualSource(m);manualRecords=manualRecords.filter(x=>manualKey(x)!==key);
- const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived daily approved status',teacherCode:m.code,teacherName:tt.name,reason:skipFirstConfirm?'Archived after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:m};
+ const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived daily approved status',teacherCode:m.code,teacherName:tt.name,reason:skipFirstConfirm?'Removed as redundant duplicate after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:m};
  await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});renderAll();clearEditor();
 }
 async function archivePlan(id,skipFirstConfirm=false){
@@ -914,7 +942,7 @@ async function archivePlan(id,skipFirstConfirm=false){
  const past=await hasPublishedPast(planDates(p));if(past.length&&!confirm(`A published proxy exists on ${past.map(displayDate).join(', ')}. Archiving will NOT rewrite that historical proxy.\n\nContinue?`))return;
  const newMap={...plans};delete newMap[id];await setDoc(doc(db,'dailyRecords','__leavePlans'),{date:'__leavePlans',dayName:'Scheduled Leave / Status Plans',plans:newMap,updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:false});
  try{await deleteDoc(doc(db,'approvedStatusPlans',id))}catch(e){}try{await removePersonalProjection(p)}catch(e){}
- plans=newMap;const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived approved leave',teacherCode:p.code,teacherName:t.name,reason:skipFirstConfirm?'Archived after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:p};
+ plans=newMap;const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived approved leave',teacherCode:p.code,teacherName:t.name,reason:skipFirstConfirm?'Removed as redundant duplicate after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:p};
  await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});renderAll();clearEditor();
 }
 
@@ -929,7 +957,9 @@ $('removeSafeDuplicatesBtn').onclick=removeSafeExactDuplicates;
 $('previewVlBulkBtn').onclick=renderVlBulkPreview;
 $('applyVlBulkBtn').onclick=applyVlBulk;
 $('vlBulkMonth').onchange=renderVlBulkPreview;
-$('vlBulkUnits').oninput=renderVlBulkPreview;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
+$('vlBulkUnits').oninput=renderVlBulkPreview;
+$('vlBulkFrom').onchange=renderVlBulkPreview;
+$('vlBulkTo').onchange=renderVlBulkPreview;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
 ['filterTeacher','filterType'].forEach(id=>$(id).onchange=renderRecords);$('filterFrom').onblur=()=>{normaliseDateInput($('filterFrom'));renderRecords()};$('filterSearch').oninput=renderRecords;
 
 onAuthStateChanged(auth,async u=>{
