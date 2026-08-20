@@ -129,7 +129,7 @@ body.quick-mode .wrap{max-width:none}
 
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '64.5';
+  const CURRENT_APP_VERSION = '65.0';
   try{
     const u = new URL(window.location.href);
     if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
@@ -142,7 +142,7 @@ body.quick-mode .wrap{max-width:none}
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v64.5</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=64.5">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=64.5">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v65.0</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=65.0">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=65.0">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
@@ -186,7 +186,11 @@ body.quick-mode .wrap{max-width:none}
     <div><label>From date (DD/MM/YYYY)</label><input id="filterFrom" class="dateInput" placeholder="DD/MM/YYYY" inputmode="numeric"></div>
     <div><label>Search</label><input id="filterSearch" placeholder="Teacher, remarks, source…"></div>
   </div>
-  <div id="recordList" style="margin-top:12px"></div>
+  <div class="actions" style="margin-top:8px">
+  <button id="loadDailyHistoryBtn">Load Daily Approved Status History</button>
+  <span id="dailyHistoryLoadMsg" class="small">Scheduled/approved plans are available immediately. Daily-status history is loaded only when needed.</span>
+</div>
+<div id="recordList" style="margin-top:12px"></div>
 <div class="actions" style="justify-content:center;margin-top:10px">
   <button id="loadMoreRecordsBtn" class="hide">Load More Leave Records</button>
 </div>
@@ -389,17 +393,15 @@ async function loadAll(){
  manualRecords=[];viewerEmails=[];audit=[];
  coreLoaded=true;
  populateSelectors();renderAll();
- // Do not block the screen on secondary/history collections.
- loadSecondaryData().catch(e=>console.warn('Deferred leave data:',e));
+ // Keep startup light. Daily-status history, viewer mapping and audit are loaded only when explicitly needed.
  syncLeaveControl().catch(e=>console.warn('Leave control sync:',e));
 }
 async function loadSecondaryData(force=false){
  if(secondaryLoaded&&!force)return;
  const results=await Promise.allSettled([
-   getDocs(collection(db,'dailyRecords')),
-   getDocs(collection(db,'viewerEmails'))
+   getDocs(collection(db,'dailyRecords'))
  ]);
- const [drR,veR]=results;
+ const [drR]=results;
  manualRecords=[];
  if(drR.status==='fulfilled')drR.value.forEach(d=>{
    if(d.id==='__leavePlans')return;
@@ -408,10 +410,9 @@ async function loadSecondaryData(force=false){
      if(x&&TYPES.has(String(x.type||'')))manualRecords.push({...x,_kind:'manual',_date:date,_docId:d.id,_index:i})
    })
  });
- viewerEmails=[];
- if(veR.status==='fulfilled')veR.value.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
  secondaryLoaded=true;
  renderRecords();
+ if($('dailyHistoryLoadMsg'))$('dailyHistoryLoadMsg').textContent=`Daily approved status history loaded: ${manualRecords.length} status record${manualRecords.length===1?'':'s'}.`;
 }
 async function normaliseLegacyStates(){
  const missing=legacy.filter(x=>!x.resolutionStatus);if(!missing.length)return;
@@ -427,7 +428,14 @@ async function syncLeaveControl(){
  if(visible&&!wasVisible)await syncMyAreaHistories();
  return visible;
 }
+async function ensureViewerEmailsLoaded(){
+ if(viewerEmails.length)return;
+ const qs=await getDocs(collection(db,'viewerEmails'));
+ viewerEmails=[];qs.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
+}
+
 async function syncMyAreaHistories(){
+ await ensureViewerEmailsLoaded();
  const btn=$('syncMyAreaBtn');if(btn)btn.disabled=true;if($('syncMyAreaMsg'))$('syncMyAreaMsg').textContent='Syncing approved leave to My Area…';
  try{
   const ops=[],unlinked=new Set();
@@ -578,7 +586,7 @@ async function correctLegacyExpectedUnits(id){
  x.originalUnits=x.originalUnits??current;x.units=n;x.expectedUnitsCorrected=true;x.expectedUnitsCorrectionReason=why.trim();
  if(editorState.pendingId===id){editorState.expectedUnits=n;updateReconcile();updateExpectedCorrectionButton()}
  await writeLeaveAudit('Corrected legacy expected leave units',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,why.trim(),{legacyId:id,beforeUnits:current,afterUnits:n});
- await syncLeaveControl();renderAll();
+ await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 async function deleteErroneousLegacyCard(id){
  const x=legacy.find(a=>a.id===id);if(!x)return;
@@ -597,7 +605,7 @@ async function deleteErroneousLegacyCard(id){
  x.active=false;x.resolutionStatus='deleted-error';x.deletedAsErrorReason=why.trim();
  if(editorState.pendingId===id)clearEditor();
  await writeLeaveAudit('Deleted erroneous legacy leave card',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,why.trim(),{legacyId:id,before:x});
- await syncLeaveControl();renderAll();
+ await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 
 
@@ -637,7 +645,7 @@ async function applyVlBulk(){
    Object.assign(x,{units:standard,vlFromDate:range.from,vlToDate:range.to,vlHasVerifiedRange:true,standardVlApplied:true});changed++;
    await writeLeaveAudit('Applied standard VL',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,`Standard ${month} VL: ${displayDate(range.from)}–${displayDate(range.to)}, ${standard} units.`,{legacyId:x.id,before,after:{units:standard,vlFromDate:range.from,vlToDate:range.to}});
  }
- await syncLeaveControl();renderAll();
+ await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
  $('vlBulkMsg').className='status ok';$('vlBulkMsg').textContent=`Standard VL applied to ${changed} non-exception record${changed===1?'':'s'} for ${displayDate(range.from)}–${displayDate(range.to)}.`;
 }
 async function editVlException(id){
@@ -664,7 +672,7 @@ async function editVlException(id){
  },{merge:true});
  Object.assign(x,{units:n,vlFromDate:fromIso,vlToDate:toIso,vlHasVerifiedRange:true,vlException:true,vlExceptionReason:reason.trim()});
  await writeLeaveAudit('Edited VL exception',x.teacherCode,x.teacherName||teacherByCode(x.teacherCode)?.name,reason.trim(),{legacyId:id,before,after:{units:n,vlFromDate:fromIso,vlToDate:toIso}});
- await syncLeaveControl();renderAll();
+ await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 
 
@@ -1029,11 +1037,11 @@ async function finaliseAccounting(id){
  if(!why||why.trim().length<5)return;if(!confirm('This removes the item from Pending Resolutions. It remains in Legacy Accounting and can be reopened later.\n\nProceed?'))return;
  await setDoc(doc(db,'legacyLeaveAccounting',id),{resolutionStatus:'final-accounting',resolutionNote:why.trim(),finalisedAt:serverTimestamp(),finalisedBy:user.uid,finalisedByEmail:user.email||'',active:true},{merge:true});x.resolutionStatus='final-accounting';x.resolutionNote=why.trim();
  const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,t=x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode,ad={action:'Finalised non-dated legacy accounting',teacherCode:x.teacherCode||'',teacherName:t,reason:why.trim(),adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),legacyId:id};
- await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});await syncLeaveControl();renderAll();
+ await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 async function reopenPending(id){
  const x=legacy.find(a=>a.id===id);if(!x)return;if(!confirm('Reopen this accounting-only item as Pending Resolution?\n\nMy Area leave history will lock again until it is resolved or re-finalised.'))return;
- await setDoc(doc(db,'legacyLeaveAccounting',id),{resolutionStatus:'pending',reopenedAt:serverTimestamp(),reopenedBy:user.uid,reopenedByEmail:user.email||'',active:true},{merge:true});x.resolutionStatus='pending';await syncLeaveControl();renderAll();
+ await setDoc(doc(db,'legacyLeaveAccounting',id),{resolutionStatus:'pending',reopenedAt:serverTimestamp(),reopenedBy:user.uid,reopenedByEmail:user.email||'',active:true},{merge:true});x.resolutionStatus='pending';await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 async function archiveManual(key,skipFirstConfirm=false){
  const m=manualRecords.find(x=>manualKey(x)===key);if(!m)return;const tt=teacherByCode(m.code)||{name:m.code};
@@ -1060,12 +1068,17 @@ $('addRangeRowBtn').onclick=()=>addRangeRow();
 $('saveBtn').onclick=saveEditor;
 $('correctExpectedBtn').onclick=()=>{if(editorState.pendingId)correctLegacyExpectedUnits(editorState.pendingId)};
 $('runIntegrityBtn').onclick=async()=>{
- if(!secondaryLoaded)await loadSecondaryData();
+ if(!secondaryLoaded){$('duplicateToolMsg').textContent='Loading daily-status history for integrity scan…';await loadSecondaryData();}
  renderLeaveIntegrity();$('duplicateToolMsg').textContent='Scan refreshed.';
 };
 $('removeSafeDuplicatesBtn').onclick=removeSafeExactDuplicates;
 if($('loadMoreRecordsBtn'))$('loadMoreRecordsBtn').onclick=()=>{recordRenderLimit+=40;renderRecords()};
 if($('loadAuditBtn'))$('loadAuditBtn').onclick=loadAuditHistory;
+if($('loadDailyHistoryBtn'))$('loadDailyHistoryBtn').onclick=async()=>{
+ const b=$('loadDailyHistoryBtn');b.disabled=true;b.textContent='Loading Daily History…';
+ try{await loadSecondaryData(true)}catch(e){$('dailyHistoryLoadMsg').textContent='Could not load daily history: '+(e.message||e)}
+ finally{b.disabled=false;b.textContent='Load / Refresh Daily Approved Status History'}
+};
 $('clearBulkDeleteBtn').onclick=()=>{bulkDeleteSelection.clear();renderAll()};
 $('bulkDeleteBtn').onclick=bulkDeleteErroneous;
 $('previewVlBulkBtn').onclick=renderVlBulkPreview;
