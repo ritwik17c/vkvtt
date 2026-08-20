@@ -28,7 +28,7 @@
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v64.5</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v65.0</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Administrator Verification</h2><div id="gateMsg" class="status">Checking Admin access…</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button id="retryAdminBtn" style="display:none">Retry Admin Check</button></div></div>
 <div id="app">
@@ -126,7 +126,7 @@ function displayDate(k){const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/)
 function displayDateTime(ms){const d=new Date(Number(ms)||0);if(isNaN(d))return'';const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function displayDatesInText(x){return String(x||'').replace(/(\d{4})-(\d{2})-(\d{2})/g,(_,y,m,d)=>`${d}/${m}/${y}`)}
 function msg(id,text,kind='ok'){const el=$(id);el.style.display='block';el.className='status '+kind;el.innerHTML=text}
-function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=64.5'}
+function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=65.0'}
 $('homeBtn').onclick=goTimetableHome;
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
@@ -134,31 +134,47 @@ let adminCheckToken=0;
 async function verifyAndOpenAdmin(user){
  const token=++adminCheckToken;
  $('retryAdminBtn').style.display='none';$('gateMsg').className='status';$('gateMsg').textContent='Checking Admin access…';
- const slowTimer=setTimeout(()=>{if(token===adminCheckToken){$('gateMsg').className='status warn';$('gateMsg').textContent='Admin verification is taking longer than expected. You may wait or retry.';$('retryAdminBtn').style.display='inline-block'}},3500);
+ const slowTimer=setTimeout(()=>{if(token===adminCheckToken){$('gateMsg').className='status warn';$('gateMsg').textContent='Admin verification is taking longer than expected. You may wait or retry.';$('retryAdminBtn').style.display='inline-block'}},2500);
  try{
-   const [ps,snap]=await Promise.all([getDoc(doc(db,'authorizedUsers',user.uid)),getDoc(doc(db,'master','current'))]);
+   const ps=await getDoc(doc(db,'authorizedUsers',user.uid));
    if(token!==adminCheckToken)return;
    const adminEmail=String(user.email||'').trim().toLowerCase();
    if(!ps.exists()||ps.data().active!==true||ps.data().role!=='admin'||adminEmail!=='ritwik.sir3@gmail.com'){$('gateMsg').className='status warn';$('gateMsg').textContent='Admin Dashboard access is not available for this account.';return}
-   if(!snap.exists())throw new Error('Master timetable is not available.');
-   profile=ps.data();masterDoc=snap.data();master=structuredClone(masterDoc.data||masterDoc);
-   if(!Array.isArray(master.records)||!Array.isArray(master.teachers)||!Array.isArray(master.classes))throw new Error('Master timetable structure is incomplete.');
-   if(!Array.isArray(master.temporaryReplacements))master.temporaryReplacements=[];
-   $('gate').style.display='none';$('app').style.display='block';$('app').style.opacity='1';$('app').style.pointerEvents='auto';$('app').removeAttribute('aria-busy');renderAll();showDashboard();
+   profile=ps.data();
+   $('gate').style.display='none';$('app').style.display='block';$('app').style.opacity='1';$('app').style.pointerEvents='auto';$('app').removeAttribute('aria-busy');
+   showDashboard();
+   // Preload master only when the browser is idle. Do not render heavy tables yet.
+   const preload=()=>ensureMasterLoaded(false).catch(()=>{});
+   if('requestIdleCallback' in window)requestIdleCallback(preload,{timeout:2500});else setTimeout(preload,1200);
  }catch(e){if(token!==adminCheckToken)return;$('gateMsg').className='status error';$('gateMsg').textContent='Could not open Admin Dashboard: '+(e.message||e);$('retryAdminBtn').style.display='inline-block'}
  finally{clearTimeout(slowTimer)}
 }
+
 onAuthStateChanged(auth,user=>{
  currentUser=user;
  if(!user){$('gateMsg').textContent='Sign in with the Admin Google account.';$('signInBtn').style.display='inline-block';$('retryAdminBtn').style.display='none';return}
  $('signInBtn').style.display='none';verifyAndOpenAdmin(user);
 });
 $('retryAdminBtn').onclick=()=>{if(currentUser)verifyAndOpenAdmin(currentUser)};
-async function loadMaster(){
- const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())throw new Error('Master timetable is not available.');
- masterDoc=snap.data();master=structuredClone(masterDoc.data||masterDoc);if(!Array.isArray(master.records)||!Array.isArray(master.teachers)||!Array.isArray(master.classes))throw new Error('Master timetable structure is incomplete.');
- if(!Array.isArray(master.temporaryReplacements))master.temporaryReplacements=[];renderAll();
+let masterLoadingPromise=null,masterRendered=false;
+async function ensureMasterLoaded(render=false){
+ if(master&&Array.isArray(master.records)){
+   if(render&&!masterRendered){renderAll();masterRendered=true}
+   return master;
+ }
+ if(!masterLoadingPromise)masterLoadingPromise=(async()=>{
+   const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())throw new Error('Master timetable is not available.');
+   masterDoc=snap.data();master=structuredClone(masterDoc.data||masterDoc);
+   if(!Array.isArray(master.records)||!Array.isArray(master.teachers)||!Array.isArray(master.classes))throw new Error('Master timetable structure is incomplete.');
+   if(!Array.isArray(master.temporaryReplacements))master.temporaryReplacements=[];
+   return master;
+ })().finally(()=>{masterLoadingPromise=null});
+ await masterLoadingPromise;
+ if(render&&!masterRendered){renderAll();masterRendered=true}
+ return master;
 }
+async function loadMaster(){master=null;masterRendered=false;return ensureMasterLoaded(true)}
+
 function activeSchedule(){const id=master.activeScheduleProfileId||'normal',profiles=master.scheduleProfiles||{};return profiles[id]||profiles.normal||{name:'Normal Schedule'}}
 function activeReplacements(date=todayKey()){return master.temporaryReplacements.filter(r=>r&&r.active!==false&&r.startDate&&r.endDate&&date>=r.startDate&&date<=r.endDate)}
 function renderAll(){
@@ -231,11 +247,17 @@ function changeLabel(c){const map={slot_edit:'Master timetable slot edited',repl
 function renderHistory(){const h=masterDoc.changeHistory||[];$('historyList').innerHTML=h.length?h.map(c=>`<div class="historyItem"><b>${safe(changeLabel(c))}</b><div class="when">${safe(displayDateTime(c.atMs||0))} · ${safe(c.byName||'Admin')}</div>${c.summary?'<div>'+safe(displayDatesInText(c.summary))+'</div>':''}${c.class?'<div>'+safe(c.class)+' · '+safe(c.day||'')+' · P'+safe(c.period||'')+'</div>':''}${c.before?.entry?'<div><b>Before:</b> '+safe(c.before.entry)+'</div>':''}${c.after?.entry?'<div><b>After:</b> '+safe(c.after.entry)+'</div>':''}</div>`).join(''):'<div class="empty">No administrative changes have been recorded through this dashboard yet.</div>'}
 function renderOverview(){const session=masterDoc.session||'2026-27';$('overviewBox').innerHTML='<b>Session:</b> '+safe(session)+'<br><b>Permanent teachers:</b> '+master.teachers.length+'<br><b>Temporary replacement records:</b> '+master.temporaryReplacements.length+'<br><b>Active temporary replacements today:</b> '+activeReplacements().length+'<br><b>Classes / Sections:</b> '+master.classes.length+'<br><b>Timetable entries:</b> '+master.records.length+'<br><b>Active schedule:</b> '+safe(activeSchedule().name||'Normal Schedule')}
 function showDashboard(){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('dashboardHome').style.display='block';window.scrollTo({top:0,behavior:'smooth'})}
-function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const el=$(id);if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'})}}
+async function showPanel(id){
+ try{
+   await ensureMasterLoaded(true);
+   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+   const el=$(id);if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'})}
+ }catch(e){alert('Could not load Master Timetable data: '+(e.message||e))}
+}
 document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>showPanel(el.dataset.open));document.querySelectorAll('[data-back-dashboard]').forEach(el=>el.onclick=showDashboard);
-$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=64.5';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=64.5';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=64.5';$('openUsers').onclick=()=>location.href='admin-users.html?v=64.5';$('openImport').onclick=()=>location.href='admin-import.html?v=64.5';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=64.5';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=64.5';$('openExport').onclick=()=>location.href='admin-export.html?v=64.5';
+$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=65.0';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=65.0';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=65.0';$('openUsers').onclick=()=>location.href='admin-users.html?v=65.0';$('openImport').onclick=()=>location.href='admin-import.html?v=65.0';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=65.0';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=65.0';$('openExport').onclick=()=>location.href='admin-export.html?v=65.0';
 $('downloadBackup').onclick=()=>{const blob=new Blob([JSON.stringify(master,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='VKV_Nalbari_Master_Timetable_Backup_'+todayKey()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 </script>
-<script src="v64-dashboard-addon.js?v=64.5"></script>
+<script src="v64-dashboard-addon.js?v=65.0"></script>
 </body>
 </html>

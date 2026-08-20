@@ -28,7 +28,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 </style>
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '64.5';
+  const CURRENT_APP_VERSION = '65.0';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -41,7 +41,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 
 </head>
 <body>
-<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v64.5</div></div><a class="btn headerBack" href="admin-dashboard.html?v=64.5">← Admin Dashboard</a></div></header>
+<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v65.0</div></div><a class="btn headerBack" href="admin-dashboard.html?v=65.0">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">Admin Dashboard → User Access & Roles</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToDashboard">← Admin Dashboard</button></div></div>
 
@@ -180,7 +180,7 @@ async function verifyAdmin(user){
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 
 $('backToDashboard').onclick=()=>{
- location.href='admin-dashboard.html?v=64.5';
+ location.href='admin-dashboard.html?v=65.0';
 };
 
 onAuthStateChanged(auth,verifyAdmin);

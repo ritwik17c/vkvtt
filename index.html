@@ -181,7 +181,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </script>
 
 </head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v64.5</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="googleSwitchAccount">Use another Google account</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -409,7 +409,14 @@ function teacherCodesForRecord(r){
  return out;
 }
 function sanitiseMasterRecord(r){return {...r,codes:teacherCodesForRecord(r)}}
-function sanitisedMasterRecords(){return ((DATA&&DATA.records)||[]).map(sanitiseMasterRecord)}
+let __sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};
+function sanitisedMasterRecords(){
+ const records=(DATA&&DATA.records)||[],teachers=(DATA&&DATA.teachers)||[];
+ if(__sanitisedRecordsCache.recordsRef===records&&__sanitisedRecordsCache.teachersRef===teachers)return __sanitisedRecordsCache.value;
+ const value=records.map(sanitiseMasterRecord);
+ __sanitisedRecordsCache={recordsRef:records,teachersRef:teachers,value};
+ return value;
+}
 function temporaryReplacementRecords(){return Array.isArray(DATA&&DATA.temporaryReplacements)?DATA.temporaryReplacements:[]}
 function replacementAppliesToDate(r,date=todayKey()){
  if(!r||r.active===false||!r.originalCode||!r.tempCode||!date)return false;
@@ -459,7 +466,16 @@ function applyTemporaryReplacementsToRecord(r,date=todayKey()){
  }
  return changed?{...r,codes:[...new Set(newCodes)],entry,_temporaryReplacement:true}:{...r,codes};
 }
-function operationalRecords(date=todayKey()){return sanitisedMasterRecords().filter(isOperationalRecord).map(r=>applyTemporaryReplacementsToRecord(r,date))}
+let __operationalRecordsCache={key:'',value:[]};
+function operationalRecords(date=todayKey()){
+ const reps=(DATA&&Array.isArray(DATA.temporaryReplacements)?DATA.temporaryReplacements:[]);
+ const repSig=reps.map(r=>[r.id,r.active,r.originalCode,r.tempCode,r.startDate,r.endDate].join(':')).join('|');
+ const key=[date,(DATA&&DATA.activeScheduleProfileId)||'normal',repSig,sanitisedMasterRecords().length].join('||');
+ if(__operationalRecordsCache.key===key)return __operationalRecordsCache.value;
+ const value=sanitisedMasterRecords().filter(isOperationalRecord).map(r=>applyTemporaryReplacementsToRecord(r,date));
+ __operationalRecordsCache={key,value};
+ return value;
+}
 function activeSchedulePeriods(){
  const set=new Set(),prof=activeScheduleProfile();
  for(const c of ((DATA&&DATA.classes)||[]))classActivePeriods(c).forEach(p=>set.add(Number(p)));
@@ -1307,12 +1323,12 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=64.5','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=64.5';
+ const w=window.open('admin-dashboard.html?v=65.0','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=65.0';
 }
 function openApprovedLeaveRegister(){
- const w=window.open('admin-leave.html?v=64.5','vkvApprovedLeave');
- if(!w)location.href='admin-leave.html?v=64.5';
+ const w=window.open('admin-leave.html?v=65.0','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=65.0';
 }
 window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
@@ -1867,7 +1883,7 @@ window.finaliseProxyCloud=async function(snapshot){
  }
 };
 
-async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;if(!Array.isArray(window.DATA.temporaryReplacements))window.DATA.temporaryReplacements=[];populateMasterSelectors();if(window.applyActiveScheduleProfile)window.applyActiveScheduleProfile();return true}
+async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;if(!Array.isArray(window.DATA.temporaryReplacements))window.DATA.temporaryReplacements=[];__sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};__operationalRecordsCache={key:'',value:[]};populateMasterSelectors();if(window.applyActiveScheduleProfile)window.applyActiveScheduleProfile();return true}
 async function cloudHistoryRender(){
  const inp=document.getElementById('historyDate'),out=document.getElementById('historyResult');if(!inp.value)inp.value=todayKey();
  try{
@@ -2149,11 +2165,12 @@ onAuthStateChanged(auth,async user=>{
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
    if(!snap.exists()){
      showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
-     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=64.5">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=65.0">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
      return;
    }
    const masterDoc=snap.data();
    window.DATA=masterDoc.data||masterDoc;
+   __sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};__operationalRecordsCache={key:'',value:[]};
    window.DATA.teacherEmailMap=window.DATA.teacherEmailMap||{};
    if(currentProfile&&currentProfile.teacherCode&&user.email)window.DATA.teacherEmailMap[String(currentProfile.teacherCode)]=normalizedEmail(user.email);
    window.__vkvMyTeacherCode=resolveMyTeacherCode(user,currentProfile,window.DATA);
