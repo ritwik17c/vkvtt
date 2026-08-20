@@ -9,7 +9,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#263d4e;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}header{background:var(--deep);color:#fff;padding:18px 16px}.wrap{max-width:900px;margin:auto}.headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:1.45rem;margin:0}.subtitle{opacity:.92;margin-top:4px}.btn,button,input{font:inherit}.btn,button{font-weight:750;border:1px solid #b9ced9;border-radius:11px;padding:10px 13px;background:#e7f2f7;color:var(--ink);cursor:pointer;text-decoration:none}.primary{background:var(--deep);color:#fff;border-color:var(--deep)}button:disabled{opacity:.55;cursor:not-allowed}main{padding:18px 14px 60px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d0e}h2{margin:0 0 7px;color:var(--ink);font-size:1.18rem}.help{font-size:.9rem;line-height:1.55;color:var(--muted)}.box{margin:12px 0;padding:12px 13px;background:var(--bluebg);border-radius:12px;line-height:1.5}.ok{background:var(--greenbg);border:1px solid #a9d4b2;color:var(--green)}.warn{background:var(--amberbg);border:1px solid #e4c873;color:var(--amber)}.error{background:var(--redbg);border:1px solid #e5b7b7;color:var(--red)}.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}input[type=file]{padding:10px;border:1px solid #c7d5de;border-radius:10px;background:#fbfefd;max-width:100%}
 </style><script>
 (function(){
-  const CURRENT_APP_VERSION = '64.2';
+  const CURRENT_APP_VERSION = '64.3';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -21,7 +21,7 @@
 </script>
 
 </head><body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Master Timetable Import / Restore · v61.0</div></div><a class="btn" href="admin-dashboard.html?v=64.2">← Admin Dashboard</a></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Master Timetable Import / Restore · v61.0</div></div><a class="btn" href="admin-dashboard.html?v=64.3">← Admin Dashboard</a></div></header>
 <main class="wrap"><div id="status" class="box">Checking sign-in…</div><div id="tools" hidden>
 <section class="card"><h2>📥 Master Timetable Import / Restore</h2>
 <div class="box warn"><b>Master timetable only.</b> This page accepts only the private Master Timetable JSON. <b>Do not upload a leave Excel workbook here.</b> Leave history has its own separate import page.</div>
