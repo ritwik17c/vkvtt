@@ -28,7 +28,7 @@
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v64.3</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v64.4</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Administrator Verification</h2><div id="gateMsg" class="status">Checking Admin access…</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button id="retryAdminBtn" style="display:none">Retry Admin Check</button></div></div>
 <div id="app">
@@ -126,7 +126,7 @@ function displayDate(k){const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/)
 function displayDateTime(ms){const d=new Date(Number(ms)||0);if(isNaN(d))return'';const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function displayDatesInText(x){return String(x||'').replace(/(\d{4})-(\d{2})-(\d{2})/g,(_,y,m,d)=>`${d}/${m}/${y}`)}
 function msg(id,text,kind='ok'){const el=$(id);el.style.display='block';el.className='status '+kind;el.innerHTML=text}
-function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=64.3'}
+function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=64.4'}
 $('homeBtn').onclick=goTimetableHome;
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
@@ -144,7 +144,7 @@ async function verifyAndOpenAdmin(user){
    profile=ps.data();masterDoc=snap.data();master=structuredClone(masterDoc.data||masterDoc);
    if(!Array.isArray(master.records)||!Array.isArray(master.teachers)||!Array.isArray(master.classes))throw new Error('Master timetable structure is incomplete.');
    if(!Array.isArray(master.temporaryReplacements))master.temporaryReplacements=[];
-   $('gate').style.display='none';$('app').style.display='block';renderAll();showDashboard();
+   $('gate').style.display='none';$('app').style.display='block';$('app').style.opacity='1';$('app').style.pointerEvents='auto';$('app').removeAttribute('aria-busy');renderAll();showDashboard();
  }catch(e){if(token!==adminCheckToken)return;$('gateMsg').className='status error';$('gateMsg').textContent='Could not open Admin Dashboard: '+(e.message||e);$('retryAdminBtn').style.display='inline-block'}
  finally{clearTimeout(slowTimer)}
 }
@@ -233,9 +233,9 @@ function renderOverview(){const session=masterDoc.session||'2026-27';$('overview
 function showDashboard(){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('dashboardHome').style.display='block';window.scrollTo({top:0,behavior:'smooth'})}
 function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const el=$(id);if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'})}}
 document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>showPanel(el.dataset.open));document.querySelectorAll('[data-back-dashboard]').forEach(el=>el.onclick=showDashboard);
-$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=64.3';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=64.3';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=64.3';$('openUsers').onclick=()=>location.href='admin-users.html?v=64.3';$('openImport').onclick=()=>location.href='admin-import.html?v=64.3';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=64.3';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=64.3';$('openExport').onclick=()=>location.href='admin-export.html?v=64.3';
+$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=64.4';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=64.4';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=64.4';$('openUsers').onclick=()=>location.href='admin-users.html?v=64.4';$('openImport').onclick=()=>location.href='admin-import.html?v=64.4';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=64.4';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=64.4';$('openExport').onclick=()=>location.href='admin-export.html?v=64.4';
 $('downloadBackup').onclick=()=>{const blob=new Blob([JSON.stringify(master,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='VKV_Nalbari_Master_Timetable_Backup_'+todayKey()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 </script>
-<script src="v64-dashboard-addon.js?v=64.3"></script>
+<script src="v64-dashboard-addon.js?v=64.4"></script>
 </body>
 </html>
