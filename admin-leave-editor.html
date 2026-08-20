@@ -23,23 +23,22 @@ label{display:block;font-size:.82rem;color:var(--muted);margin:7px 0 5px}select,
 .cardTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.cardTitle{font-weight:850;color:var(--ink);font-size:1.02rem}.meta{font-size:.84rem;color:var(--muted);line-height:1.5;margin-top:4px}
 .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#e9f3f7;font-size:.75rem;font-weight:750;margin:2px 4px 2px 0}.pill.warn{background:#fff0c7}.pill.ok{background:#dff2e4}.pill.violet{background:#ece7f8}
 details.guide{border:1px solid #d9e5ea;border-radius:12px;background:#f9fcfd;padding:11px 13px}details.guide summary{cursor:pointer;font-weight:850;color:var(--ink)}
-.editorPanel{border:2px solid #a7c9dc;border-radius:16px;background:#f8fcfe;padding:16px;margin-top:14px}.rowHead,.dateRow{display:grid;grid-template-columns:1.15fr 1.15fr 1.15fr .75fr 1.05fr .75fr 1fr 1.7fr auto;gap:7px;align-items:end}.rowHead{font-size:.76rem;color:var(--muted);font-weight:750;padding:0 3px 4px}.dateRow{padding:9px 0;border-top:1px solid #e3edf1}.dateRow:first-of-type{border-top:0}.dateRow input,.dateRow select{padding:8px;font-size:.84rem}.rowRemove{padding:8px 10px}
+.editorPanel{border:2px solid #a7c9dc;border-radius:16px;background:#f8fcfe;padding:16px;margin-top:14px}.rangeBuilder{border:1px solid #bfd8e5;border-radius:14px;background:#f1f8fb;padding:13px;margin:12px 0}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.integrityMetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:10px 0}.integrityMetric{border:1px solid #dce7ec;border-radius:12px;padding:10px;background:#f8fbfc}.integrityMetric b{display:block;font-size:1.3rem;color:var(--deep)}.rowHead,.dateRow{display:grid;grid-template-columns:1.15fr 1.15fr 1.15fr .75fr 1.05fr .85fr .85fr 1.7fr auto;gap:7px;align-items:end}.rowHead{font-size:.76rem;color:var(--muted);font-weight:750;padding:0 3px 4px}.dateRow{padding:9px 0;border-top:1px solid #e3edf1}.dateRow:first-of-type{border-top:0}.dateRow input,.dateRow select{padding:8px;font-size:.84rem}.rowRemove{padding:8px 10px}
 .tablewrap{overflow:auto;margin-top:10px;border:1px solid #dce7ec;border-radius:12px}table{border-collapse:collapse;width:100%;min-width:850px}th,td{border-bottom:1px solid #e0e9ee;padding:9px;text-align:left;font-size:.84rem;vertical-align:top}th{background:#edf5f9;color:var(--ink)}
 .empty{padding:18px;text-align:center;color:var(--muted);background:#f7fafb;border-radius:12px}.sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.hide{display:none!important}.lock{font-weight:850}.auditItem{padding:9px 0;border-bottom:1px solid #e3edf1;font-size:.84rem}.auditItem:last-child{border-bottom:0}
-@media(max-width:980px){.grid4,.grid3,.grid2{grid-template-columns:1fr 1fr}.rowHead{display:none}.dateRow{grid-template-columns:1fr 1fr}.dateRow>div:last-child{align-self:end}}
-@media(max-width:640px){.metrics,.grid4,.grid3,.grid2,.dateRow{grid-template-columns:1fr}.headline{align-items:flex-start}}
+@media(max-width:980px){.grid4,.grid3,.grid2,.rangeGrid{grid-template-columns:1fr 1fr}.rowHead{display:none}.dateRow{grid-template-columns:1fr 1fr}.dateRow>div:last-child{align-self:end}}
+@media(max-width:640px){.metrics,.grid4,.grid3,.grid2,.rangeGrid,.dateRow{grid-template-columns:1fr}.headline{align-items:flex-start}}
 </style>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave correction, date-wise editing & audit · Cloud v61.1</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=61.1">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=61.1">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, range/date-wise editing, integrity checking & audit · Cloud v62.0</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=62.0">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=62.0">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
 <div id="app" hidden>
 <section class="card">
   <div class="sectionTitle"><div><h2>🧭 Leave Reconciliation Control</h2><div class="help">This editor is always available to the Principal/Admin. My Area leave history remains locked for staff while any parked legacy item still needs a dated resolution.</div></div><button id="refreshBtn">↻ Refresh</button></div>
-  <div id="controlStatus" class="status info">Loading reconciliation status…</div>
-  <div id="loadNotice" class="status warn hide"></div><div class="actions"><button id="syncMyAreaBtn">🔄 Sync My Area Leave Histories</button><span id="syncMyAreaMsg" class="small"></span></div>
+  <div id="controlStatus" class="status info">Loading reconciliation status…</div><div class="actions"><button id="syncMyAreaBtn">🔄 Sync My Area Leave Histories</button><span id="syncMyAreaMsg" class="small"></span></div>
   <div id="metrics" class="metrics"></div>
 </section>
 
@@ -58,6 +57,13 @@ details.guide{border:1px solid #d9e5ea;border-radius:12px;background:#f9fcfd;pad
       </div>
     </div>
   </details>
+</section>
+
+<section class="card" id="leaveIntegritySection">
+  <div class="sectionTitle"><div><h2>🛡 Leave Integrity Checker</h2><div class="help">Scans all currently loaded approved leave / OD / Special records for exact duplicates, same-date contradictions and overlapping duty periods. This checker is read-only; it never changes a record automatically.</div></div><button id="runIntegrityBtn">🔎 Run Integrity Check</button></div>
+  <div id="integritySummary" class="status info">Run the checker after the leave records finish loading.</div>
+  <div id="integrityMetrics" class="integrityMetrics"></div>
+  <div id="integrityResults"></div>
 </section>
 
 <section class="card" id="pendingSection">
@@ -83,8 +89,23 @@ details.guide{border:1px solid #d9e5ea;border-radius:12px;background:#f9fcfd;pad
     <div><label>Teacher</label><select id="editTeacher"></select></div>
     <div><label>Audit / correction reason <span style="color:#8b2d2d">*</span></label><input id="editReason" placeholder="e.g. Verified against leave application dated …"></div>
   </div>
+  <div class="rangeBuilder">
+    <div class="sectionTitle"><div><h3 style="margin:0">Date entry tools</h3><div class="help">For a continuous leave, enter a From Date and To Date and generate date rows automatically. The range includes every calendar date; remove any date that is not part of the approved leave before saving.</div></div></div>
+    <div class="rangeGrid">
+      <div><label>From Date</label><input id="rangeFrom" type="date"></div>
+      <div><label>To Date</label><input id="rangeTo" type="date"></div>
+      <div><label>Status</label><select id="rangeType"><option value="full">Full Leave</option><option value="half">Half Leave</option><option value="od">On Duty</option><option value="special">Special Assignment</option></select></div>
+      <div><label>Leave Category</label><select id="rangeCat"><option value="">—</option><option value="VL">VL</option><option value="EL">EL</option><option value="CL">CL</option><option value="SEL">SEL</option><option value="EOL">EOL</option><option value="MATERNITY">Maternity Leave</option></select></div>
+      <div><label>Units per date</label><input id="rangeUnits" type="number" min="0" step="0.5" value="1"></div>
+      <div><label>Day Part</label><select id="rangePart"><option value="full">Full day</option><option value="am">P1–P4</option><option value="pm">P5–P8</option><option value="custom">Custom periods</option></select></div>
+      <div><label>From Period</label><input id="rangePFrom" type="number" min="1" max="8"></div>
+      <div><label>To Period</label><input id="rangePTo" type="number" min="1" max="8"></div>
+      <div style="grid-column:span 4"><label>Remarks / reference</label><input id="rangeNote" placeholder="Optional common remarks / reference for the generated dates"></div>
+    </div>
+    <div class="actions"><button id="generateRangeBtn" type="button" class="green">＋ Generate Date Rows</button><span id="rangeMsg" class="small"></span></div>
+  </div>
   <h3>Date-wise leave allocation</h3>
-  <div class="rowHead"><div>Date</div><div>Status</div><div>Leave category</div><div>Units</div><div>Day part</div><div>From P.</div><div>To P.</div><div>Remarks / reference</div><div></div></div>
+  <div class="rowHead"><div>Date</div><div>Status</div><div>Leave category</div><div>Units</div><div>Day part</div><div>From Period</div><div>To Period</div><div>Remarks / reference</div><div></div></div>
   <div id="dateRows"></div>
   <div class="actions"><button id="addRowBtn">＋ Add date row</button><span id="reconcileText" class="pill"></span></div>
   <div class="actions"><button id="saveBtn" class="primary">💾 Save Approved Record</button><button id="archiveBtn" class="danger hide">Archive original record</button></div>
@@ -111,7 +132,7 @@ import{getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,serverTimesta
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(cfg),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
 const $=id=>document.getElementById(id),safe=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[],loadWarnings=[],legacyLoadError='',editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
+let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[],editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
 const TYPES=new Set(['full','half','od','special']);
 const CATS=['VL','EL','CL','SEL','EOL','MATERNITY'];
 const catLabel=x=>String(x||'').toUpperCase()==='MATERNITY'?'Maternity Leave':String(x||'').toUpperCase();
@@ -145,23 +166,24 @@ async function verify(u){
  master=m.data().data||m.data();teachers=(master.teachers||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 async function loadAll(){
- loadWarnings=[];legacyLoadError='';
- plans={};manualRecords=[];legacy=[];viewerEmails=[];audit=[];
- // v61.1 deliberately loads each source independently. One denied optional collection
- // must never leave the Pending Legacy section stuck on “Loading…”.
- try{const lp=await getDoc(doc(db,'dailyRecords','__leavePlans'));plans=lp.exists()?(lp.data().plans||{}):{}}catch(e){loadWarnings.push('Scheduled leave plans could not be read: '+(e.message||e))}
- try{const dr=await getDocs(collection(db,'dailyRecords'));dr.forEach(d=>{if(d.id==='__leavePlans')return;const data=d.data()||{},date=data.date||d.id;(data.statuses||[]).forEach((st,i)=>{if(st&&TYPES.has(String(st.type||'')))manualRecords.push({...st,_kind:'manual',_date:date,_docId:d.id,_index:i})})})}catch(e){loadWarnings.push('Daily approved-status records could not be read: '+(e.message||e))}
- try{const la=await getDocs(collection(db,'legacyLeaveAccounting'));la.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}))}catch(e){legacyLoadError='Legacy leave accounting could not be read: '+(e.message||e);loadWarnings.push(legacyLoadError)}
- try{const ve=await getDocs(collection(db,'viewerEmails'));ve.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}))}catch(e){loadWarnings.push('Teacher email links could not be read: '+(e.message||e))}
- try{const au=await getDocs(collection(db,'leaveAudit'));au.forEach(d=>audit.push({id:d.id,...(d.data()||{})}))}catch(e){loadWarnings.push('Leave audit history could not be read. This usually means the v61 Firestore rules have not yet been published. '+(e.message||e))}
- try{await normaliseLegacyStates()}catch(e){loadWarnings.push('Legacy state normalisation could not be saved: '+(e.message||e))}
- try{await syncLeaveControl()}catch(e){loadWarnings.push('Leave publication control could not be updated. Publish firestore.rules.v61.1.txt before final reconciliation. '+(e.message||e))}
- populateSelectors();renderAll();renderLoadNotice();
-}
-function renderLoadNotice(){
- const el=$('loadNotice');if(!el)return;
- if(!loadWarnings.length){el.classList.add('hide');el.textContent='';return}
- el.className='status warn';el.innerHTML='<b>Some leave data services need attention.</b><br>'+loadWarnings.map(safe).join('<br>');
+ const results=await Promise.allSettled([
+   getDoc(doc(db,'dailyRecords','__leavePlans')),
+   getDocs(collection(db,'dailyRecords')),
+   getDocs(collection(db,'legacyLeaveAccounting')),
+   getDocs(collection(db,'viewerEmails')),
+   getDocs(collection(db,'leaveAudit'))
+ ]);
+ const [lpR,drR,laR,veR,auR]=results;
+ if(laR.status!=='fulfilled')throw new Error('Pending legacy leave records could not load. '+(laR.reason?.message||laR.reason||'Check Firestore rules.'));
+ const lp=lpR.status==='fulfilled'?lpR.value:null,dr=drR.status==='fulfilled'?drR.value:null,la=laR.value,ve=veR.status==='fulfilled'?veR.value:null,au=auR.status==='fulfilled'?auR.value:null;
+ plans=lp&&lp.exists()?(lp.data().plans||{}):{};
+ manualRecords=[];if(dr)dr.forEach(d=>{if(d.id==='__leavePlans')return;const data=d.data()||{},date=data.date||d.id;(data.statuses||[]).forEach((s,i)=>{if(s&&TYPES.has(String(s.type||'')))manualRecords.push({...s,_kind:'manual',_date:date,_docId:d.id,_index:i})})});
+ legacy=[];la.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}));
+ viewerEmails=[];if(ve)ve.forEach(d=>viewerEmails.push({email:d.id,...(d.data()||{})}));
+ audit=[];if(au)au.forEach(d=>audit.push({id:d.id,...(d.data()||{})}));
+ await normaliseLegacyStates();
+ await syncLeaveControl();
+ populateSelectors();renderAll();
 }
 async function normaliseLegacyStates(){
  const missing=legacy.filter(x=>!x.resolutionStatus);if(!missing.length)return;
@@ -207,7 +229,6 @@ function renderControl(){
  $('pendingBadge').className='pill '+(p?'warn':'ok');
 }
 function renderPending(){
- if(legacyLoadError){$('pendingBadge').textContent='Load failed';$('pendingBadge').className='pill warn';$('pendingList').innerHTML=`<div class="status error"><b>Pending legacy items could not be loaded.</b><br>${safe(legacyLoadError)}<br><br>Check/publish the supplied Firestore rules, then press Refresh.</div>`;return}
  const rows=pendingItems().sort((a,b)=>Number(a.rowNum||999)-Number(b.rowNum||999)||String(a.teacherName||'').localeCompare(String(b.teacherName||'')));
  if(!rows.length){$('pendingList').innerHTML='<div class="empty"><b>No pending leave resolution remains.</b><br>My Area leave history can be visible. This editor remains available for future corrections.</div>';return}
  $('pendingList').innerHTML=rows.map(x=>`<div class="pendingCard">
@@ -248,9 +269,9 @@ function renderRecords(){
 }
 function renderAudit(){
  const rows=audit.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0)).slice(0,30);
- $('auditList').innerHTML=rows.length?rows.map(x=>`<div class="auditItem"><b>${safe(x.action||'Leave edit')}</b> · ${safe(x.teacherName||x.teacherCode||'')} ${x.teacherCode?`(${safe(x.teacherCode)})`:''}<br><span class="small">${safe(x.reason||'No reason recorded')} · ${safe(x.adminEmail||'Admin')} · ${safe(x.whenText||'')}</span></div>`).join(''):'<div class="empty">No v61 Leave Master Editor audit entries yet.</div>';
+ $('auditList').innerHTML=rows.length?rows.map(x=>`<div class="auditItem"><b>${safe(x.action||'Leave edit')}</b> · ${safe(x.teacherName||x.teacherCode||'')} ${x.teacherCode?`(${safe(x.teacherCode)})`:''}<br><span class="small">${safe(x.reason||'No reason recorded')} · ${safe(x.adminEmail||'Admin')} · ${safe(x.whenText||'')}</span></div>`).join(''):'<div class="empty">No Leave Master Editor audit entries yet.</div>';
 }
-function renderAll(){renderControl();renderPending();renderRecords();renderFinalAccounting();renderAudit()}
+function renderAll(){renderControl();renderPending();renderRecords();renderFinalAccounting();renderAudit();renderLeaveIntegrity()}
 function addDateRow(data={}){
  const row=document.createElement('div');row.className='dateRow';
  row.innerHTML=`<div><input class="rDate" type="date" value="${safe(data.date||'')}"></div>
@@ -265,8 +286,8 @@ function addDateRow(data={}){
  row.querySelector('.rType').value=data.type||'full';row.querySelector('.rCat').value=data.category||'';row.querySelector('.rPart').value=data.part||((data.type==='half'&&Number(data.from||5)<=4)?'am':(data.type==='half'?'pm':'full'));
  const sync=()=>{const typ=row.querySelector('.rType').value,cat=row.querySelector('.rCat'),u=row.querySelector('.rUnits'),part=row.querySelector('.rPart'),f=row.querySelector('.rFrom'),t=row.querySelector('.rTo');
    const leave=typ==='full'||typ==='half';cat.disabled=!leave;u.disabled=!leave;if(!leave){cat.value='';u.value='0'}else if(typ==='half'&&(!u.value||Number(u.value)===1))u.value='0.5';else if(typ==='full'&&!u.value)u.value='1';
-   if(typ==='full'){part.value='full';part.disabled=true;f.disabled=true;t.disabled=true;f.value='';t.value=''}
-   else{part.disabled=false;const pv=part.value;if(pv==='am'){f.value='1';t.value='4';f.disabled=true;t.disabled=true}else if(pv==='pm'){f.value='5';t.value='8';f.disabled=true;t.disabled=true}else if(pv==='full'){f.value='';t.value='';f.disabled=true;t.disabled=true}else{f.disabled=false;t.disabled=false}}
+   if(typ==='full'){part.value='full';part.disabled=true;f.disabled=true;t.disabled=true;f.value='';t.value='';f.parentElement.style.visibility='hidden';t.parentElement.style.visibility='hidden'}
+   else{part.disabled=false;f.parentElement.style.visibility='visible';t.parentElement.style.visibility='visible';const pv=part.value;if(pv==='am'){f.value='1';t.value='4';f.disabled=true;t.disabled=true}else if(pv==='pm'){f.value='5';t.value='8';f.disabled=true;t.disabled=true}else if(pv==='full'){f.value='';t.value='';f.disabled=true;t.disabled=true}else{f.disabled=false;t.disabled=false}}
    updateReconcile();
  };
  row.querySelector('.rType').onchange=sync;row.querySelector('.rPart').onchange=sync;row.querySelector('.rUnits').oninput=updateReconcile;row.querySelector('.rDate').onchange=updateReconcile;row.querySelector('.rowRemove').onclick=()=>{row.remove();updateReconcile()};sync();
@@ -279,12 +300,57 @@ function updateReconcile(){
  $('reconcileText').textContent=target!==null?`Entered ${units} / expected ${target} leave units`:`Entered leave units: ${units}`;
  $('reconcileText').className='pill '+(target!==null&&Math.abs(units-target)>0.001?'warn':'ok');
 }
+
+function rangeDates(from,to){
+ if(!from||!to||from>to)return[];const out=[],d=new Date(from+'T00:00:00');const end=new Date(to+'T00:00:00');
+ while(d<=end){out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));d.setDate(d.getDate()+1)}return out;
+}
+function syncRangeBuilder(){
+ const typ=$('rangeType').value,leave=typ==='full'||typ==='half',part=$('rangePart'),cat=$('rangeCat'),units=$('rangeUnits'),f=$('rangePFrom'),t=$('rangePTo');
+ cat.disabled=!leave;units.disabled=!leave;if(!leave){cat.value='';units.value='0'}else if(typ==='half'){if(!units.value||Number(units.value)===1)units.value='0.5'}else if(!units.value||Number(units.value)===0)units.value='1';
+ if(typ==='full'){part.value='full';part.disabled=true;f.value='';t.value='';f.disabled=true;t.disabled=true;f.parentElement.style.visibility='hidden';t.parentElement.style.visibility='hidden';return}part.disabled=false;f.parentElement.style.visibility='visible';t.parentElement.style.visibility='visible';
+ const pv=part.value;if(pv==='am'){f.value='1';t.value='4';f.disabled=true;t.disabled=true}else if(pv==='pm'){f.value='5';t.value='8';f.disabled=true;t.disabled=true}else if(pv==='full'){f.value='';t.value='';f.disabled=true;t.disabled=true}else{f.disabled=false;t.disabled=false}
+}
+function generateRangeRows(){
+ const from=$('rangeFrom').value,to=$('rangeTo').value,dates=rangeDates(from,to);if(!dates.length){$('rangeMsg').textContent='Choose a valid From Date and To Date.';return}
+ if(dates.length>180&&!confirm(`This range contains ${dates.length} calendar dates. Generate all of them?`))return;
+ const currentRows=[...document.querySelectorAll('#dateRows .dateRow')];if(currentRows.length===1&&!currentRows[0].querySelector('.rDate').value)currentRows[0].remove();
+ const typ=$('rangeType').value,category=$('rangeCat').value,units=Number($('rangeUnits').value||0),part=$('rangePart').value,pfrom=Number($('rangePFrom').value||0),pto=Number($('rangePTo').value||0),note=$('rangeNote').value.trim();
+ if((typ==='full'||typ==='half')&&!category){$('rangeMsg').textContent='Select the leave category first.';return}
+ if((typ==='od'||typ==='special')&&part==='custom'&&(!pfrom||!pto||pfrom>pto)){$('rangeMsg').textContent='Check the custom From Period and To Period.';return}
+ dates.forEach(date=>addDateRow({date,type:typ,category,units,part,from:pfrom,to:pto,note}));$('rangeMsg').textContent=`Generated ${dates.length} date row${dates.length===1?'':'s'} (${displayDate(from)} to ${displayDate(to)}). Review and remove any non-leave date before saving.`;updateReconcile();
+}
+function periodSpan(x){if(x.type==='full')return[1,8];if(x.type==='half')return[Number(x.from||5),Number(x.to||8)];if(x.type==='od'||x.type==='special'){if(!x.from&&!x.to)return[1,8];return[Number(x.from||1),Number(x.to||8)]}return[1,8]}
+function spansOverlap(a,b){const x=periodSpan(a),y=periodSpan(b);return x[0]<=y[1]&&y[0]<=x[1]}
+function integrityEntries(){
+ const out=[];for(const p of activePlans())for(const d of planDates(p))out.push({code:String(p.code||''),date:d,type:p.type||'',category:String(p.leaveCategory||''),from:Number(p.from||0),to:Number(p.to||0),source:'Approved plan',id:String(p.id||''),label:statusText(p)});
+ for(const m of manualRecords)out.push({code:String(m.code||''),date:m._date,type:m.type||'',category:String(m.leaveCategory||''),from:Number(m.from||0),to:Number(m.to||0),source:'Daily approved status',id:manualKey(m),label:statusText(m)});return out;
+}
+function exactIntegritySig(x){const sp=periodSpan(x);return [x.code,x.date,x.type,x.category,sp[0],sp[1]].join('|')}
+function scanLeaveIntegrity(){
+ const entries=integrityEntries(),exact=[],conflicts=[],seen=new Map();for(const x of entries){const sig=exactIntegritySig(x);if(seen.has(sig)){exact.push({a:seen.get(sig),b:x})}else seen.set(sig,x)}
+ const groups=new Map();for(const x of entries){const k=x.code+'|'+x.date;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)}
+ for(const arr of groups.values())for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){const a=arr[i],b=arr[j];if(exactIntegritySig(a)===exactIntegritySig(b))continue;if(spansOverlap(a,b))conflicts.push({a,b})}
+ return{entries,exact,conflicts};
+}
+function renderLeaveIntegrity(){
+ const r=scanLeaveIntegrity(),issues=r.exact.length+r.conflicts.length;$('integritySummary').className='status '+(issues?'warn':'ok');$('integritySummary').innerHTML=issues?`<b>${issues} integrity issue${issues===1?'':'s'} found.</b> Review before relying on leave/proxy calculations. Nothing has been changed automatically.`:`<b>No duplicate or overlapping contradictory leave records detected.</b> ${r.entries.length} dated approved record instance${r.entries.length===1?' was':'s were'} checked.`;
+ $('integrityMetrics').innerHTML=`<div class="integrityMetric"><b>${r.entries.length}</b><span>Dated instances scanned</span></div><div class="integrityMetric"><b>${r.exact.length}</b><span>Exact duplicates</span></div><div class="integrityMetric"><b>${r.conflicts.length}</b><span>Overlapping conflicts</span></div><div class="integrityMetric"><b>${pendingItems().length}</b><span>Pending legacy resolutions</span></div>`;
+ const rows=[...r.exact.map(x=>({...x,kind:'Exact duplicate'})),...r.conflicts.map(x=>({...x,kind:'Overlap / contradiction'}))];if(!rows.length){$('integrityResults').innerHTML='';return}
+ $('integrityResults').innerHTML='<div class="tablewrap"><table><thead><tr><th>Issue</th><th>Teacher</th><th>Date</th><th>Record A</th><th>Record B</th></tr></thead><tbody>'+rows.map(x=>{const t=teacherByCode(x.a.code)||{name:x.a.code};return `<tr><td><b>${safe(x.kind)}</b></td><td>${safe(t.name)} (${safe(x.a.code)})</td><td>${safe(displayDate(x.a.date))}</td><td>${safe(x.a.label)}<br><span class="small">${safe(x.a.source)}</span></td><td>${safe(x.b.label)}<br><span class="small">${safe(x.b.source)}</span></td></tr>`}).join('')+'</tbody></table></div>';
+}
+function proposedIntegrity(rows,code){
+ const replace=new Set(editorState.originalIds.map(String)),manualKeyOld=editorState.manualOriginal?manualKey(editorState.manualOriginal):'',existing=integrityEntries().filter(x=>String(x.code)===String(code)&&!replace.has(String(x.id))&&String(x.id)!==manualKeyOld),exact=[],conflict=[];
+ for(const r of rows){const p={...r,code};for(const x of existing){if(x.date!==r.date)continue;if(exactIntegritySig(x)===exactIntegritySig(p))exact.push({existing:x,proposed:p});else if(spansOverlap(x,p))conflict.push({existing:x,proposed:p})}}
+ return{exact,conflict};
+}
+
 function clearEditor(){editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};$('dateRows').innerHTML='';$('editTeacher').value='';$('editReason').value='';$('editorPanel').classList.add('hide');$('editorWarning').classList.add('hide');$('saveMsg').classList.add('hide');$('archiveBtn').classList.add('hide')}
 function openEditor(title,source){$('editorTitle').textContent=title;$('editorSource').textContent=source||'';$('editorPanel').classList.remove('hide');$('saveMsg').classList.add('hide');$('editorPanel').scrollIntoView({behavior:'smooth',block:'start'})}
 function startPending(id){
  const x=legacy.find(a=>a.id===id);if(!x)return;editorState={mode:'pending',originalIds:[],manualOriginal:null,pendingId:id,expectedUnits:Number(x.units||0)};
  $('dateRows').innerHTML='';$('editTeacher').value=x.teacherCode||'';$('editReason').value=`Legacy correction verified for source row ${x.rowNum||'—'}`;
- addDateRow({type:'full',category:String(x.category||'').toUpperCase(),units:Number(x.units||1)});
+ addDateRow({type:'full',category:String(x.category||'').toUpperCase(),units:Number(x.units||1)});$('rangeType').value='full';$('rangeCat').value=String(x.category||'').toUpperCase();$('rangeUnits').value='1';syncRangeBuilder();
  $('editorWarning').className='status warn';$('editorWarning').innerHTML=`<b>Pending legacy item:</b> ${safe(x.month||'')} · ${safe(catLabel(x.category))} ${safe(x.units)}. Add the genuine date(s) only after verification. Total leave units must equal ${safe(x.units)} before saving.`;
  openEditor(`Resolve pending leave · ${x.teacherName||x.teacherCode}`,`Source row ${x.rowNum||'—'} · ${x.reason||''}`);updateReconcile();
 }
@@ -344,9 +410,9 @@ async function removeManualSource(m){
 async function savePlans(rows,reason){
  const code=$('editTeacher').value;if(!code)throw new Error('Select the teacher.');
  const err=validateRows(rows);if(err)throw new Error(err);
- const overlapDates=new Set(),replace=new Set(editorState.originalIds);
- for(const p of activePlans()){if(replace.has(String(p.id)))continue;if(String(p.code)!==String(code))continue;for(const d of planDates(p))overlapDates.add(d)}
- const hits=rows.map(r=>r.date).filter(d=>overlapDates.has(d));if(hits.length&&!confirm(`This teacher already has another approved status on ${[...new Set(hits)].map(displayDate).join(', ')}.\n\nSave anyway?`))return false;
+ const integrity=proposedIntegrity(rows,code);
+ if(integrity.exact.length)throw new Error(`Exact duplicate leave record detected for ${[...new Set(integrity.exact.map(x=>displayDate(x.proposed.date)))].join(', ')}. The duplicate has not been saved.`);
+ if(integrity.conflict.length)throw new Error(`Conflicting / overlapping approved status already exists for ${[...new Set(integrity.conflict.map(x=>displayDate(x.proposed.date)))].join(', ')}. Edit or archive the existing record before saving a contradictory status.`);
  const published=await hasPublishedPast(rows.map(r=>r.date));if(published.length&&!confirm(`WARNING — PAST PUBLISHED PROXY EXISTS\n\nA final proxy record already exists for ${published.map(displayDate).join(', ')}.\n\nThis leave edit will NOT silently rewrite that historical proxy. Continue with the leave-history correction?`))return false;
  const stamp=Date.now(),newPlans=rows.map((r,i)=>makePlan(r,code,stamp,i)),old=editorState.originalIds.map(id=>plans[id]).filter(Boolean),manualOld=editorState.manualOriginal?{...editorState.manualOriginal}:null,newMap={...plans};
  for(const p of old)delete newMap[p.id];for(const p of newPlans)newMap[p.id]=p;
@@ -391,9 +457,9 @@ async function archivePlan(id){
 }
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 $('refreshBtn').onclick=async()=>{try{await loadAll()}catch(e){alert(e.message||e)}};
-$('newBtn').onclick=startNew;$('cancelBtn').onclick=clearEditor;$('addRowBtn').onclick=()=>addDateRow({type:'full',units:1});$('saveBtn').onclick=saveEditor;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
+$('newBtn').onclick=startNew;$('cancelBtn').onclick=clearEditor;$('addRowBtn').onclick=()=>addDateRow({type:'full',units:1});$('saveBtn').onclick=saveEditor;$('syncMyAreaBtn').onclick=syncMyAreaHistories;$('runIntegrityBtn').onclick=renderLeaveIntegrity;$('generateRangeBtn').onclick=generateRangeRows;$('rangeType').onchange=syncRangeBuilder;$('rangePart').onchange=syncRangeBuilder;syncRangeBuilder();
 ['filterTeacher','filterType','filterFrom'].forEach(id=>$(id).onchange=renderRecords);$('filterSearch').oninput=renderRecords;
-onAuthStateChanged(auth,async u=>{user=u;$('signInBtn').style.display='none';if(!u){$('gateMsg').className='status warn';$('gateMsg').textContent='You are not signed in.';$('signInBtn').style.display='inline-block';return}try{await verify(u);$('gate').hidden=true;$('app').hidden=false;await loadAll()}catch(e){$('gateMsg').className='status error';$('gateMsg').innerHTML='<b>Access not available.</b><br>'+safe(e.message||e);if(!$('app').hidden){$('controlStatus').className='status error';$('controlStatus').textContent='Leave Master Editor could not finish loading: '+(e.message||e)}}})
+onAuthStateChanged(auth,async u=>{user=u;$('signInBtn').style.display='none';if(!u){$('gateMsg').className='status warn';$('gateMsg').textContent='You are not signed in.';$('signInBtn').style.display='inline-block';return}try{await verify(u);$('gate').hidden=true;$('app').hidden=false;await loadAll()}catch(e){$('gateMsg').className='status error';$('gateMsg').innerHTML='<b>Access not available.</b><br>'+safe(e.message||e)}})
 </script>
 </body>
 </html>
