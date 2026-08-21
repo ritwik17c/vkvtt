@@ -14,6 +14,7 @@ Improve the operational proxy workflow without changing the Version 65.0/65.1 ca
 - Incomplete drafts cannot be shared or printed; they remain editable and saved.
 - Background schedule and leave-plan refreshes no longer reset the currently selected proxy period to Period 1.
 - The app URL cache marker is advanced to `65.2` so clients receive this release cleanly.
+- All active home-page, Admin Dashboard, admin-module, navigation-link and dashboard add-on version displays/cache markers are standardised to `65.2`; older release-note and archived legacy filenames remain unchanged as historical records.
 
 ## Performance safeguard
 
