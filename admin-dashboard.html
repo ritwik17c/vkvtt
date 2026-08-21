@@ -15,7 +15,7 @@
 </style>
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '64.2';
+  const CURRENT_APP_VERSION = '65.2';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -28,7 +28,7 @@
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v65.0</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v65.2</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Administrator Verification</h2><div id="gateMsg" class="status">Checking Admin access…</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button id="retryAdminBtn" style="display:none">Retry Admin Check</button></div></div>
 <div id="app">
@@ -126,7 +126,7 @@ function displayDate(k){const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/)
 function displayDateTime(ms){const d=new Date(Number(ms)||0);if(isNaN(d))return'';const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function displayDatesInText(x){return String(x||'').replace(/(\d{4})-(\d{2})-(\d{2})/g,(_,y,m,d)=>`${d}/${m}/${y}`)}
 function msg(id,text,kind='ok'){const el=$(id);el.style.display='block';el.className='status '+kind;el.innerHTML=text}
-function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=65.0'}
+function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=65.2'}
 $('homeBtn').onclick=goTimetableHome;
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
@@ -255,9 +255,9 @@ async function showPanel(id){
  }catch(e){alert('Could not load Master Timetable data: '+(e.message||e))}
 }
 document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>showPanel(el.dataset.open));document.querySelectorAll('[data-back-dashboard]').forEach(el=>el.onclick=showDashboard);
-$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=65.0';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=65.0';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=65.0';$('openUsers').onclick=()=>location.href='admin-users.html?v=65.0';$('openImport').onclick=()=>location.href='admin-import.html?v=65.0';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=65.0';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=65.0';$('openExport').onclick=()=>location.href='admin-export.html?v=65.0';
+$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=65.2';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=65.2';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=65.2';$('openUsers').onclick=()=>location.href='admin-users.html?v=65.2';$('openImport').onclick=()=>location.href='admin-import.html?v=65.2';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=65.2';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=65.2';$('openExport').onclick=()=>location.href='admin-export.html?v=65.2';
 $('downloadBackup').onclick=()=>{const blob=new Blob([JSON.stringify(master,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='VKV_Nalbari_Master_Timetable_Backup_'+todayKey()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 </script>
-<script src="v64-dashboard-addon.js?v=65.0"></script>
+<script src="v64-dashboard-addon.js?v=65.2"></script>
 </body>
 </html>
