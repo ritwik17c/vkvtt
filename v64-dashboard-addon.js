@@ -1,5 +1,5 @@
 /*
-VKV Nalbari Timetable — Cloud v64.4 Dashboard Add-on
+VKV Nalbari Timetable — Cloud v65.2 Dashboard Add-on
 Adds Quick Add Leave only. No duplicate-remover card.
 
 Place this file in the repository root and load it after the existing
@@ -8,7 +8,7 @@ admin-dashboard.html module script:
 <script src="v64-dashboard-addon.js"></script>
 */
 (() => {
-  const VERSION='64.4';
+  const VERSION='65.2';
 
   const style=document.createElement('style');
   style.textContent=`
@@ -72,7 +72,7 @@ admin-dashboard.html module script:
     panel.querySelector('[data-v64-back]')?.addEventListener('click',back);
 
     const sub=document.querySelector('header .subtitle');
-    if(sub)sub.textContent=sub.textContent.replace(/Cloud v\d+(?:\.\d+)?/,'Cloud v64.4');
+    if(sub)sub.textContent=sub.textContent.replace(/Cloud v\d+(?:\.\d+)?/,'Cloud v65.2');
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);
