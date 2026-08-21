@@ -129,7 +129,7 @@ body.quick-mode .wrap{max-width:none}
 
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '65.2';
+  const CURRENT_APP_VERSION = '65.3';
   try{
     const u = new URL(window.location.href);
     if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
@@ -378,7 +378,7 @@ async function verify(u){
  if(!p.exists()||p.data().active!==true||String(p.data().role||'')!=='admin')throw new Error('Only the Principal/Admin account can open the Leave Master Editor.');
  if(!m.exists())throw new Error('Master timetable is not available.');
  master=m.data().data||m.data();
- teachers=(master.teachers||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+ teachers=[...(master.teachers||[]),...(master.nonTeachingStaff||[]).filter(x=>x&&x.active!==false).map(x=>({...x,name:x.name+' — Non-Teaching · '+(x.designation||'Staff')}))].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 async function loadAll(){
  const core=await Promise.allSettled([

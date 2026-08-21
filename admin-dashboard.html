@@ -15,7 +15,7 @@
 </style>
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '65.2';
+  const CURRENT_APP_VERSION = '65.3';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -28,7 +28,7 @@
 
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v65.2</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v65.3</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Administrator Verification</h2><div id="gateMsg" class="status">Checking Admin access…</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button id="retryAdminBtn" style="display:none">Retry Admin Check</button></div></div>
 <div id="app">
@@ -41,6 +41,7 @@
       <div class="tile" id="openSchedules"><b>🗓 Schedule Profiles</b><span>Normal, Heat Wave and other timing profiles.</span></div>
       <div class="tile" data-open="replacements"><b>👩‍🏫 Temporary Leave-Vacancy Replacements</b><span>Assign a temporary local teacher for a defined period without adding that person to the main roster.</span></div>
       <div class="tile" data-open="teachers"><b>👥 Teachers & Workload</b><span>Permanent teacher directory and current master teaching load.</span></div>
+      <div class="tile" data-open="nonTeaching"><b>🧑‍💼 Non-Teaching Staff</b><span>Maintain the separate non-teaching roster for leave records only. These members never enter the timetable or proxy system.</span></div>
       <div class="tile" data-open="classes"><b>🏫 Classes & Sections</b><span>Current class/section structure and scheduled entries.</span></div>
       <div class="tile" id="openUsers"><b>🔐 Roles & User Access</b><span>Viewer, Proxy Manager, Manager, Approved Leave Viewer and Admin permissions.</span></div>
       <div class="tile" id="openTimetableIntegrity" style="background:#eef8ff;border-color:#aacdde"><b>🧼 Timetable Integrity Checker</b><span>Read-only sanitation scan for legacy teacher-code formats, combined teaching duties, structural anomalies and active-schedule suppression.</span></div>
@@ -92,6 +93,15 @@
   <section id="teachers" class="card panel">
     <div class="sectionTop"><div><div class="breadcrumb">Admin Dashboard → Teachers & Workload</div><h2>👥 Teachers & Workload</h2></div><button data-back-dashboard>← Admin Dashboard</button></div>
     <div class="help">This is the permanent roster only. Temporary leave-vacancy teachers are intentionally excluded.</div><div id="teacherTable" class="tablewrap"></div>
+  </section>
+
+  <section id="nonTeaching" class="card panel">
+    <div class="sectionTop"><div><div class="breadcrumb">Admin Dashboard → Non-Teaching Staff</div><h2>🧑‍💼 Non-Teaching Staff Register</h2></div><button data-back-dashboard>← Admin Dashboard</button></div>
+    <div class="help">These records are available only in Leave / OD / Special Assignment and the Approved Leave Register. They have no connection with the timetable, workload, Free Teachers or proxy allotment.</div>
+    <input type="hidden" id="nonTeachingId">
+    <div class="grid3"><div><label>Full Name</label><input id="nonTeachingName" placeholder="Staff member's full name"></div><div><label>Staff Code</label><input id="nonTeachingCode" placeholder="e.g. NT01" maxlength="16"></div><div><label>Designation</label><select id="nonTeachingDesignation"><option value="">Select…</option><option>LDC</option><option>UDC</option><option>Accountant</option><option>Office Assistant</option><option>Librarian</option><option>Lab Assistant</option><option>Driver</option><option>Conductor</option><option>Peon</option><option>Attendant</option><option>Security Guard</option><option>Cleaner</option><option>Other</option></select></div><div><label>Email (optional)</label><input id="nonTeachingEmail" type="email" placeholder="Google/email address"></div><div><label>Remarks</label><input id="nonTeachingRemarks" placeholder="Optional"></div></div>
+    <div class="actions"><button class="primary" id="saveNonTeaching">Save Non-Teaching Staff</button><button id="clearNonTeaching">Clear Form</button></div><div id="nonTeachingMsg" class="status" style="display:none"></div>
+    <h3>Saved Non-Teaching Staff</h3><div id="nonTeachingList"></div>
   </section>
 
   <section id="classes" class="card panel">
@@ -167,6 +177,7 @@ async function ensureMasterLoaded(render=false){
    masterDoc=snap.data();master=structuredClone(masterDoc.data||masterDoc);
    if(!Array.isArray(master.records)||!Array.isArray(master.teachers)||!Array.isArray(master.classes))throw new Error('Master timetable structure is incomplete.');
    if(!Array.isArray(master.temporaryReplacements))master.temporaryReplacements=[];
+   if(!Array.isArray(master.nonTeachingStaff))master.nonTeachingStaff=[];
    return master;
  })().finally(()=>{masterLoadingPromise=null});
  await masterLoadingPromise;
@@ -181,7 +192,7 @@ function renderAll(){
  const ap=activeSchedule();$('activeScheduleStatus').innerHTML='<b>Active Schedule:</b> '+safe(ap.name||'Normal Schedule');
  $('mTeachers').textContent=master.teachers.length;$('mClasses').textContent=master.classes.length;$('mEntries').textContent=master.records.length;$('mTemp').textContent=activeReplacements().length;
  fill($('editDay'),DAYS.map(x=>({value:x,label:x})));fill($('editClass'),master.classes.map(x=>({value:x,label:x})));fill($('replacementOriginal'),master.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>({value:t.code,label:t.name+' ('+t.code+')'})));
- renderTeacherTable();renderClassTable();renderReplacementList();renderHistory();renderOverview();
+ renderTeacherTable();renderClassTable();renderReplacementList();renderNonTeachingList();renderHistory();renderOverview();
  if(!$('editDay').value)$('editDay').value='Monday';if(!$('editClass').value)$('editClass').value=master.classes[0]||'';updatePeriods();
 }
 function fill(sel,items){const old=sel.value;sel.innerHTML=items.map(x=>'<option value="'+safe(x.value)+'">'+safe(x.label)+'</option>').join('');if([...sel.options].some(o=>o.value===old))sel.value=old}
@@ -241,11 +252,18 @@ async function mutateReplacement(id,kind){const r=master.temporaryReplacements.f
 }
 document.addEventListener('click',e=>{const edit=e.target.closest('[data-edit-rep]');if(edit)return editReplacement(edit.dataset.editRep);const cancel=e.target.closest('[data-cancel-rep]');if(cancel)return mutateReplacement(cancel.dataset.cancelRep,'cancel');const end=e.target.closest('[data-end-rep]');if(end)return mutateReplacement(end.dataset.endRep,'end');const arc=e.target.closest('[data-archive-rep]');if(arc)return mutateReplacement(arc.dataset.archiveRep,'archive')});
 
+function clearNonTeachingForm(){$('nonTeachingId').value='';$('nonTeachingName').value='';$('nonTeachingCode').value='';$('nonTeachingDesignation').value='';$('nonTeachingEmail').value='';$('nonTeachingRemarks').value='';$('saveNonTeaching').textContent='Save Non-Teaching Staff';$('nonTeachingMsg').style.display='none'}
+$('clearNonTeaching').onclick=clearNonTeachingForm;
+$('saveNonTeaching').onclick=async()=>{const id=$('nonTeachingId').value.trim(),name=$('nonTeachingName').value.trim(),code=$('nonTeachingCode').value.trim().toUpperCase().replace(/\s+/g,''),designation=$('nonTeachingDesignation').value.trim(),email=$('nonTeachingEmail').value.trim().toLowerCase(),remarks=$('nonTeachingRemarks').value.trim();if(!name||!code||!designation){msg('nonTeachingMsg','Full Name, Staff Code and Designation are required.','warn');return}if(master.teachers.some(t=>String(t.code)===code)||master.temporaryReplacements.some(t=>String(t.tempCode)===code)||master.nonTeachingStaff.some(t=>t.id!==id&&String(t.code)===code)){msg('nonTeachingMsg','Staff Code '+safe(code)+' is already in use.','warn');return}const now=Date.now(),old=id?master.nonTeachingStaff.find(x=>x.id===id):null,rec={...(old||{}),id:id||('NTS_'+now+'_'+Math.random().toString(36).slice(2,7)),name,code,designation,email,remarks,active:true,createdAtMs:old?.createdAtMs||now,updatedAtMs:now};const i=master.nonTeachingStaff.findIndex(x=>x.id===rec.id);if(i>=0)master.nonTeachingStaff[i]=rec;else master.nonTeachingStaff.push(rec);try{await persistMaster({atMs:now,type:old?'non_teaching_edit':'non_teaching_create',byUid:currentUser.uid,byName:currentUser.displayName||profile.name||currentUser.email||'Admin',summary:(old?'Updated':'Added')+' non-teaching staff: '+name+' ('+code+') · '+designation});clearNonTeachingForm();showPanel('nonTeaching');msg('nonTeachingMsg','Saved for leave-register use only.','ok')}catch(e){msg('nonTeachingMsg','Could not save: '+safe(e.message||e),'error')}};
+function renderNonTeachingList(){const rows=(master.nonTeachingStaff||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));$('nonTeachingList').innerHTML=rows.length?'<div class="tablewrap"><table><thead><tr><th>Name</th><th>Code</th><th>Designation</th><th>Email</th><th>Action</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${safe(x.name)}</td><td class="code">${safe(x.code)}</td><td>${safe(x.designation)}</td><td>${safe(x.email||'—')}</td><td><button class="smallbtn" data-edit-nts="${safe(x.id)}">Edit</button> <button class="smallbtn danger" data-delete-nts="${safe(x.id)}">Delete</button></td></tr>`).join('')+'</tbody></table></div>':'<div class="empty">No non-teaching staff added yet.</div>'}
+async function deleteNonTeaching(id){const x=master.nonTeachingStaff.find(r=>r.id===id);if(!x||!confirm('Delete '+x.name+' from the non-teaching staff register? Existing historical leave records will remain.'))return;master.nonTeachingStaff=master.nonTeachingStaff.filter(r=>r.id!==id);try{await persistMaster({atMs:Date.now(),type:'non_teaching_delete',byUid:currentUser.uid,byName:currentUser.displayName||profile.name||currentUser.email||'Admin',summary:'Deleted non-teaching staff roster entry: '+x.name+' ('+x.code+')',before:x});showPanel('nonTeaching')}catch(e){master.nonTeachingStaff.push(x);alert('Could not delete: '+(e.message||e))}}
+document.addEventListener('click',e=>{const edit=e.target.closest('[data-edit-nts]');if(edit){const x=master.nonTeachingStaff.find(r=>r.id===edit.dataset.editNts);if(!x)return;$('nonTeachingId').value=x.id;$('nonTeachingName').value=x.name;$('nonTeachingCode').value=x.code;$('nonTeachingDesignation').value=x.designation;$('nonTeachingEmail').value=x.email||'';$('nonTeachingRemarks').value=x.remarks||'';$('saveNonTeaching').textContent='Update Non-Teaching Staff';return}const del=e.target.closest('[data-delete-nts]');if(del)deleteNonTeaching(del.dataset.deleteNts)});
+
 function renderTeacherTable(){const rows=master.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>{const slots=new Set(master.records.filter(r=>inferCodes(r).includes(t.code)).map(r=>r.day+'|'+r.period));const rep=activeReplacements().find(r=>r.originalCode===t.code);return `<tr><td>${safe(t.name)}</td><td class="code">${safe(t.code)}</td><td>${slots.size}</td><td>${rep?safe(rep.tempName)+' ('+safe(rep.tempCode)+') until '+safe(rep.endDate):'—'}</td></tr>`});$('teacherTable').innerHTML='<table><thead><tr><th>Permanent Teacher</th><th>Code</th><th>Distinct Teaching Slots / Week</th><th>Active Leave-Vacancy Replacement</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>'}
 function renderClassTable(){const rows=master.classes.map(c=>`<tr><td>${safe(c)}</td><td>${master.records.filter(r=>r.class===c).length}</td><td>${safe(((master.patterns&&master.patterns[c])||[]).join(', '))}</td></tr>`);$('classTable').innerHTML='<table><thead><tr><th>Class / Section</th><th>Scheduled Entries</th><th>Periods Used</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>'}
 function changeLabel(c){const map={slot_edit:'Master timetable slot edited',replacement_create:'Temporary replacement created',replacement_edit:'Temporary replacement updated',replacement_cancel:'Temporary replacement cancelled',replacement_end:'Temporary replacement ended',replacement_archive:'Temporary replacement archived'};return map[c.type]||c.type||'Administrative change'}
 function renderHistory(){const h=masterDoc.changeHistory||[];$('historyList').innerHTML=h.length?h.map(c=>`<div class="historyItem"><b>${safe(changeLabel(c))}</b><div class="when">${safe(displayDateTime(c.atMs||0))} · ${safe(c.byName||'Admin')}</div>${c.summary?'<div>'+safe(displayDatesInText(c.summary))+'</div>':''}${c.class?'<div>'+safe(c.class)+' · '+safe(c.day||'')+' · P'+safe(c.period||'')+'</div>':''}${c.before?.entry?'<div><b>Before:</b> '+safe(c.before.entry)+'</div>':''}${c.after?.entry?'<div><b>After:</b> '+safe(c.after.entry)+'</div>':''}</div>`).join(''):'<div class="empty">No administrative changes have been recorded through this dashboard yet.</div>'}
-function renderOverview(){const session=masterDoc.session||'2026-27';$('overviewBox').innerHTML='<b>Session:</b> '+safe(session)+'<br><b>Permanent teachers:</b> '+master.teachers.length+'<br><b>Temporary replacement records:</b> '+master.temporaryReplacements.length+'<br><b>Active temporary replacements today:</b> '+activeReplacements().length+'<br><b>Classes / Sections:</b> '+master.classes.length+'<br><b>Timetable entries:</b> '+master.records.length+'<br><b>Active schedule:</b> '+safe(activeSchedule().name||'Normal Schedule')}
+function renderOverview(){const session=masterDoc.session||'2026-27';$('overviewBox').innerHTML='<b>Session:</b> '+safe(session)+'<br><b>Permanent teachers:</b> '+master.teachers.length+'<br><b>Non-teaching staff:</b> '+(master.nonTeachingStaff||[]).length+'<br><b>Temporary replacement records:</b> '+master.temporaryReplacements.length+'<br><b>Active temporary replacements today:</b> '+activeReplacements().length+'<br><b>Classes / Sections:</b> '+master.classes.length+'<br><b>Timetable entries:</b> '+master.records.length+'<br><b>Active schedule:</b> '+safe(activeSchedule().name||'Normal Schedule')}
 function showDashboard(){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('dashboardHome').style.display='block';window.scrollTo({top:0,behavior:'smooth'})}
 async function showPanel(id){
  try{

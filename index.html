@@ -169,7 +169,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
 (function(){
-  const CURRENT_APP_VERSION = '65.2';
+  const CURRENT_APP_VERSION = '65.3';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -181,7 +181,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </script>
 
 </head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.2</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.3</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="googleSwitchAccount">Use another Google account</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -428,8 +428,10 @@ function activeTemporaryReplacements(date=todayKey()){return temporaryReplacemen
 function activeReplacementForOriginal(code,date=todayKey()){return activeTemporaryReplacements(date).find(r=>String(r.originalCode)===String(code))||null}
 function activeReplacementForTemp(code,date=todayKey()){return activeTemporaryReplacements(date).find(r=>String(r.tempCode)===String(code))||null}
 function permanentTeacherByCode(code){return ((DATA&&DATA.teachers)||[]).find(t=>t.code===code)||null}
+function nonTeachingStaffByCode(code){const x=((DATA&&DATA.nonTeachingStaff)||[]).find(t=>String(t.code)===String(code));return x?{...x,nonTeaching:true}:null}
 function teacherByEffectiveCode(code,date=todayKey()){
  const p=permanentTeacherByCode(code);if(p)return p;
+ const n=nonTeachingStaffByCode(code);if(n)return n;
  const r=activeReplacementForTemp(code,date)||temporaryReplacementRecords().find(x=>String(x.tempCode)===String(code));
  return r?{code:r.tempCode,name:r.tempName||r.tempCode,temporary:true,originalCode:r.originalCode}:null;
 }
@@ -447,7 +449,7 @@ function operationalTeachers(date=todayKey()){
  return out;
 }
 function statusAssignableTeachers(){
- const out=[...((DATA&&DATA.teachers)||[])],seen=new Set(out.map(t=>t.code)),today=todayKey();
+ const out=[...((DATA&&DATA.teachers)||[]),...((DATA&&DATA.nonTeachingStaff)||[]).filter(x=>x&&x.active!==false).map(x=>({...x,nonTeaching:true}))],seen=new Set(out.map(t=>t.code)),today=todayKey();
  for(const r of temporaryReplacementRecords()){
    if(r.active===false||!r.tempCode||!r.tempName||String(r.endDate||"")<today||seen.has(r.tempCode))continue;
    out.push({code:r.tempCode,name:r.tempName,temporary:true,originalCode:r.originalCode});seen.add(r.tempCode);
@@ -1443,7 +1445,7 @@ function populateMasterSelectors(){
  const statusTeachers=statusAssignableTeachers().sort((a,b)=>a.name.localeCompare(b.name));
  const classes=[...(DATA.classes||[])];
  const fill=(id,placeholder,items)=>{const el=document.getElementById(id);if(!el)return;const old=el.value;el.innerHTML='<option value="">'+placeholder+'</option>'+items.map(x=>'<option value="'+safe(x.value)+'">'+safe(x.label)+'</option>').join('');if([...el.options].some(o=>o.value===old))el.value=old};
- const label=t=>t.name+' ('+t.code+')'+(t.temporary?' · Temporary Leave Vacancy':'');
+ const label=t=>t.name+' ('+t.code+')'+(t.nonTeaching?' · Non-Teaching · '+(t.designation||'Staff'):(t.temporary?' · Temporary Leave Vacancy':''));
  const currentItems=currentTeachers.map(t=>({value:t.code,label:label(t)}));
  const statusItems=statusTeachers.map(t=>({value:t.code,label:label(t)}));
  const cItems=classes.map(c=>({value:c,label:c}));
@@ -1456,8 +1458,9 @@ function populateMasterSelectors(){
 function scheduleSignature(data){
  const id=(data&&data.activeScheduleProfileId)||'normal',profiles=(data&&data.scheduleProfiles)||{},p=profiles[id]||profiles.normal||{};
  const reps=((data&&data.temporaryReplacements)||[]).map(r=>[r.id,r.originalCode,r.tempCode,r.tempName,r.startDate,r.endDate,r.active!==false,r.archived===true,r.updatedAtMs||0]);
+ const nts=((data&&data.nonTeachingStaff)||[]).map(x=>[x.id,x.code,x.name,x.designation,x.email,x.active!==false,x.updatedAtMs||0]);
  const emailMap=(data&&data.teacherEmailMap)||{};
- return JSON.stringify([id,p.updatedAtMs||0,p.name||'',p.times||{},p.classPeriods||{},reps,emailMap]);
+ return JSON.stringify([id,p.updatedAtMs||0,p.name||'',p.times||{},p.classPeriods||{},reps,nts,emailMap]);
 }
 async function refreshActiveScheduleFromCloud(){
  if(!currentUser||!window.DATA)return;
@@ -1468,6 +1471,7 @@ async function refreshActiveScheduleFromCloud(){
    window.DATA.scheduleProfiles=fresh.scheduleProfiles||{};
    window.DATA.activeScheduleProfileId=fresh.activeScheduleProfileId||'normal';
    window.DATA.temporaryReplacements=Array.isArray(fresh.temporaryReplacements)?fresh.temporaryReplacements:[];
+   window.DATA.nonTeachingStaff=Array.isArray(fresh.nonTeachingStaff)?fresh.nonTeachingStaff:[];
    window.DATA.teacherEmailMap=fresh.teacherEmailMap||window.DATA.teacherEmailMap||{};
    if(fresh.times)window.DATA.times=fresh.times;
    if(fresh.patterns)window.DATA.patterns=fresh.patterns;
@@ -1497,6 +1501,7 @@ function teacherEmailForCode(code){
    for(const k of ['email','gmail','googleEmail','google_email']){email=normalizedEmail(t[k]);if(email)return email}
    if(Array.isArray(t.emails)){email=normalizedEmail(t.emails.find(Boolean));if(email)return email}
  }
+ const nt=((window.DATA&&window.DATA.nonTeachingStaff)||[]).find(x=>String(x.code)===code);if(nt){email=normalizedEmail(nt.email);if(email)return email}
  if(code===String(window.__vkvMyTeacherCode||'')&&currentUser) return normalizedEmail(currentUser.email);
  return '';
 }
@@ -1921,7 +1926,7 @@ window.loadProxyWorkCloud=async function(date){
  await load();if(proxyWorkPollTimer){clearInterval(proxyWorkPollTimer);proxyWorkPollTimer=null}if(date!==todayKey())proxyWorkPollTimer=setInterval(()=>load().catch(e=>console.warn('Next-day proxy sync:',e)),10000);
 };
 
-async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;if(!Array.isArray(window.DATA.temporaryReplacements))window.DATA.temporaryReplacements=[];__sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};__operationalRecordsCache={key:'',value:[]};populateMasterSelectors();if(window.applyActiveScheduleProfile)window.applyActiveScheduleProfile();return true}
+async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;if(!Array.isArray(window.DATA.temporaryReplacements))window.DATA.temporaryReplacements=[];if(!Array.isArray(window.DATA.nonTeachingStaff))window.DATA.nonTeachingStaff=[];__sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};__operationalRecordsCache={key:'',value:[]};populateMasterSelectors();if(window.applyActiveScheduleProfile)window.applyActiveScheduleProfile();return true}
 async function cloudHistoryRender(){
  const inp=document.getElementById('historyDate'),out=document.getElementById('historyResult');if(!inp.value)inp.value=todayKey();
  try{
@@ -2208,6 +2213,7 @@ onAuthStateChanged(auth,async user=>{
    }
    const masterDoc=snap.data();
    window.DATA=masterDoc.data||masterDoc;
+   if(!Array.isArray(window.DATA.nonTeachingStaff))window.DATA.nonTeachingStaff=[];
    __sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};__operationalRecordsCache={key:'',value:[]};
    window.DATA.teacherEmailMap=window.DATA.teacherEmailMap||{};
    if(currentProfile&&currentProfile.teacherCode&&user.email)window.DATA.teacherEmailMap[String(currentProfile.teacherCode)]=normalizedEmail(user.email);
