@@ -590,9 +590,8 @@ function mergeEffectiveStatuses(base,planned){
  return out;
 }
 function leaveData(date=todayKey()){
- const approved=approvedStatusesForDate(date);
- const scheduled=mergeEffectiveStatuses(approved,plannedStatusesForDate(date));
- return mergeEffectiveStatuses(scheduled,storedStatusData(date));
+ const recorded=mergeEffectiveStatuses(storedStatusData(date),plannedStatusesForDate(date));
+ return recorded;
 }
 
 let selectedStatus="",selectedDuration="";
@@ -1608,7 +1607,7 @@ function cacheLeavePlans(plans){
  }
 }
 async function loadLeavePlansOnce(){
- if(!currentUser||!currentProfile||currentProfile.emailViewer||currentProfile.role==='leave_viewer')return;
+ if(!currentUser||!currentProfile||currentProfile.role==='leave_viewer')return;
  const snap=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));
  cacheLeavePlans(snap.exists()?(snap.data().plans||{}):{});
 }
@@ -1961,7 +1960,7 @@ window.authoriseHistoricalProxyCloud=async function(date,reason){
 
 window.loadProxyWorkCloud=async function(date){
  if(!currentUser)return;
- const load=async()=>{if(cloudWriting)return;const refreshPlans=!window.__vkvApprovedProxyPlansLoadedAt||Date.now()-window.__vkvApprovedProxyPlansLoadedAt>60000,requests=[getDoc(doc(db,'dailyRecords',date)),getDoc(doc(db,'publishedProxy',date)),getDoc(doc(db,'proxyEditAuthorizations',date)),date!==todayKey()?getDoc(doc(db,'dailyRecords',todayKey())):Promise.resolve(null),getDoc(doc(db,'approvedDailyStatus',date)),refreshPlans?getDocs(collection(db,'approvedStatusPlans')):Promise.resolve(null)];const [daily,published,authorization,todayDaily,approvedDaily,approvedPlans]=await Promise.all(requests);window.__vkvApprovedProxyDaily=window.__vkvApprovedProxyDaily||{};window.__vkvApprovedProxyDaily[date]=approvedDaily.exists()?(approvedDaily.data().statuses||[]):[];if(approvedPlans){window.__vkvApprovedProxyPlans=[];approvedPlans.forEach(x=>{const p={id:x.id,...x.data()};if(p.active!==false&&p.approved!==false)window.__vkvApprovedProxyPlans.push(p)});window.__vkvApprovedProxyPlansLoadedAt=Date.now()}if(daily.exists())hydrateDaily(daily.data(),date);else hydrateDaily({date,dayName:dayNameForDate(date),statuses:[],allotments:allotData(date),supervisions:supervisionData(date)},date);window.__vkvWorkPublishedProxy=published.exists()?published.data():null;window.__vkvHistoricalProxyAuthorization=authorization.exists()?authorization.data():null;window.__vkvTodayStatusSummary=date===todayKey()?leaveData(date):(todayDaily&&todayDaily.exists()?(todayDaily.data().statuses||[]):[]);if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();if(window.renderProxyLockState)window.renderProxyLockState();if(document.getElementById('allot')?.classList.contains('active'))renderActiveProxyView(true)};
+ const load=async()=>{if(cloudWriting)return;const [daily,published,authorization,todayDaily,leavePlans]=await Promise.all([getDoc(doc(db,'dailyRecords',date)),getDoc(doc(db,'publishedProxy',date)),getDoc(doc(db,'proxyEditAuthorizations',date)),date!==todayKey()?getDoc(doc(db,'dailyRecords',todayKey())):Promise.resolve(null),getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC))]);cacheLeavePlans(leavePlans.exists()?(leavePlans.data().plans||{}):{});if(daily.exists())hydrateDaily(daily.data(),date);else hydrateDaily({date,dayName:dayNameForDate(date),statuses:[],allotments:allotData(date),supervisions:supervisionData(date)},date);window.__vkvWorkPublishedProxy=published.exists()?published.data():null;window.__vkvHistoricalProxyAuthorization=authorization.exists()?authorization.data():null;window.__vkvTodayStatusSummary=date===todayKey()?leaveData(date):(todayDaily&&todayDaily.exists()?(todayDaily.data().statuses||[]):[]);if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();if(window.renderProxyLockState)window.renderProxyLockState();if(document.getElementById('allot')?.classList.contains('active'))renderActiveProxyView(true)};
  await load();if(proxyWorkPollTimer){clearInterval(proxyWorkPollTimer);proxyWorkPollTimer=null}if(date!==todayKey())proxyWorkPollTimer=setInterval(()=>load().catch(e=>console.warn('Next-day proxy sync:',e)),10000);
 };
 
