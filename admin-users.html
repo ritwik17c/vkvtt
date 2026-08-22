@@ -75,7 +75,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
@@ -104,7 +104,11 @@ function isNonTeachingCode(code){return !!(master&&Array.isArray(master.nonTeach
 async function loadMaster(){
  const snap=await getDoc(doc(db,'master','current'));
  if(!snap.exists())throw new Error('Master timetable is not available.');
- const raw=snap.data();masterWrapped=!!raw.data;master=raw.data||raw;master.teacherEmailMap=master.teacherEmailMap||{};
+ const raw=snap.data(),wrapped=(raw.data&&typeof raw.data==='object')?raw.data:{};
+ masterWrapped=!!raw.data;
+ master={...raw,...wrapped};
+ if(!Array.isArray(master.nonTeachingStaff))master.nonTeachingStaff=Array.isArray(raw.nonTeachingStaff)?raw.nonTeachingStaff:[];
+ master.teacherEmailMap=master.teacherEmailMap||{};
 }
 async function saveTeacherEmailMap(code,email,previousCode=''){
  code=String(code||'').trim();email=String(email||'').trim().toLowerCase();previousCode=String(previousCode||'').trim();
@@ -114,7 +118,7 @@ async function saveTeacherEmailMap(code,email,previousCode=''){
  if(code)map[code]=email;
  master.teacherEmailMap=map;
  const ref=doc(db,'master','current');
- if(masterWrapped)await setDoc(ref,{data:{teacherEmailMap:map}},{merge:true});else await setDoc(ref,{teacherEmailMap:map},{merge:true});
+ if(masterWrapped)await updateDoc(ref,{'data.teacherEmailMap':map});else await setDoc(ref,{teacherEmailMap:map},{merge:true});
 }
 function personalType(x){return x&&['full','half','od','special'].includes(String(x.type||''))}
 function dateFromKey(k){const [y,m,d]=String(k||'').split('-').map(Number);return y&&m&&d?new Date(y,m-1,d):null}
