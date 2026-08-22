@@ -137,7 +137,7 @@ function displayDate(k){const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/)
 function displayDateTime(ms){const d=new Date(Number(ms)||0);if(isNaN(d))return'';const p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function displayDatesInText(x){return String(x||'').replace(/(\d{4})-(\d{2})-(\d{2})/g,(_,y,m,d)=>`${d}/${m}/${y}`)}
 function msg(id,text,kind='ok'){const el=$(id);el.style.display='block';el.className='status '+kind;el.innerHTML=text}
-function goTimetableHome(){try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}location.href='index.html?v=65.4'}
+function goTimetableHome(){location.href='index.html?v=65.4-sessionfix'}
 $('homeBtn').onclick=goTimetableHome;
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
