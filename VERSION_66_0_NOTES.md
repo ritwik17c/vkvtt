@@ -1,8 +1,35 @@
-# Version 66.0 — Timetable Studio
+# Version 66.0 — Timetable Studio and Annual Calendar
 
 ## Purpose
 
 Version 66.0 adds a non-destructive timetable design and generation system. A generated timetable is never an automatic replacement for the operational master. Every saved candidate remains an independently named version and can be activated later by the Principal/Admin.
+
+It also integrates the official Annual Calendar 2026–27 on the home page. Full View opens by default, with Daily and Monthly alternatives. The Principal/Admin can add, edit or delete calendar items from a dedicated management page.
+
+## Professional interface redesign
+
+- Shared institutional design system across the home page and every active administration, leave, attendance, access, import/export and integrity module.
+- Restrained deep-blue, neutral and warm-gold palette aligned with a professional school operations product.
+- Consistent typography, spacing, radii, surfaces, form controls, buttons, status messages and table treatment.
+- Functional emoji labels are progressively replaced with a consistent lightweight line-icon system without changing button IDs or event handlers.
+- Home-page functions are presented as compact, neutral action cards with clearer separation between My Area, timetable views and Daily Management.
+- Admin Dashboard tiles use a denser three-column workspace with restrained category accents, stronger hierarchy and keyboard activation.
+- Mobile layouts collapse cleanly to one or two columns, preserve minimum touch targets and contain wide data tables without shifting the whole page.
+- Visible keyboard focus, skip-to-content navigation, live status announcements, reduced-motion support and loading-state indicators improve accessibility.
+- Existing Annual Calendar and Timetable Studio workspaces retain their purpose-built professional layouts and are visually aligned through the same palette and interaction principles.
+- The redesign is presentation-only: no Firestore schema, role, attendance, leave, proxy, calendar or timetable-generation behavior is changed.
+
+## Annual Calendar
+
+- Home-page Annual Calendar button visible to signed-in staff only while the Principal/Admin setting is On.
+- Principal/Admin On/Off control retains all saved calendar entries; Off also blocks staff reads of the managed calendar document.
+- Full View active by default, with Daily and Monthly views retained.
+- Original April 2026–April 2027 calendar preserved as the safe first-load baseline.
+- Search, category filters, Today, print and event-detail views.
+- Dates displayed and entered as `dd/mm/yyyy` throughout all active app modules; Firestore continues to use ISO keys internally for safe sorting.
+- Admin Dashboard → Annual Calendar Management.
+- Add, edit and delete events across session milestones, examinations, holidays, celebrations, observances, restricted holidays and common programmes.
+- A saved managed list is stored in `annualCalendar/current`; the original baseline remains available when no managed document exists.
 
 ## New Timetable Studio
 
@@ -57,8 +84,9 @@ Version 66.0 adds a non-destructive timetable design and generation system. A ge
 - `timetableVersions/{versionId}` — complete named version documents.
 - `timetableActivations/{activationId}` — immutable Admin activation audit.
 - `authorizedUsers.permissions.timetableStudio` — independent delegated Studio permission.
+- `annualCalendar/current` — complete Principal-managed Annual Calendar event list.
 
-The updated rules in `firestore.rules.v62.txt` must be published before the Studio is released.
+The complete replace-all rules are provided in `FIRESTORE_RULES_V66_REPLACE_ALL.txt` (identical to the current `firestore.rules.v62.txt`) and must be published before the Studio is released.
 
 ## Rollback
 

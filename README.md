@@ -8,6 +8,8 @@
 - Named Draft, Ready, Active and Inactive timetable library.
 - Principal-only validation-gated activation; the previous operational master remains stored for reactivation.
 - Existing leave, proxy, attendance, temporary replacement and non-teaching data remain separate and preserved.
+- Home-page Annual Calendar 2026–27 with Full View by default, plus Daily and Monthly views.
+- Principal-only Annual Calendar management for adding, editing and deleting events.
 
 ## v57.0 — Safe Leave Import & Legacy Accounting Update
 
