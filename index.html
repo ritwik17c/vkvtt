@@ -194,7 +194,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <button id="myProxyTodayBtn" onclick="openMyProxyToday(this)">👥 My Proxy Today <span id="myProxyBadge" class="myBadge" style="display:none"></span></button>
 <button id="myProxyHistoryBtn" onclick="openMyProxyHistory(this)">🕘 My Past Proxy History</button>
 <button id="myStatusBtn" onclick="openMyStatus(this)">🗂 My Leave Record</button>
-<button onclick="location.href='attendance.html?v=65.4'">📍 My Attendance</button>
+<button id="myAttendanceBtn" onclick="location.href='attendance.html?v=65.4-stafffix'">📍 My Attendance</button>
 </div>
 <div class="nav">
 <button onclick="show('teacher',this)">👨‍🏫 Teacher Wise</button><button onclick="show('class',this)">🏫 Class Wise</button><button onclick="show('day',this)">📅 Day Wise</button>
@@ -1794,7 +1794,6 @@ async function checkAccessStillActive(){
      if(accessCheckTimer){clearInterval(accessCheckTimer);accessCheckTimer=null}
      showGate();
      setMessage('<b>Access temporarily disabled.</b><br>Please contact the administrator if access should be restored.','error');
-     try{await signOut(auth)}catch(e){}
    }
  }catch(e){
    // A temporary network failure must never sign a user out.
@@ -1840,6 +1839,8 @@ function applyRoleUI(){
    // Keep My Leave Record visible. If locked, the page itself explains the lock.
    myStatusBtn.style.display='';
  }
+ const myAttendanceBtn=document.getElementById('myAttendanceBtn');
+ if(myAttendanceBtn)myAttendanceBtn.style.display='';
  const approvedLeaveBtn=document.getElementById('approvedLeaveBtn');
  if(approvedLeaveBtn)approvedLeaveBtn.style.display=(isAdmin()||role==='leave_viewer')?'inline-block':'none';
  const adminAccessBtn=document.getElementById('adminUserAccessBtn');
