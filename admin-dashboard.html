@@ -282,6 +282,6 @@ document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>showPanel(el
 $('openAttendance').onclick=()=>location.href='admin-attendance.html?v=65.4';$('openTimetableIntegrity').onclick=()=>location.href='admin-timetable-integrity.html?v=65.4';$('openSchedules').onclick=()=>location.href='admin-schedules.html?v=65.4';$('openLeaveEditor').onclick=()=>location.href='admin-leave-editor.html?v=65.4';$('openUsers').onclick=()=>location.href='admin-users.html?v=65.4';$('openImport').onclick=()=>location.href='admin-import.html?v=65.4';$('openLeaveImport').onclick=()=>location.href='admin-leave-import.html?v=65.4';$('openLeaveRegister').onclick=()=>location.href='admin-leave.html?v=65.4';$('openExport').onclick=()=>location.href='admin-export.html?v=65.4';
 $('downloadBackup').onclick=()=>{const blob=new Blob([JSON.stringify(master,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='VKV_Nalbari_Master_Timetable_Backup_'+todayKey()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 </script>
-<script src="v64-dashboard-addon.js?v=65.4"></script>
+<script src="v64-dashboard-addon.js?v=65.4-dashboardfix"></script>
 </body>
 </html>
