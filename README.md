@@ -1,5 +1,14 @@
 # VKV Nalbari Timetable and Daily Proxy Management System
 
+## v66.0 — Timetable Studio
+
+- Admin/delegated timetable configuration with editable teachers, classes, subjects, venues, periods and allocation cards.
+- Seeded multi-attempt timetable generation with retained parameters and separately stored results.
+- Colourful drag/tap move, swap and replace editor with unplaced tray, locks and undo/redo.
+- Named Draft, Ready, Active and Inactive timetable library.
+- Principal-only validation-gated activation; the previous operational master remains stored for reactivation.
+- Existing leave, proxy, attendance, temporary replacement and non-teaching data remain separate and preserved.
+
 ## v57.0 — Safe Leave Import & Legacy Accounting Update
 
 - Master Timetable Import / Restore accepts JSON only and remains separate from Leave Import.

@@ -169,7 +169,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
 (function(){
-  const CURRENT_APP_VERSION = '65.4';
+  const CURRENT_APP_VERSION = '66.0';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -181,7 +181,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </script>
 
 </head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.4</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v66.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="googleSwitchAccount">Use another Google account</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -194,7 +194,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <button id="myProxyTodayBtn" onclick="openMyProxyToday(this)">👥 My Proxy Today <span id="myProxyBadge" class="myBadge" style="display:none"></span></button>
 <button id="myProxyHistoryBtn" onclick="openMyProxyHistory(this)">🕘 My Past Proxy History</button>
 <button id="myStatusBtn" onclick="openMyStatus(this)">🗂 My Leave Record</button>
-<button id="myAttendanceBtn" onclick="location.href='attendance.html?v=65.4-stafffix'">📍 My Attendance</button>
+<button id="myAttendanceBtn" onclick="location.href='attendance.html?v=66.0'">📍 My Attendance</button>
 </div>
 <div class="nav">
 <button onclick="show('teacher',this)">👨‍🏫 Teacher Wise</button><button onclick="show('class',this)">🏫 Class Wise</button><button onclick="show('day',this)">📅 Day Wise</button>
@@ -1372,12 +1372,12 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=65.4-dashboardfix','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=65.4-dashboardfix';
+ const w=window.open('admin-dashboard.html?v=66.0','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=66.0';
 }
 function openApprovedLeaveRegister(){
- const w=window.open('admin-leave.html?v=65.4','vkvApprovedLeave');
- if(!w)location.href='admin-leave.html?v=65.4';
+ const w=window.open('admin-leave.html?v=66.0','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=66.0';
 }
 window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
@@ -1485,10 +1485,11 @@ function populateMasterSelectors(){
 
 function scheduleSignature(data){
  const id=(data&&data.activeScheduleProfileId)||'normal',profiles=(data&&data.scheduleProfiles)||{},p=profiles[id]||profiles.normal||{};
+ const timetableVersion=(data&&data.activeTimetableVersionId)||'';
  const reps=((data&&data.temporaryReplacements)||[]).map(r=>[r.id,r.originalCode,r.tempCode,r.tempName,r.startDate,r.endDate,r.active!==false,r.archived===true,r.updatedAtMs||0]);
  const nts=((data&&data.nonTeachingStaff)||[]).map(x=>[x.id,x.code,x.name,x.designation,x.email,x.active!==false,x.updatedAtMs||0]);
  const emailMap=(data&&data.teacherEmailMap)||{};
- return JSON.stringify([id,p.updatedAtMs||0,p.name||'',p.times||{},p.classPeriods||{},reps,nts,emailMap]);
+ return JSON.stringify([timetableVersion,id,p.updatedAtMs||0,p.name||'',p.times||{},p.classPeriods||{},reps,nts,emailMap]);
 }
 async function refreshActiveScheduleFromCloud(){
  if(!currentUser||!window.DATA)return;
@@ -1496,6 +1497,20 @@ async function refreshActiveScheduleFromCloud(){
    const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return;
    const raw=snap.data(),fresh=raw.data||raw;
    if(scheduleSignature(fresh)===scheduleSignature(window.DATA))return;
+   const timetableChanged=!!fresh.activeTimetableVersionId&&fresh.activeTimetableVersionId!==window.DATA.activeTimetableVersionId;
+   if(timetableChanged){
+     window.DATA.teachers=Array.isArray(fresh.teachers)?fresh.teachers:window.DATA.teachers;
+     window.DATA.classes=Array.isArray(fresh.classes)?fresh.classes:window.DATA.classes;
+     window.DATA.records=Array.isArray(fresh.records)?fresh.records:window.DATA.records;
+     window.DATA.subjects=Array.isArray(fresh.subjects)?fresh.subjects:(window.DATA.subjects||[]);
+     window.DATA.venues=Array.isArray(fresh.venues)?fresh.venues:(window.DATA.venues||[]);
+     window.DATA.assignmentCards=Array.isArray(fresh.assignmentCards)?fresh.assignmentCards:(window.DATA.assignmentCards||[]);
+     window.DATA.activeTimetableVersionId=fresh.activeTimetableVersionId;
+     window.DATA.activeTimetableVersionName=fresh.activeTimetableVersionName||'';
+     __sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};
+     __operationalRecordsCache={key:'',value:[]};
+     __operationalTeachersCache={key:'',value:[]};
+   }
    window.DATA.scheduleProfiles=fresh.scheduleProfiles||{};
    window.DATA.activeScheduleProfileId=fresh.activeScheduleProfileId||'normal';
    window.DATA.temporaryReplacements=Array.isArray(fresh.temporaryReplacements)?fresh.temporaryReplacements:[];

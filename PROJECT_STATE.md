@@ -1,5 +1,11 @@
 # VKV Nalbari Timetable — Current Next Release
 
+## v66.0 — Timetable Studio
+
+The new Studio builds and stores complete timetable versions without modifying the operational master. Components and allocation cards are reusable; each generator run stores its own seed, parameters and score. Only the Principal/Admin can activate a clean Ready version. Previous active timetables remain in the version library for later reactivation.
+
+The Studio uses `timetableVersions`, `timetableActivations`, and the independent `authorizedUsers.permissions.timetableStudio` delegation flag. Publish the accompanying Firestore rules before release.
+
 ## v65.0 — Performance Architecture Reset
 Reason: repeated v64.x feature patches left too much expensive work on initial page load and repeated calculations.
 

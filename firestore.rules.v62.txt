@@ -49,6 +49,14 @@ service cloud.firestore {
       return uidActive() && uidRole() == 'admin';
     }
 
+    // Timetable Studio is available to the Principal/Admin and to individual
+    // UID accounts explicitly delegated through User Access & Roles.
+    function canUseTimetableStudio() {
+      return uidActive()
+             && (uidRole() == 'admin'
+                 || uidProfile().data.get('permissions', {}).get('timetableStudio', false) == true);
+    }
+
     function isStatusEditor() {
       return uidActive() && uidRole() in ['admin', 'manager'];
     }
@@ -128,6 +136,28 @@ service cloud.firestore {
     match /master/{documentId} {
       allow read: if canReadSchool();
       allow create, update, delete: if isAdmin();
+    }
+
+    // Complete named timetable versions. Delegated designers can create and
+    // edit non-active versions. Only the Principal/Admin can activate/delete.
+    match /timetableVersions/{versionId} {
+      allow read: if canUseTimetableStudio();
+      allow create: if canUseTimetableStudio()
+                    && request.resource.data.status in ['draft', 'ready', 'inactive'];
+      allow update: if isAdmin()
+                    || (canUseTimetableStudio()
+                        && resource.data.status != 'active'
+                        && request.resource.data.status in ['draft', 'ready', 'inactive']);
+      allow delete: if isAdmin() && resource.data.status != 'active';
+    }
+
+    // Immutable activation audit. Activation also requires the existing
+    // Admin-only write permission on master/current.
+    match /timetableActivations/{activationId} {
+      allow read: if canUseTimetableStudio();
+      allow create: if isAdmin()
+                    && request.resource.data.activatedByUid == request.auth.uid;
+      allow update, delete: if false;
     }
 
     match /dailyRecords/{date} {
