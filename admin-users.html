@@ -11,7 +11,7 @@
 :root{--ink:#18364e;--line:#cbdce5;--bg:#edf6f1;--deep:#236d99;--green:#2d7d46}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Segoe UI,Arial;color:#24394b}
 header{background:#1d5e89;color:#fff;padding:16px}.wrap{max-width:980px;margin:auto;padding:0 14px}.headerline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.headerBack{background:#f2f7fa;color:#18364e;border-color:#d2e0e7}
-h1{font-size:1.35rem;margin:0}.sub{opacity:.9;font-size:.88rem;margin-top:3px}
+h1{font-size:1.55rem;margin:0}.sub{opacity:.9;font-size:.88rem;margin-top:3px}.permissionBox{grid-column:1/-1;border:1px solid #cfe0e7;border-radius:12px;background:#f4f9fb;padding:11px}.permissionBox label{display:flex;align-items:flex-start;gap:8px;margin:0;color:#36586c;font-weight:700}.permissionBox input{width:auto;margin-top:3px}
 main{padding:18px 0 50px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 16px #17324d10}
 h2{color:var(--ink);margin:0 0 8px;font-size:1.15rem}.help{font-size:.88rem;color:#5f7180;line-height:1.45;margin-bottom:12px}
 label{display:block;font-size:.83rem;color:#667987;margin:9px 0 5px}
@@ -28,7 +28,7 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 </style>
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '65.4';
+  const CURRENT_APP_VERSION = '66.0';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -39,9 +39,10 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 })();
 </script>
 
+<link rel="stylesheet" href="v66-design-system.css?v=66.0"><script src="v66-ui.js?v=66.0" defer></script>
 </head>
 <body>
-<header><div class="wrap headerline"><div><h1>VKV Nalbari · Administration</h1><div class="sub">Admin Dashboard → User Access & Roles · Cloud v65.4</div></div><a class="btn headerBack" href="admin-dashboard.html?v=65.4-dashboardfix">← Admin Dashboard</a></div></header>
+<header><div class="wrap headerline"><div><h1>User Access & Roles</h1><div class="sub">VKV Nalbari · Administration · Cloud v66.0</div></div><a class="btn headerBack" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Admin access…</h2><div class="help">Admin Dashboard → User Access & Roles</div><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button class="btn" id="backToDashboard">← Admin Dashboard</button></div></div>
 
@@ -58,16 +59,17 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 
   <div class="card">
     <h2>Privileged Accounts</h2>
-    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer accounts. These require the person’s Firebase UID. Normal teachers should be added in the Viewer section above. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record. <b>Approved Leave Viewer</b> is a read-only role for a Vice Principal or another authorised person: it can open only the approved leave register, not edit leave or proxy allotments.</div>
+    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer accounts and for individual Timetable Studio delegation. These require the person’s Firebase UID. A delegated Studio permission is independent of the person’s normal operational role. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
     <div class="grid">
       <div><label>Firebase UID</label><input id="privUid" placeholder="Paste Firebase UID"></div>
       <div><label>Name</label><input id="privName" placeholder="Teacher name"></div>
       <div><label>Google email</label><input id="privEmail" type="email" placeholder="Enter authorised Google email"></div>
-      <div><label>Role</label><select id="privRole"><option value="proxy_manager">Proxy Manager</option><option value="attendance_manager">Attendance Manager</option><option value="manager">Manager</option><option value="leave_viewer">Approved Leave Viewer</option><option value="admin">Admin</option></select></div>
+      <div><label>Role</label><select id="privRole"><option value="staff">Staff · Delegated Tools Only</option><option value="proxy_manager">Proxy Manager</option><option value="attendance_manager">Attendance Manager</option><option value="manager">Manager</option><option value="leave_viewer">Approved Leave Viewer</option><option value="admin">Admin</option></select></div>
+      <div class="permissionBox"><label><input id="privTimetableStudio" type="checkbox"> <span><b>Delegate Timetable Studio</b><br><small>May configure, generate, edit and save timetable versions. Only the Principal/Admin can activate or delete them.</small></span></label></div>
     </div>
     <div class="actions"><button class="green" id="savePriv">Add / Update Privileged Account</button><button id="refreshPriv">Refresh List</button></div>
     <div id="privMsg" class="status" style="display:none"></div>
-    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Timetable Studio</th><th>Status</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="7">Loading…</td></tr></tbody></table></div>
   </div>
 </div>
 </main>
@@ -162,7 +164,7 @@ async function verifyAdmin(user){
 $('signInBtn').onclick=async()=>{await setPersistence(auth,browserLocalPersistence);await signInWithPopup(auth,provider)};
 
 $('backToDashboard').onclick=()=>{
- location.href='admin-dashboard.html?v=65.4-dashboardfix';
+ location.href='admin-dashboard.html?v=66.0';
 };
 
 onAuthStateChanged(auth,verifyAdmin);
@@ -246,28 +248,29 @@ $('syncPersonal').onclick=async()=>{
 };
 
 function roleOptions(selected=''){
- const opts=[['proxy_manager','Proxy Manager'],['attendance_manager','Attendance Manager'],['manager','Manager'],['leave_viewer','Approved Leave Viewer'],['admin','Admin']];
+ const opts=[['staff','Staff · Delegated Tools Only'],['proxy_manager','Proxy Manager'],['attendance_manager','Attendance Manager'],['manager','Manager'],['leave_viewer','Approved Leave Viewer'],['admin','Admin']];
  return opts.map(([v,l])=>'<option value="'+v+'" '+(String(selected)===v?'selected':'')+'>'+l+'</option>').join('');
 }
 async function loadPrivileged(){
- const body=$('privRows');body.innerHTML='<tr><td colspan="5">Loading…</td></tr>';
+ const body=$('privRows');body.innerHTML='<tr><td colspan="7">Loading…</td></tr>';
  try{
    const qs=await getDocs(collection(db,'authorizedUsers'));
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>(a.name||a.email||a.id).localeCompare(b.name||b.email||b.id));
    body.innerHTML=rows.length?rows.map(x=>{
      const self=x.id===currentUser.uid;
-     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td>${self?'<span class="pill">Admin · protected</span>':`<select id="role_${safe(x.id)}" style="min-width:175px">${roleOptions(x.role||'proxy_manager')}</select> <button data-save-role="${safe(x.id)}" data-role-select="role_${safe(x.id)}">Update Role</button>`}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
-   }).join(''):'<tr><td colspan="6">No privileged accounts found.</td></tr>';
- }catch(e){body.innerHTML='<tr><td colspan="6">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
+     const studio=x.role==='admin'||x.permissions?.timetableStudio===true;
+     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td>${self?'<span class="pill">Admin · protected</span>':`<select id="role_${safe(x.id)}" style="min-width:175px">${roleOptions(x.role||'proxy_manager')}</select> <button data-save-role="${safe(x.id)}" data-role-select="role_${safe(x.id)}">Update Role</button>`}</td><td>${self?'<span class="pill">Full Admin access</span>':`<span class="pill">${studio?'Delegated':'Not delegated'}</span> <button data-toggle-studio="${safe(x.id)}" data-next-studio="${studio?'false':'true'}">${studio?'Remove Studio Access':'Delegate Studio'}</button>`}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
+   }).join(''):'<tr><td colspan="7">No privileged accounts found.</td></tr>';
+ }catch(e){body.innerHTML='<tr><td colspan="7">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
 }
 $('savePriv').onclick=async()=>{
- const uid=$('privUid').value.trim(),name=$('privName').value.trim(),email=$('privEmail').value.trim().toLowerCase(),role=$('privRole').value;
+ const uid=$('privUid').value.trim(),name=$('privName').value.trim(),email=$('privEmail').value.trim().toLowerCase(),role=$('privRole').value,timetableStudio=$('privTimetableStudio').checked;
  if(!uid||!email||!name){showMsg('privMsg','UID, name and email are required.','warn');return}
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('privMsg','Please enter a valid email address.','warn');return}
  try{
-   await setDoc(doc(db,'authorizedUsers',uid),{active:true,email,name,role},{merge:true});
+   await setDoc(doc(db,'authorizedUsers',uid),{active:true,email,name,role,permissions:{timetableStudio}},{merge:true});
    showMsg('privMsg','Privileged account saved successfully.','ok');
-   $('privUid').value='';$('privName').value='';$('privEmail').value='';$('privRole').value='proxy_manager';
+   $('privUid').value='';$('privName').value='';$('privEmail').value='';$('privRole').value='staff';$('privTimetableStudio').checked=false;
    await loadPrivileged();
  }catch(e){showMsg('privMsg','Could not save account: '+(e.message||e),'warn')}
 };
@@ -308,7 +311,7 @@ document.addEventListener('click',async e=>{
  const sr=e.target.closest('[data-save-role]');
  if(sr){
    const uid=sr.dataset.saveRole,sel=$(sr.dataset.roleSelect),role=sel?sel.value:'';
-   if(!['proxy_manager','attendance_manager','manager','leave_viewer','admin'].includes(role)){showMsg('privMsg','Choose a valid role.','warn');return}
+   if(!['staff','proxy_manager','attendance_manager','manager','leave_viewer','admin'].includes(role)){showMsg('privMsg','Choose a valid role.','warn');return}
    try{await setDoc(doc(db,'authorizedUsers',uid),{role},{merge:true});await loadPrivileged();showMsg('privMsg','Role updated successfully.','ok')}
    catch(err){showMsg('privMsg','Could not update role: '+(err.message||err),'warn')}
    return;
@@ -321,6 +324,13 @@ document.addEventListener('click',async e=>{
      await loadPrivileged();
      showMsg('privMsg',active?'Privileged account enabled.':'Privileged account temporarily disabled.','ok');
    }catch(err){showMsg('privMsg','Could not change account status: '+(err.message||err),'warn')}
+   return;
+ }
+ const ts=e.target.closest('[data-toggle-studio]');
+ if(ts){
+   const uid=ts.dataset.toggleStudio,timetableStudio=ts.dataset.nextStudio==='true';
+   try{await setDoc(doc(db,'authorizedUsers',uid),{permissions:{timetableStudio}},{merge:true});await loadPrivileged();showMsg('privMsg',timetableStudio?'Timetable Studio access delegated.':'Timetable Studio delegation removed.','ok')}
+   catch(err){showMsg('privMsg','Could not change Timetable Studio access: '+(err.message||err),'warn')}
    return;
  }
  const vb=e.target.closest('[data-remove-viewer]');

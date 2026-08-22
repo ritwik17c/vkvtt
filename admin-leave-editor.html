@@ -129,7 +129,7 @@ body.quick-mode .wrap{max-width:none}
 
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '65.4';
+  const CURRENT_APP_VERSION = '66.0';
   try{
     const u = new URL(window.location.href);
     if(u.searchParams.get('v') !== CURRENT_APP_VERSION){
@@ -140,9 +140,10 @@ body.quick-mode .wrap{max-width:none}
 })();
 </script>
 
+<link rel="stylesheet" href="v66-design-system.css?v=66.0"><script src="v66-ui.js?v=66.0" defer></script>
 </head>
 <body>
-<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v65.4</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=65.4-dashboardfix">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=65.4">🗂 Approved Leave</a></div></div></header>
+<header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v66.0</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=66.0">🗂 Approved Leave</a></div></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Checking Principal/Admin access…</h2><div id="gateMsg" class="status">Please wait.</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button></div></div>
 
@@ -256,10 +257,10 @@ body.quick-mode .wrap{max-width:none}
       <input id="vlBulkUnits" type="number" min="0" step="0.5" value="14">
     </label>
     <label>VL From Date
-      <input id="vlBulkFrom" type="date">
+      <input id="vlBulkFrom" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy">
     </label>
     <label>VL To Date
-      <input id="vlBulkTo" type="date">
+      <input id="vlBulkTo" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy">
     </label>
   </div>
   <div class="actions">
@@ -323,6 +324,10 @@ const todayIso=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMon
 function displayDate(s){
  const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
  return m?`${m[3]}/${m[2]}/${m[1]}`:String(s||'—');
+}
+function displayDateTime(ms){
+ const d=new Date(Number(ms)||0);if(isNaN(d))return'';
+ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 function dateToIso(s){
  const v=String(s||'').trim();
@@ -560,7 +565,7 @@ function updateExpectedCorrectionButton(){
 }
 async function writeLeaveAudit(action,teacherCode,teacherName,reason,extra={}){
  const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
- const ad={action,teacherCode:teacherCode||'',teacherName:teacherName||teacherCode||'',reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),...extra};
+ const ad={action,teacherCode:teacherCode||'',teacherName:teacherName||teacherCode||'',reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),...extra};
  await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});return aid;
 }
 async function correctLegacyExpectedUnits(id){
@@ -613,7 +618,7 @@ function eligibleVlItems(){
  const month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase();
  return legacy.filter(x=>x.active!==false&&String(x.category||'').toUpperCase()==='VL'&&String(x.month||'').toUpperCase()===month&&x.resolutionStatus!=='resolved-dated'&&x.resolutionStatus!=='deleted-error');
 }
-function vlBulkRange(){return{from:String($('vlBulkFrom')?.value||''),to:String($('vlBulkTo')?.value||'')}}
+function vlBulkRange(){return{from:dateToIso($('vlBulkFrom')?.value||''),to:dateToIso($('vlBulkTo')?.value||'')}}
 function renderVlBulkPreview(){
  const items=eligibleVlItems(),standard=Number($('vlBulkUnits')?.value||0),box=$('vlBulkPreview'),msg=$('vlBulkMsg'),range=vlBulkRange();
  if(!box||!msg)return;
@@ -659,7 +664,7 @@ async function editVlException(id){
  if(from===null)return;
  const to=prompt('VL To Date (DD/MM/YYYY):',displayDate(x.vlToDate||$('vlBulkTo')?.value||''));
  if(to===null)return;
- const fromIso=parseDisplayDate(from),toIso=parseDisplayDate(to);
+ const fromIso=dateToIso(from),toIso=dateToIso(to);
  if(!fromIso||!toIso||fromIso>toIso){alert('Enter a valid From/To date range in DD/MM/YYYY.');return}
  const reason=prompt('Reason for individual VL exception (e.g. training / official duty):',x.vlExceptionReason||'Official duty / training during vacation.');
  if(!reason||reason.trim().length<3)return;
@@ -1014,7 +1019,7 @@ async function savePlans(rows,reason){
  for(const p of newPlans){await setDoc(doc(db,'approvedStatusPlans',String(p.id)),{...p,approved:true,source:p.source||'admin-leave-editor-v64',updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:true});try{await addPersonalProjection(p)}catch(e){}}
  plans=newMap;
  if(editorState.pendingId){const x=legacy.find(a=>a.id===editorState.pendingId);if(x){await setDoc(doc(db,'legacyLeaveAccounting',x.id),{resolutionStatus:'resolved-dated',active:false,resolvedPlanIds:newPlans.map(p=>p.id),resolutionNote:reason,resolvedAt:serverTimestamp(),resolvedBy:user.uid,resolvedByEmail:user.email||''},{merge:true});x.resolutionStatus='resolved-dated';x.active=false;x.resolvedPlanIds=newPlans.map(p=>p.id)}}
- const t=teacherByCode(code)||{name:code},auditDoc={action:editorState.pendingId?'Resolved pending legacy leave':(old.length?'Edited approved leave':'Created approved leave'),teacherCode:code,teacherName:t.name||code,reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:manualOld?[manualOld]:old,after:newPlans,pendingSourceId:editorState.pendingId||''};
+ const t=teacherByCode(code)||{name:code},auditDoc={action:editorState.pendingId?'Resolved pending legacy leave':(old.length?'Edited approved leave':'Created approved leave'),teacherCode:code,teacherName:t.name||code,reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),before:manualOld?[manualOld]:old,after:newPlans,pendingSourceId:editorState.pendingId||''};
  const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;await setDoc(doc(db,'leaveAudit',aid),{...auditDoc,createdAt:serverTimestamp()});audit.push({id:aid,...auditDoc});await syncLeaveControl();return true;
 }
 function showSave(msg,error=false,good=false){$('saveMsg').className='status '+(error?'error':good?'ok':'info');$('saveMsg').textContent=msg;$('saveMsg').classList.remove('hide')}
@@ -1036,7 +1041,7 @@ async function finaliseAccounting(id){
  const why=prompt(`Confirm this item as FINAL NON-DATED ACCOUNTING.\n\nTeacher: ${x.teacherName||x.teacherCode}\n${x.month||''} · ${catLabel(x.category)} ${x.units}\n\nEnter the reason/evidence:`,'Verified as accounting-only / vacation balance; no dated leave event required.');
  if(!why||why.trim().length<5)return;if(!confirm('This removes the item from Pending Resolutions. It remains in Legacy Accounting and can be reopened later.\n\nProceed?'))return;
  await setDoc(doc(db,'legacyLeaveAccounting',id),{resolutionStatus:'final-accounting',resolutionNote:why.trim(),finalisedAt:serverTimestamp(),finalisedBy:user.uid,finalisedByEmail:user.email||'',active:true},{merge:true});x.resolutionStatus='final-accounting';x.resolutionNote=why.trim();
- const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,t=x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode,ad={action:'Finalised non-dated legacy accounting',teacherCode:x.teacherCode||'',teacherName:t,reason:why.trim(),adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),legacyId:id};
+ const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,t=x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode,ad={action:'Finalised non-dated legacy accounting',teacherCode:x.teacherCode||'',teacherName:t,reason:why.trim(),adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),legacyId:id};
  await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 async function reopenPending(id){
@@ -1048,7 +1053,7 @@ async function archiveManual(key,skipFirstConfirm=false){
  if(!skipFirstConfirm&&!confirm(`ARCHIVE DAILY APPROVED STATUS\n\n${tt.name}\n${statusText(m)} · ${displayDate(m._date)}\n\nIt will be removed from active leave/proxy calculations but preserved in the audit. Continue?`))return;
  const past=await hasPublishedPast([m._date]);if(past.length&&!confirm(`A published proxy exists on ${displayDate(m._date)}. Archiving will NOT rewrite that historical proxy.\n\nContinue?`))return;
  await removeManualSource(m);manualRecords=manualRecords.filter(x=>manualKey(x)!==key);
- const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived daily approved status',teacherCode:m.code,teacherName:tt.name,reason:skipFirstConfirm?'Removed as redundant duplicate after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:m};
+ const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived daily approved status',teacherCode:m.code,teacherName:tt.name,reason:skipFirstConfirm?'Removed as redundant duplicate after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),before:m};
  await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});renderAll();clearEditor();
 }
 async function archivePlan(id,skipFirstConfirm=false){
@@ -1057,7 +1062,7 @@ async function archivePlan(id,skipFirstConfirm=false){
  const past=await hasPublishedPast(planDates(p));if(past.length&&!confirm(`A published proxy exists on ${past.map(displayDate).join(', ')}. Archiving will NOT rewrite that historical proxy.\n\nContinue?`))return;
  const newMap={...plans};delete newMap[id];await setDoc(doc(db,'dailyRecords','__leavePlans'),{date:'__leavePlans',dayName:'Scheduled Leave / Status Plans',plans:newMap,updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:false});
  try{await deleteDoc(doc(db,'approvedStatusPlans',id))}catch(e){}try{await removePersonalProjection(p)}catch(e){}
- plans=newMap;const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived approved leave',teacherCode:p.code,teacherName:t.name,reason:skipFirstConfirm?'Removed as redundant duplicate after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:new Date().toLocaleString('en-IN'),before:p};
+ plans=newMap;const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,ad={action:'Archived approved leave',teacherCode:p.code,teacherName:t.name,reason:skipFirstConfirm?'Removed as redundant duplicate after Admin review':'Archived by Principal/Admin after confirmation',adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),before:p};
  await setDoc(doc(db,'leaveAudit',aid),{...ad,createdAt:serverTimestamp()});audit.push({id:aid,...ad});renderAll();clearEditor();
 }
 
@@ -1085,8 +1090,8 @@ $('previewVlBulkBtn').onclick=renderVlBulkPreview;
 $('applyVlBulkBtn').onclick=applyVlBulk;
 $('vlBulkMonth').onchange=renderVlBulkPreview;
 $('vlBulkUnits').oninput=renderVlBulkPreview;
-$('vlBulkFrom').onchange=renderVlBulkPreview;
-$('vlBulkTo').onchange=renderVlBulkPreview;$('syncMyAreaBtn').onclick=syncMyAreaHistories;
+$('vlBulkFrom').onchange=()=>{normaliseDateInput($('vlBulkFrom'));renderVlBulkPreview()};
+$('vlBulkTo').onchange=()=>{normaliseDateInput($('vlBulkTo'));renderVlBulkPreview()};$('syncMyAreaBtn').onclick=syncMyAreaHistories;
 ['filterTeacher','filterType'].forEach(id=>$(id).onchange=renderRecords);$('filterFrom').onblur=()=>{normaliseDateInput($('filterFrom'));renderRecords()};$('filterSearch').oninput=()=>{recordRenderLimit=40;renderRecords()};
 
 onAuthStateChanged(auth,async u=>{

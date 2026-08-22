@@ -169,7 +169,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
 (function(){
-  const CURRENT_APP_VERSION = '65.4';
+  const CURRENT_APP_VERSION = '66.0';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -180,8 +180,9 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 })();
 </script>
 
+<link rel="stylesheet" href="v66-design-system.css?v=66.0"><script src="v66-ui.js?v=66.0" defer></script>
 </head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.4</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v66.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="googleSwitchAccount">Use another Google account</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -194,11 +195,11 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <button id="myProxyTodayBtn" onclick="openMyProxyToday(this)">👥 My Proxy Today <span id="myProxyBadge" class="myBadge" style="display:none"></span></button>
 <button id="myProxyHistoryBtn" onclick="openMyProxyHistory(this)">🕘 My Past Proxy History</button>
 <button id="myStatusBtn" onclick="openMyStatus(this)">🗂 My Leave Record</button>
-<button id="myAttendanceBtn" onclick="location.href='attendance.html?v=65.4-stafffix'">📍 My Attendance</button>
+<button id="myAttendanceBtn" onclick="location.href='attendance.html?v=66.0'">📍 My Attendance</button>
 </div>
 <div class="nav">
 <button onclick="show('teacher',this)">👨‍🏫 Teacher Wise</button><button onclick="show('class',this)">🏫 Class Wise</button><button onclick="show('day',this)">📅 Day Wise</button>
-</div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button id="historyBtn" onclick="show('history',this);renderHistory()">📚 History</button><button id="approvedLeaveBtn" class="leaveRegisterLink" onclick="openApprovedLeaveRegister()">🗂 Approved Leave</button><button id="adminUserAccessBtn" class="adminOnlyLink" onclick="openAdminDashboard()">⚙️ Admin Dashboard</button></div>
+</div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button id="annualCalendarBtn" style="display:none" onclick="location.href='annual-calendar-2026-27.html?v=66.0'">🗓 Annual Calendar</button><button id="historyBtn" onclick="show('history',this);renderHistory()">📚 History</button><button id="approvedLeaveBtn" class="leaveRegisterLink" onclick="openApprovedLeaveRegister()">🗂 Approved Leave</button><button id="adminUserAccessBtn" class="adminOnlyLink" onclick="openAdminDashboard()">⚙️ Admin Dashboard</button></div>
 <div class="opsTitle">Daily Management</div>
 <div class="opsGrid">
 <button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / OD / Special / Vacant</button>
@@ -230,8 +231,8 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <h2>My Past Proxy History</h2>
 <div id="myProxyHistoryIdentity" class="myIdentity"></div>
 <div class="controls">
-<div><label>From Date</label><input type="date" id="myProxyHistoryFrom"></div>
-<div><label>To Date</label><input type="date" id="myProxyHistoryTo"></div>
+<div><label>From Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="myProxyHistoryFrom"></div>
+<div><label>To Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="myProxyHistoryTo"></div>
 </div>
 <div class="actions"><button onclick="loadMyProxyHistory()">🔎 Show History</button><span id="myProxyHistoryMsg" class="copymsg"></span></div>
 <div id="myProxyHistoryResult" class="result">Choose a date range or leave From Date blank to see all available past published proxy records.</div>
@@ -266,7 +267,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 <section id="allot" class="view"><h2><span id="proxyScopeTitle">Today’s</span> Proxy Allotment (All Teachers) <span class="small" id="proxyDateLabel"></span></h2>
 <div id="proxyTodayStatusSummary" class="result" style="margin-bottom:12px">Loading today’s Leave / OD / Assignment summary…</div>
-<div class="controls"><div><label>Proxy Date</label><input type="date" id="proxyWorkDate" onchange="changeProxyWorkDate()"><div class="small">Today and the coming three days are available normally. An earlier date requires Principal authorisation.</div></div></div>
+<div class="controls"><div><label>Proxy Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="proxyWorkDate" onchange="changeProxyWorkDate()"><div class="small">Today and the coming three days are available normally. An earlier date requires Principal authorisation.</div></div></div>
 <div class="proxyTop">
   <button onclick="prevProxyPeriod()">← Previous</button>
   <div><b id="proxyPeriodTitle">Period</b><div id="proxyProgress" class="small"></div></div>
@@ -303,8 +304,8 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <div class="calendarWeek"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
 <div id="leaveCalendarGrid" class="calendarGrid"></div>
 <div id="leaveRangeInputs" class="dateRangeInputs" style="display:none">
-<div><label>From Date</label><input type="date" id="leaveRangeFrom" onchange="syncLeaveRangeInputs()"></div>
-<div><label>To Date</label><input type="date" id="leaveRangeTo" onchange="syncLeaveRangeInputs()"></div>
+<div><label>From Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="leaveRangeFrom" onchange="syncLeaveRangeInputs()"></div>
+<div><label>To Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="leaveRangeTo" onchange="syncLeaveRangeInputs()"></div>
 </div>
 <div id="leaveSelectionSummary" class="leaveSelectionSummary"></div>
 </div>
@@ -367,7 +368,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <div class="actions"><button id="exportLeaveExcelBtn" onclick="exportLeaveExcel()">⬇ Export Leave Register (Excel)</button><button onclick="copyProxy()">📋 Copy Proxy List</button><button onclick="shareProxy()">↗ Share Proxy List</button><span id="copyMsg" class="copymsg"></span></div>
 <div id="leaveResult" class="result"></div></section>
 <section id="history" class="view"><h2>Daily History</h2>
-<div class="controls"><div><label>Date</label><input type="date" id="historyDate" onchange="renderHistory()"></div></div>
+<div class="controls"><div><label>Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="historyDate" onchange="renderHistory()"></div></div>
 <div class="actions"><button onclick="copyHistory()">📋 Copy</button><button onclick="shareHistory()">↗ Share</button><button class="dangerBtn" onclick="deleteAllHistory()">🗑 Delete All History</button><span id="historyResultMsg" class="copymsg"></span></div>
 <div id="historyResult" class="result">Select a date.</div></section>
 </main>
@@ -663,8 +664,8 @@ function renderLeaveCalendar(){
  grid.innerHTML=html;
  const rf=E("leaveRangeFrom"),rt=E("leaveRangeTo"),box=E("leaveRangeInputs");
  if(box)box.style.display=leaveDateMode==="range"?"grid":"none";
- if(rf)rf.value=leaveRangeStart||"";
- if(rt)rt.value=leaveRangeEnd||"";
+ if(rf)rf.value=leaveRangeStart?displayDate(leaveRangeStart):"";
+ if(rt)rt.value=leaveRangeEnd?displayDate(leaveRangeEnd):"";
  document.querySelectorAll("[data-leave-date-mode]").forEach(b=>b.classList.toggle("active",b.getAttribute("data-leave-date-mode")===leaveDateMode));
  renderLeaveSelectionSummary();
  refreshLeaveCategoryUi(true);
@@ -683,7 +684,8 @@ function changeLeaveCalendarMonth(delta){
 }
 function syncLeaveRangeInputs(){
  if(window.__vkvRole&&!["admin","manager"].includes(window.__vkvRole))return;
- const a=E("leaveRangeFrom").value,b=E("leaveRangeTo").value;
+ const a=inputDate(E("leaveRangeFrom").value),b=inputDate(E("leaveRangeTo").value);
+ if((E("leaveRangeFrom").value&&!a)||(E("leaveRangeTo").value&&!b)){alert("Enter dates as dd/mm/yyyy.");renderLeaveCalendar();return}
  if(a)leaveRangeStart=a;if(b)leaveRangeEnd=b;
  if(leaveRangeStart)leaveCalendarMonth=new Date(dateFromKey(leaveRangeStart).getFullYear(),dateFromKey(leaveRangeStart).getMonth(),1);
  renderLeaveCalendar();
@@ -928,10 +930,10 @@ function proxyDateKey(){return proxyWorkDate||todayKey()}
 function proxyDayName(){return dayNameForDate(proxyDateKey())}
 function nextDayKey(){let d=dateFromKey(todayKey());d.setDate(d.getDate()+1);return dateKeyFromDate(d)}
 function proxyFutureLimitKey(){let d=dateFromKey(todayKey());d.setDate(d.getDate()+3);return dateKeyFromDate(d)}
-function setupProxyDateSelector(){const el=E("proxyWorkDate");if(!el)return;el.removeAttribute("min");el.max=proxyFutureLimitKey();el.value=proxyDateKey();updateProxyDateUi()}
+function setupProxyDateSelector(){const el=E("proxyWorkDate");if(!el)return;el.value=displayDate(proxyDateKey());updateProxyDateUi()}
 function updateProxyDateUi(){const date=proxyDateKey(),offset=Math.round((dateFromKey(date)-dateFromKey(todayKey()))/86400000),scope=offset===0?"Today’s":offset>0?`Day +${offset} Proxy`:"Earlier Date";if(E("proxyScopeTitle"))E("proxyScopeTitle").textContent=scope;if(E("proxyDateLabel"))E("proxyDateLabel").textContent="· "+displayDate(date)+" · "+proxyDayName()}
 function historicalProxyAuthorised(){return proxyDateKey()>=todayKey()||window.__vkvRole==='admin'||!!(window.__vkvHistoricalProxyAuthorization&&window.__vkvHistoricalProxyAuthorization.enabled===true&&window.__vkvHistoricalProxyAuthorization.date===proxyDateKey())}
-async function changeProxyWorkDate(){const el=E("proxyWorkDate"),date=el&&el.value;if(!date||date>proxyFutureLimitKey()){alert("A proxy record can be prepared for today and the coming three days.");el.value=previousProxyWorkDate;return}proxyEmergencyPanelOpen=false;const old=previousProxyWorkDate;proxyWorkDate=date;updateProxyDateUi();proxyPeriod=firstProxyPeriod();E("allotPeriod").value=String(proxyPeriod);E("allotReview").style.display="none";await loadProxyWorkState(date);if(date<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise historical proxy entry or correction first.");proxyWorkDate=old||todayKey();el.value=proxyWorkDate;updateProxyDateUi();await loadProxyWorkState(proxyWorkDate);return}previousProxyWorkDate=date;renderActiveProxyView()}
+async function changeProxyWorkDate(){const el=E("proxyWorkDate"),date=el&&inputDate(el.value);if(!date||date>proxyFutureLimitKey()){alert("Enter a valid date as dd/mm/yyyy. A proxy record can be prepared for today and the coming three days.");el.value=displayDate(previousProxyWorkDate);return}proxyEmergencyPanelOpen=false;const old=previousProxyWorkDate;proxyWorkDate=date;el.value=displayDate(date);updateProxyDateUi();proxyPeriod=firstProxyPeriod();E("allotPeriod").value=String(proxyPeriod);E("allotReview").style.display="none";await loadProxyWorkState(date);if(date<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise historical proxy entry or correction first.");proxyWorkDate=old||todayKey();el.value=displayDate(proxyWorkDate);updateProxyDateUi();await loadProxyWorkState(proxyWorkDate);return}previousProxyWorkDate=date;renderActiveProxyView()}
 async function loadProxyWorkState(date){if(window.loadProxyWorkCloud){try{await window.loadProxyWorkCloud(date)}catch(e){console.warn("Proxy date load:",e)}}renderTodayProxyStatusSummary();renderProxyLockState();renderActiveProxyView()}
 function proxyIsLocked(){const p=window.__vkvWorkPublishedProxy;return !!(p&&p.date===proxyDateKey()&&!p.correctionEnabled)}
 function ensureProxyEditable(){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return false}if(proxyDateKey()<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise it before the Proxy Manager can add or correct a record.");return false}if(proxyIsLocked()){alert("This proxy timetable is finalised and locked. The Principal must enable correction first.");return false}return true}
@@ -942,6 +944,8 @@ async function authoriseHistoricalProxy(){if(window.__vkvRole!=="admin"){alert("
 function renderTodayProxyStatusSummary(){const out=E("proxyTodayStatusSummary");if(!out)return;const base=Array.isArray(window.__vkvTodayStatusSummary)?window.__vkvTodayStatusSummary:leaveData(todayKey()),planned=window.plannedStatusesForDate?window.plannedStatusesForDate(todayKey()):[],seen=new Set(base.map(x=>x&&x.code).filter(Boolean)),rows=[...base,...planned.filter(x=>x&&x.code&&!seen.has(x.code))].filter(o=>o&&['full','half','od','special'].includes(o.type));if(!rows.length){out.innerHTML='<b>Today’s Leave / OD / Assignment Summary</b><div class="small" style="margin-top:5px">No approved Leave, On Duty or Special Assignment record is available for today.</div>';return}out.innerHTML='<b>Today’s Leave / OD / Assignment Summary</b><div class="small" style="margin:4px 0 8px">'+rows.length+' staff record'+(rows.length===1?'':'s')+' affecting today’s availability.</div>'+rows.map(o=>{const t=teacherByEffectiveCode(o.code,todayKey());return '<div style="padding:4px 0;border-top:1px solid #dbe7df"><b>'+esc(t?t.name:o.code)+'</b> ('+esc(o.code)+') — '+esc(statusLabel(o))+'</div>'}).join('')}
 window.renderTodayProxyStatusSummary=renderTodayProxyStatusSummary;
 function displayDate(k){if(k){const m=String(k).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(k)}let n=new Date();return String(n.getDate()).padStart(2,"0")+"/"+String(n.getMonth()+1).padStart(2,"0")+"/"+n.getFullYear()}
+function inputDate(v){const m=String(v||"").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return"";const iso=`${m[3]}-${m[2]}-${m[1]}`,d=new Date(iso+"T00:00:00");return d.getFullYear()===Number(m[3])&&d.getMonth()+1===Number(m[2])&&d.getDate()===Number(m[1])?iso:""}
+function displayDateTime(ms=Date.now()){const d=new Date(Number(ms)||0),p=n=>String(n).padStart(2,"0");return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`}
 function historyData(){try{return JSON.parse(localStorage.getItem("vkvHistory")||"{}")}catch(e){return{}}}
 function saveSnapshot(day=todayKey()){let h=historyData();h[day]={date:day,dayName:dayNameForDate(day),statuses:storedStatusData(day),allotments:allotData(day),supervisions:supervisionData(day)};localStorage.setItem("vkvHistory",JSON.stringify(h))}
 function allotData(date=proxyDateKey()){try{
@@ -1337,7 +1341,7 @@ function openMyProxyToday(btn){
 }
 function openMyProxyHistory(btn){
  show("myProxyHistory",btn);refreshMyAreaIdentity();
- const to=E("myProxyHistoryTo");if(to&&!to.value)to.value=todayKey();
+ const to=E("myProxyHistoryTo");if(to&&!to.value)to.value=displayDate(todayKey());
  loadMyProxyHistory();
 }
 function loadMyProxyHistory(){
@@ -1372,16 +1376,16 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=65.4-dashboardfix','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=65.4-dashboardfix';
+ const w=window.open('admin-dashboard.html?v=66.0','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=66.0';
 }
 function openApprovedLeaveRegister(){
- const w=window.open('admin-leave.html?v=65.4','vkvApprovedLeave');
- if(!w)location.href='admin-leave.html?v=65.4';
+ const w=window.open('admin-leave.html?v=66.0','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=66.0';
 }
 window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
-function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=todayKey();let h=historyData()[inp.value],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${displayDate(inp.value)} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=teacherByEffectiveCode(o.code,inp.value);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
+function renderHistory(){let inp=E("historyDate");if(!inp.value)inp.value=displayDate(todayKey());const date=inputDate(inp.value);if(!date){E("historyResult").innerHTML='<div class="warn">Enter the date as dd/mm/yyyy.</div>';return}inp.value=displayDate(date);let h=historyData()[date],out=E("historyResult");if(!h){out.innerHTML="No saved record for this date.";return}let sts=h.statuses||[],als=Object.values(h.allotments||{}).filter(x=>x&&x.day===h.dayName).sort((a,b)=>a.period-b.period);out.innerHTML=`<b>${displayDate(date)} · ${h.dayName}</b><h3>Leave / OD / Special Assignment</h3>${sts.length?sts.map(o=>{let t=teacherByEffectiveCode(o.code,date);return `<div>${esc(t?t.name:o.code)} (${o.code}) — ${statusLabel(o)}</div>`}).join(""):"None"}<h3>Proxy Allotments</h3>${als.length?als.map(x=>`<div>${PL(x.period)} — ${esc(x.name)} (${x.code}) — Regular ${x.regular} + Proxy ${x.proxyNumber} = ${x.total}</div>`).join(""):"None"}`}
 function historyText(){let el=E("historyResult");return `VKV Nalbari – Daily History\\n${el.innerText||el.textContent||""}`}
 async function copyHistory(){await copyTextSafe(historyText(),"historyResultMsg")}
 async function shareHistory(){let text=historyText();if(navigator.share){try{await navigator.share({title:"VKV Nalbari Daily History",text});return}catch(e){}}await copyHistory()}
@@ -1438,6 +1442,12 @@ const withTimeout=(promise,ms,label)=>Promise.race([
 function setMessage(text,kind='info'){msg.className=kind==='error'?'authError':'authInfo';msg.innerHTML=text}
 function showGate(){gate.classList.remove('hidden');cloudBar.classList.remove('show')}
 function openApp(){gate.classList.add('hidden');cloudBar.classList.add('show')}
+async function applyAnnualCalendarVisibility(){
+ const button=document.getElementById('annualCalendarBtn');if(!button)return;
+ button.style.display='none';
+ try{const snap=await getDoc(doc(db,'annualCalendar','current'));button.style.display=(!snap.exists()||snap.data().visible!==false)?'inline-block':'none'}
+ catch(e){console.warn('Annual Calendar visibility check:',e)}
+}
 async function doSignIn(forceChooser=true){
  setMessage(forceChooser?'Choose the Google account you want to use…':'Opening Google sign-in…');
  try{
@@ -1485,10 +1495,11 @@ function populateMasterSelectors(){
 
 function scheduleSignature(data){
  const id=(data&&data.activeScheduleProfileId)||'normal',profiles=(data&&data.scheduleProfiles)||{},p=profiles[id]||profiles.normal||{};
+ const timetableVersion=(data&&data.activeTimetableVersionId)||'';
  const reps=((data&&data.temporaryReplacements)||[]).map(r=>[r.id,r.originalCode,r.tempCode,r.tempName,r.startDate,r.endDate,r.active!==false,r.archived===true,r.updatedAtMs||0]);
  const nts=((data&&data.nonTeachingStaff)||[]).map(x=>[x.id,x.code,x.name,x.designation,x.email,x.active!==false,x.updatedAtMs||0]);
  const emailMap=(data&&data.teacherEmailMap)||{};
- return JSON.stringify([id,p.updatedAtMs||0,p.name||'',p.times||{},p.classPeriods||{},reps,nts,emailMap]);
+ return JSON.stringify([timetableVersion,id,p.updatedAtMs||0,p.name||'',p.times||{},p.classPeriods||{},reps,nts,emailMap]);
 }
 async function refreshActiveScheduleFromCloud(){
  if(!currentUser||!window.DATA)return;
@@ -1496,6 +1507,20 @@ async function refreshActiveScheduleFromCloud(){
    const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return;
    const raw=snap.data(),fresh=raw.data||raw;
    if(scheduleSignature(fresh)===scheduleSignature(window.DATA))return;
+   const timetableChanged=!!fresh.activeTimetableVersionId&&fresh.activeTimetableVersionId!==window.DATA.activeTimetableVersionId;
+   if(timetableChanged){
+     window.DATA.teachers=Array.isArray(fresh.teachers)?fresh.teachers:window.DATA.teachers;
+     window.DATA.classes=Array.isArray(fresh.classes)?fresh.classes:window.DATA.classes;
+     window.DATA.records=Array.isArray(fresh.records)?fresh.records:window.DATA.records;
+     window.DATA.subjects=Array.isArray(fresh.subjects)?fresh.subjects:(window.DATA.subjects||[]);
+     window.DATA.venues=Array.isArray(fresh.venues)?fresh.venues:(window.DATA.venues||[]);
+     window.DATA.assignmentCards=Array.isArray(fresh.assignmentCards)?fresh.assignmentCards:(window.DATA.assignmentCards||[]);
+     window.DATA.activeTimetableVersionId=fresh.activeTimetableVersionId;
+     window.DATA.activeTimetableVersionName=fresh.activeTimetableVersionName||'';
+     __sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};
+     __operationalRecordsCache={key:'',value:[]};
+     __operationalTeachersCache={key:'',value:[]};
+   }
    window.DATA.scheduleProfiles=fresh.scheduleProfiles||{};
    window.DATA.activeScheduleProfileId=fresh.activeScheduleProfileId||'normal';
    window.DATA.temporaryReplacements=Array.isArray(fresh.temporaryReplacements)?fresh.temporaryReplacements:[];
@@ -1515,7 +1540,7 @@ function startSchedulePolling(){
  if(schedulePollTimer){clearInterval(schedulePollTimer);schedulePollTimer=null}
  schedulePollTimer=setInterval(()=>refreshActiveScheduleFromCloud(),60000);
 }
-window.addEventListener('focus',()=>refreshActiveScheduleFromCloud());
+window.addEventListener('focus',()=>{refreshActiveScheduleFromCloud();if(currentProfile)applyAnnualCalendarVisibility()});
 
 const LEAVE_PLAN_DOC='__leavePlans';
 const PERSONAL_STATUS_TYPES=new Set(['full','half','od','special']);
@@ -1966,10 +1991,10 @@ window.loadProxyWorkCloud=async function(date){
 
 async function loadMaster(){const snap=await getDoc(doc(db,'master','current'));if(!snap.exists())return false;const d=snap.data();window.DATA=d.data||d;if(!Array.isArray(window.DATA.temporaryReplacements))window.DATA.temporaryReplacements=[];if(!Array.isArray(window.DATA.nonTeachingStaff))window.DATA.nonTeachingStaff=[];__sanitisedRecordsCache={recordsRef:null,teachersRef:null,value:[]};__operationalRecordsCache={key:'',value:[]};populateMasterSelectors();if(window.applyActiveScheduleProfile)window.applyActiveScheduleProfile();return true}
 async function cloudHistoryRender(){
- const inp=document.getElementById('historyDate'),out=document.getElementById('historyResult');if(!inp.value)inp.value=todayKey();
+ const inp=document.getElementById('historyDate'),out=document.getElementById('historyResult');if(!inp.value)inp.value=displayDate(todayKey());const selectedDate=inputDate(inp.value);if(!selectedDate){out.innerHTML='<div class="warn">Enter the date as dd/mm/yyyy.</div>';return}inp.value=displayDate(selectedDate);
  try{
-   const snap=await getDoc(doc(db,'dailyRecords',inp.value));
-   const h=snap.exists()?snap.data():{date:inp.value,dayName:dayNameForDate(inp.value),statuses:[],allotments:{},supervisions:{}};
+   const snap=await getDoc(doc(db,'dailyRecords',selectedDate));
+   const h=snap.exists()?snap.data():{date:selectedDate,dayName:dayNameForDate(selectedDate),statuses:[],allotments:{},supervisions:{}};
    const base=h.statuses||[],planned=window.plannedStatusesForDate?window.plannedStatusesForDate(inp.value):[];
    const seen=new Set(base.map(x=>x&&x.code).filter(Boolean));
    const sts=[...base,...planned.filter(x=>x&&x.code&&!seen.has(x.code))];
@@ -1977,12 +2002,12 @@ async function cloudHistoryRender(){
    if(!snap.exists()&&!sts.length){out.innerHTML='No saved record for this date.';return}
    const editable=canEditStatus();
    const statusHtml=sts.length?sts.map(o=>{
-     let t=teacherByEffectiveCode(o.code,inp.value),rep=activeReplacementForOriginal(o.code,inp.value);
+     let t=teacherByEffectiveCode(o.code,selectedDate),rep=activeReplacementForOriginal(o.code,selectedDate);
      const cover=rep?' · <b>Covered by '+safe(rep.tempName||rep.tempCode)+(rep.tempCode?' ('+safe(rep.tempCode)+')':'')+'</b>':'';
      const edit=(editable&&o.planned&&o.planId)?' <button style="margin-left:8px;padding:5px 9px" onclick="editScheduledPlanFromHistory(\''+String(o.planId).replace(/'/g,'&#39;')+'\')">✏️ Edit / Dates</button>':'';
      return '<div style="margin:7px 0">'+safe(t?t.name:o.code)+' ('+safe(o.code)+') — '+safe(statusLabel(o))+(o.planned?' · Scheduled':'')+cover+edit+'</div>';
    }).join(''):'None';
-   out.innerHTML='<b>'+safe(inp.value)+' · '+safe(h.dayName||dayNameForDate(inp.value))+'</b><h3>Leave / OD / Special Assignment / Vacant</h3>'+statusHtml+'<h3>Normal Proxy Allotments</h3>'+(als.length?als.map(x=>'<div>'+PL(x.period)+' — '+safe(x.name)+' ('+safe(x.code)+')</div>').join(''):'None')+'<h3>Emergency Supervision</h3>'+(sups.length?sups.map(x=>'<div>'+PL(x.period)+' — '+safe(x.name)+' ('+safe(x.code)+')</div>').join(''):'None');
+   out.innerHTML='<b>'+safe(displayDate(selectedDate))+' · '+safe(h.dayName||dayNameForDate(selectedDate))+'</b><h3>Leave / OD / Special Assignment / Vacant</h3>'+statusHtml+'<h3>Normal Proxy Allotments</h3>'+(als.length?als.map(x=>'<div>'+PL(x.period)+' — '+safe(x.name)+' ('+safe(x.code)+')</div>').join(''):'None')+'<h3>Emergency Supervision</h3>'+(sups.length?sups.map(x=>'<div>'+PL(x.period)+' — '+safe(x.name)+' ('+safe(x.code)+')</div>').join(''):'None');
  }catch(e){out.innerHTML='<div class="warn">Cloud history could not be loaded: '+safe(e.message||e)+'</div>'}
 }
 window.renderHistory=cloudHistoryRender;
@@ -2034,8 +2059,9 @@ window.loadMyProxyHistoryCloud=async function(){
  const out=document.getElementById('myProxyHistoryResult'),msg=document.getElementById('myProxyHistoryMsg');
  const code=String(window.__vkvMyTeacherCode||'').trim();
  if(!code){if(out)out.innerHTML=window.myLinkMissingHtml?window.myLinkMissingHtml():'Teacher link unavailable.';if(msg)msg.textContent='';return}
- const from=(document.getElementById('myProxyHistoryFrom')||{}).value||'';
- const to=(document.getElementById('myProxyHistoryTo')||{}).value||todayKey();
+ const fromEl=document.getElementById('myProxyHistoryFrom'),toEl=document.getElementById('myProxyHistoryTo'),from=fromEl&&fromEl.value?inputDate(fromEl.value):'',to=toEl&&toEl.value?inputDate(toEl.value):todayKey();
+ if((fromEl&&fromEl.value&&!from)||(toEl&&toEl.value&&!to)){if(out)out.innerHTML='<div class="warn">Enter dates as dd/mm/yyyy.</div>';if(msg)msg.textContent='';return}
+ if(fromEl&&from)fromEl.value=displayDate(from);if(toEl&&to)toEl.value=displayDate(to);
  if(from&&to&&from>to){if(out)out.innerHTML='<div class="warn">From Date cannot be later than To Date.</div>';if(msg)msg.textContent='';return}
  try{
    const qs=await getDocs(collection(db,'publishedProxy'));
@@ -2138,7 +2164,7 @@ window.exportLeaveExcelCloud=async function(){
    const sws=XLSX.utils.aoa_to_sheet(srows);sws['!freeze']={xSplit:0,ySplit:1};sws['!cols']=[{wch:13},{wch:25},...Array(10).fill({wch:16})];XLSX.utils.book_append_sheet(wb,sws,'Leave_Summary');
    const months=new Map();for(const r of recs){if(!(r.type==='full'||r.type==='half')||!r.from)continue;let dates=[];if(r.specific)dates=String(r.specific).split(',').map(x=>x.trim()).filter(Boolean);else if(r.from&&r.to){for(let d=dateFromKey(r.from),last=dateFromKey(r.to);d<=last;d.setDate(d.getDate()+1))dates.push(dateKeyFromDate(d))}if(!dates.length)dates=[r.from];const perDate=Number(r.units||0)/(dates.length||1),c=cats.includes(r.category)?r.category:'UNCAT';for(const date of dates){const month=String(date).slice(0,7),key=(r.code||r.name)+'|'+month;if(!months.has(key))months.set(key,{code:r.code,name:r.name,month,VL:0,EL:0,CL:0,SEL:0,EOL:0,MATERNITY:0,UNCAT:0});months.get(key)[c]+=perDate}}
    const mrows=[['Month','Teacher Code','Teacher Name','VL','EL','CL','SEL','EOL','Maternity','Uncategorised'],...([...months.values()].sort((a,b)=>a.month.localeCompare(b.month)||a.name.localeCompare(b.name)).map(o=>[o.month,o.code,o.name,o.VL,o.EL,o.CL,o.SEL,o.EOL,o.MATERNITY,o.UNCAT]))];const mws=XLSX.utils.aoa_to_sheet(mrows);mws['!freeze']={xSplit:0,ySplit:1};mws['!cols']=[{wch:11},{wch:13},{wch:25},...Array(7).fill({wch:14})];XLSX.utils.book_append_sheet(wb,mws,'Monthly_Summary');
-   const notes=XLSX.utils.aoa_to_sheet([['VKV Nalbari Leave Register Export'],['Generated',new Date().toLocaleString()],[],['Leave account logic'],['CL entitlement','12 days per year'],['SEL entitlement','10 days per year'],['VL / EL / Maternity','As per VKSPV / applicable school rules; export reports usage but does not assume a universal entitlement.'],['EOL','Usage reported; no fixed entitlement assumed.'],[],['Important'],['The app stores operational status (Leave / OD / Special) separately from leave-account category (VL / EL / CL / SEL / EOL / Maternity). This prevents duplicate maintenance of a timetable record and a separate leave spreadsheet.']]);XLSX.utils.book_append_sheet(wb,notes,'Notes');
+   const notes=XLSX.utils.aoa_to_sheet([['VKV Nalbari Leave Register Export'],['Generated',displayDateTime()],[],['Leave account logic'],['CL entitlement','12 days per year'],['SEL entitlement','10 days per year'],['VL / EL / Maternity','As per VKSPV / applicable school rules; export reports usage but does not assume a universal entitlement.'],['EOL','Usage reported; no fixed entitlement assumed.'],[],['Important'],['The app stores operational status (Leave / OD / Special) separately from leave-account category (VL / EL / CL / SEL / EOL / Maternity). This prevents duplicate maintenance of a timetable record and a separate leave spreadsheet.']]);XLSX.utils.book_append_sheet(wb,notes,'Notes');
    XLSX.writeFile(wb,'VKV_Nalbari_Leave_Register_'+todayKey()+'.xlsx');
  }catch(e){alert('Leave export failed: '+(e&&e.message?e.message:e))}finally{if(btn){btn.disabled=false;btn.textContent=oldText||'⬇ Export Leave Register (Excel)'}}
 };
@@ -2183,7 +2209,7 @@ onAuthStateChanged(auth,async user=>{
    const snap=await withTimeout(getDoc(doc(db,'master','current')),15000,'Master timetable load');
    if(!snap.exists()){
      showGate();loginBtn.style.display='none';copyUidBtn.style.display='none';signOutBtn.style.display='inline-block';
-     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=65.2">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
+     setMessage('<b>Authorisation successful.</b><br>The master timetable has not yet been uploaded to Firestore.'+(isAdmin()?'<br><br><a href="admin-import.html?v=66.0">Open Admin Importer</a> to upload the private timetable seed.':''),'error');
      return;
    }
    const masterDoc=snap.data();
@@ -2217,6 +2243,7 @@ onAuthStateChanged(auth,async user=>{
    }).catch(e=>console.warn('Leave-history visibility control:',e));
    wrapSaveSnapshot();
    applyRoleUI();
+   applyAnnualCalendarVisibility();
 
    try{
      cloudHydrating=true;

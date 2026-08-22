@@ -55,7 +55,7 @@ th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
 </style>
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '65.4';
+  const CURRENT_APP_VERSION = '66.0';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -66,6 +66,7 @@ th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
 })();
 </script>
 
+<link rel="stylesheet" href="v66-design-system.css?v=66.0"><script src="v66-ui.js?v=66.0" defer></script>
 </head>
 <body>
 <header>
@@ -149,7 +150,7 @@ const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 let user=null,adminProfile=null,masterDoc=null,master=null,periods=[];
 
-$('backAdmin').onclick=()=>location.href='admin-dashboard.html?v=65.4-dashboardfix';
+$('backAdmin').onclick=()=>location.href='admin-dashboard.html?v=66.0';
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
 onAuthStateChanged(auth,async u=>{

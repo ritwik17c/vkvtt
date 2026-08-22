@@ -30,7 +30,7 @@ td input[type=checkbox]{width:18px;height:18px;cursor:pointer}.rowBtns{display:f
 </style>
 <script>
 (function(){
-  const CURRENT_APP_VERSION = '65.4';
+  const CURRENT_APP_VERSION = '66.0';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -41,6 +41,7 @@ td input[type=checkbox]{width:18px;height:18px;cursor:pointer}.rowBtns{display:f
 })();
 </script>
 
+<link rel="stylesheet" href="v66-design-system.css?v=66.0"><script src="v66-ui.js?v=66.0" defer></script>
 </head>
 <body>
 <header><div class="wrap head"><div><h1>VKV Nalbari · Administration</h1><div class="sub">🗓 Schedule Profiles</div></div><button id="backAdmin">← Admin Dashboard</button></div></header>
@@ -102,10 +103,11 @@ const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomai
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
 const $=id=>document.getElementById(id);
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const displayDateTime=ms=>{const d=new Date(Number(ms)||0),p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`};
 
 let user=null,profile=null,masterDoc=null,master=null,selectedId="normal",periods=[];
 
-$('backAdmin').onclick=()=>location.href='admin-dashboard.html?v=65.4-dashboardfix';
+$('backAdmin').onclick=()=>location.href='admin-dashboard.html?v=66.0';
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
 onAuthStateChanged(auth,async u=>{
@@ -266,7 +268,7 @@ $('deleteProfile').onclick=async()=>{
 };
 function renderHistory(){
  const h=master.scheduleHistory||[];
- $('scheduleHistory').innerHTML=h.length?h.map(x=>`<div class="historyItem"><b>${safe(x.action)}</b> — ${safe(x.profileName||x.profileId)}<br><span class="help">${safe(new Date(x.atMs||0).toLocaleString())} · ${safe(x.byName||x.byEmail||'Admin')}</span></div>`).join(''):'<div class="status">No Schedule Profile activity recorded yet.</div>';
+ $('scheduleHistory').innerHTML=h.length?h.map(x=>`<div class="historyItem"><b>${safe(x.action)}</b> — ${safe(x.profileName||x.profileId)}<br><span class="help">${safe(displayDateTime(x.atMs||0))} · ${safe(x.byName||x.byEmail||'Admin')}</span></div>`).join(''):'<div class="status">No Schedule Profile activity recorded yet.</div>';
 }
 </script>
 </body>
