@@ -1844,8 +1844,7 @@ function applyRoleUI(){
  if(approvedLeaveBtn)approvedLeaveBtn.style.display=(isAdmin()||role==='leave_viewer')?'inline-block':'none';
  const adminAccessBtn=document.getElementById('adminUserAccessBtn');
  if(adminAccessBtn){
-   const isOwnerAdmin=isAdmin()&&currentUser&&currentUser.uid==='6EyzsGOVIDc9060gi95nZD11NZs2';
-   adminAccessBtn.style.display=isOwnerAdmin?'inline-block':'none';
+   adminAccessBtn.style.display=isAdmin()?'inline-block':'none';
  }
  const emailViewer=!!currentProfile.emailViewer;
  const leaveViewer=role==='leave_viewer';
