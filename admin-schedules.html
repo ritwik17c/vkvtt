@@ -105,7 +105,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 
 let user=null,profile=null,masterDoc=null,master=null,selectedId="normal",periods=[];
 
-$('backAdmin').onclick=()=>location.href='admin-dashboard.html';
+$('backAdmin').onclick=()=>location.href='admin-dashboard.html?v=65.4-dashboardfix';
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
 onAuthStateChanged(auth,async u=>{
