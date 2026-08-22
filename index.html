@@ -924,6 +924,7 @@ async function shareView(resultId,title){
 function todayKey(){let n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0")}
 let proxyWorkDate=todayKey(),proxyWorkPollTimer=null,previousProxyWorkDate=todayKey();
 let proxyViewMode="period";
+let proxyEmergencyPanelOpen=false;
 function proxyDateKey(){return proxyWorkDate||todayKey()}
 function proxyDayName(){return dayNameForDate(proxyDateKey())}
 function nextDayKey(){let d=dateFromKey(todayKey());d.setDate(d.getDate()+1);return dateKeyFromDate(d)}
@@ -931,7 +932,7 @@ function proxyFutureLimitKey(){let d=dateFromKey(todayKey());d.setDate(d.getDate
 function setupProxyDateSelector(){const el=E("proxyWorkDate");if(!el)return;el.removeAttribute("min");el.max=proxyFutureLimitKey();el.value=proxyDateKey();updateProxyDateUi()}
 function updateProxyDateUi(){const date=proxyDateKey(),offset=Math.round((dateFromKey(date)-dateFromKey(todayKey()))/86400000),scope=offset===0?"Today’s":offset>0?`Day +${offset} Proxy`:"Earlier Date";if(E("proxyScopeTitle"))E("proxyScopeTitle").textContent=scope;if(E("proxyDateLabel"))E("proxyDateLabel").textContent="· "+displayDate(date)+" · "+proxyDayName()}
 function historicalProxyAuthorised(){return proxyDateKey()>=todayKey()||window.__vkvRole==='admin'||!!(window.__vkvHistoricalProxyAuthorization&&window.__vkvHistoricalProxyAuthorization.enabled===true&&window.__vkvHistoricalProxyAuthorization.date===proxyDateKey())}
-async function changeProxyWorkDate(){const el=E("proxyWorkDate"),date=el&&el.value;if(!date||date>proxyFutureLimitKey()){alert("A proxy record can be prepared for today and the coming three days.");el.value=previousProxyWorkDate;return}const old=previousProxyWorkDate;proxyWorkDate=date;updateProxyDateUi();proxyPeriod=firstProxyPeriod();E("allotPeriod").value=String(proxyPeriod);E("allotReview").style.display="none";await loadProxyWorkState(date);if(date<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise historical proxy entry or correction first.");proxyWorkDate=old||todayKey();el.value=proxyWorkDate;updateProxyDateUi();await loadProxyWorkState(proxyWorkDate);return}previousProxyWorkDate=date;renderActiveProxyView()}
+async function changeProxyWorkDate(){const el=E("proxyWorkDate"),date=el&&el.value;if(!date||date>proxyFutureLimitKey()){alert("A proxy record can be prepared for today and the coming three days.");el.value=previousProxyWorkDate;return}proxyEmergencyPanelOpen=false;const old=previousProxyWorkDate;proxyWorkDate=date;updateProxyDateUi();proxyPeriod=firstProxyPeriod();E("allotPeriod").value=String(proxyPeriod);E("allotReview").style.display="none";await loadProxyWorkState(date);if(date<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise historical proxy entry or correction first.");proxyWorkDate=old||todayKey();el.value=proxyWorkDate;updateProxyDateUi();await loadProxyWorkState(proxyWorkDate);return}previousProxyWorkDate=date;renderActiveProxyView()}
 async function loadProxyWorkState(date){if(window.loadProxyWorkCloud){try{await window.loadProxyWorkCloud(date)}catch(e){console.warn("Proxy date load:",e)}}renderTodayProxyStatusSummary();renderProxyLockState();renderActiveProxyView()}
 function proxyIsLocked(){const p=window.__vkvWorkPublishedProxy;return !!(p&&p.date===proxyDateKey()&&!p.correctionEnabled)}
 function ensureProxyEditable(){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return false}if(proxyDateKey()<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise it before the Proxy Manager can add or correct a record.");return false}if(proxyIsLocked()){alert("This proxy timetable is finalised and locked. The Principal must enable correction first.");return false}return true}
@@ -974,7 +975,7 @@ function isFreeForProxy(code,p,excludeNeedKey){let day=proxyDayName();if(operati
 function proxyNeedsForPeriod(p){return proxyRows().filter(r=>r.period===p)}
 function proxyNavigationPeriods(){const p=activeSchedulePeriods();return p.length?p:[1,2,3,4,5,6,7,8]}
 function firstProxyPeriod(){let rows=proxyRows();return rows.length?Math.min(...rows.map(r=>Number(r.period))):(proxyNavigationPeriods()[0]||1)}
-function openProxyAllotment(btn){show("allot",btn);setupProxyDateSelector();proxyPeriod=firstProxyPeriod();proxyViewMode="period";E("allotPeriod").value=String(proxyPeriod);renderProxyPeriod();loadProxyWorkState(proxyDateKey())}
+function openProxyAllotment(btn){show("allot",btn);setupProxyDateSelector();proxyPeriod=firstProxyPeriod();proxyViewMode="period";proxyEmergencyPanelOpen=false;E("allotPeriod").value=String(proxyPeriod);renderProxyPeriod();loadProxyWorkState(proxyDateKey())}
 function needKey(r){return proxyDayName()+"|"+r.period+"|"+r.className+"|"+r.code}
 function supervisionData(date=proxyDateKey()){try{return JSON.parse(localStorage.getItem("vkvSupervision_"+date)||"{}")}catch(e){return{}}}
 function saveSupervisionData(x,date=proxyDateKey()){localStorage.setItem("vkvSupervision_"+date,JSON.stringify(x));saveSnapshot(date)}
@@ -995,7 +996,8 @@ function emergencyCandidates(p,key){
 function showEmergencyForNeed(btn){
  const area=E(btn.dataset.target),p=Number(btn.dataset.period),k=decodeURIComponent(btn.dataset.key);
  if(!area)return;
- if(area.innerHTML){area.innerHTML="";btn.classList.remove("active");return}
+ if(area.innerHTML){area.innerHTML="";btn.classList.remove("active");proxyEmergencyPanelOpen=false;return}
+ proxyEmergencyPanelOpen=true;
  btn.classList.add("active");
  const ec=emergencyCandidates(p,k);
  let h='<div class="emergencyBox"><div class="proxyhead">Emergency Supervision · '+PL(p)+' · '+esc(scheduleTime(p))+'</div><div class="small" style="margin-bottom:8px">Showing only teachers already engaged in this time slot.</div>';
@@ -1005,7 +1007,7 @@ function showEmergencyForNeed(btn){
  h+='</select><button type="button" class="emergencyBtn" data-pick="'+btn.dataset.target+'Pick" data-key="'+encodeURIComponent(k)+'" data-period="'+p+'" onclick="assignEmergencyFromButton(this)">Assign Emergency Supervision</button></div>';
  area.innerHTML=h;
 }
-function assignEmergencyFromButton(btn){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let sel=E(btn.dataset.pick),v=sel?sel.value:"";if(!v){alert("Please select an engaged teacher.");return}allotEmergency(btn.dataset.key,v,Number(btn.dataset.period))}
+function assignEmergencyFromButton(btn){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return;}let sel=E(btn.dataset.pick),v=sel?sel.value:"";if(!v){alert("Please select an engaged teacher.");return}proxyEmergencyPanelOpen=false;allotEmergency(btn.dataset.key,v,Number(btn.dataset.period))}
 function allotEmergency(encKey,code,p){if(!ensureProxyEditable())return;
  const k=decodeURIComponent(encKey),t=teacherByEffectiveCode(code);if(!t)return;
  if(!confirm("Emergency Supervision assigns an additional adjacent-class supervision duty to a teacher who is already teaching in this period. Continue?"))return;
@@ -1026,9 +1028,9 @@ function candidateList(p,key){
  }).map(t=>({code:t.code,name:t.name,temporary:!!t.temporary,originalCode:t.originalCode||"",regular:dailyRegularLoad(t.code,day),proxies:proxyCount(t.code),total:totalLoad(t.code,day),warn:continuousWarning(t.code,Number(p))}))
  .sort((a,b)=>a.total-b.total||a.proxies-b.proxies||a.name.localeCompare(b.name));
 }
-function renderActiveProxyView(){if(proxyViewMode==="all")showAllProxyNeeds(true);else renderProxyPeriod(true)}
-function prevProxyPeriod(){proxyViewMode="period";const ps=proxyNavigationPeriods();let i=ps.indexOf(Number(proxyPeriod));if(i<0)i=0;proxyPeriod=ps[Math.max(0,i-1)]||ps[0]||1;E("allotPeriod").value=String(proxyPeriod);renderProxyPeriod()}
-function nextProxyPeriod(){proxyViewMode="period";const ps=proxyNavigationPeriods();let i=ps.indexOf(Number(proxyPeriod));if(i<0)i=0;proxyPeriod=ps[Math.min(ps.length-1,i+1)]||ps[0]||1;E("allotPeriod").value=String(proxyPeriod);renderProxyPeriod()}
+function renderActiveProxyView(backgroundRefresh=false){if(backgroundRefresh&&proxyEmergencyPanelOpen)return;if(proxyViewMode==="all")showAllProxyNeeds(true);else renderProxyPeriod(true)}
+function prevProxyPeriod(){proxyEmergencyPanelOpen=false;proxyViewMode="period";const ps=proxyNavigationPeriods();let i=ps.indexOf(Number(proxyPeriod));if(i<0)i=0;proxyPeriod=ps[Math.max(0,i-1)]||ps[0]||1;E("allotPeriod").value=String(proxyPeriod);renderProxyPeriod()}
+function nextProxyPeriod(){proxyEmergencyPanelOpen=false;proxyViewMode="period";const ps=proxyNavigationPeriods();let i=ps.indexOf(Number(proxyPeriod));if(i<0)i=0;proxyPeriod=ps[Math.min(ps.length-1,i+1)]||ps[0]||1;E("allotPeriod").value=String(proxyPeriod);renderProxyPeriod()}
 function renderProxyPeriod(){
  proxyViewMode="period";
  let ps=proxyNavigationPeriods();if(!ps.includes(Number(proxyPeriod)))proxyPeriod=ps[0]||1;let p=proxyPeriod,day=proxyDayName(),needs=proxyNeedsForPeriod(p),a=allotData(),allNeeds=proxyRows(),idx=Math.max(0,ps.indexOf(Number(p)));E("proxyPeriodTitle").textContent=`${PL(p)} · ${scheduleTime(p)}`;E("proxyProgress").textContent=`Period ${idx+1} of ${ps.length} · ${day} · ${allNeeds.length} proxy requirement${allNeeds.length===1?"":"s"} for this date`;E("allotPeriod").value=String(p);
@@ -1043,6 +1045,7 @@ function attemptProxy(encKey,code,p){if(!ensureProxyEditable())return;let k=deco
 function removeProxy(encKey){if(!ensureProxyEditable())return;let k=decodeURIComponent(encKey),a=allotData();delete a[k];saveAllotData(a);renderProxyPeriod();renderLeave()}
 function showAllProxyNeeds(preserveMode){
  try{
+   if(!preserveMode)proxyEmergencyPanelOpen=false;
    proxyViewMode="all";
    const rows=proxyRows(), out=E("allotResult");
    if(!out)return;
@@ -1504,7 +1507,7 @@ async function refreshActiveScheduleFromCloud(){
    populateMasterSelectors();
    if(window.applyActiveScheduleProfile)window.applyActiveScheduleProfile();
    if(window.__vkvCoreInitialized){
-     try{renderLeave();renderLeavePlansList();renderActiveProxyView()}catch(e){console.warn('Operational refresh:',e)}
+     try{renderLeave();renderLeavePlansList();renderActiveProxyView(true)}catch(e){console.warn('Operational refresh:',e)}
    }
  }catch(e){console.warn('Active schedule / temporary replacement refresh:',e)}
 }
@@ -1601,7 +1604,7 @@ function cacheLeavePlans(plans){
  window.__vkvLeavePlans=clean;
  try{localStorage.setItem('vkvLeavePlansCache',JSON.stringify(clean))}catch(e){}
  if(window.__vkvCoreInitialized){
-   try{renderLeave();renderLeavePlansList();renderActiveProxyView()}catch(e){console.warn('Leave plan render:',e)}
+   try{renderLeave();renderLeavePlansList();renderActiveProxyView(true)}catch(e){console.warn('Leave plan render:',e)}
  }
 }
 async function loadLeavePlansOnce(){
@@ -1667,7 +1670,7 @@ function hydrateDaily(data,date=todayKey()){
    localStorage.setItem('vkvSupervision_'+date,JSON.stringify(data.supervisions||{}));
    let h=historyData();h[date]={date,dayName:data.dayName||dayNameForDate(date),statuses:data.statuses||[],allotments:data.allotments||{},supervisions:data.supervisions||{}};localStorage.setItem('vkvHistory',JSON.stringify(h));
  }finally{cloudHydrating=false}
- if(window.__vkvCoreInitialized){try{renderLeave();const allot=document.getElementById('allot');if(allot&&allot.classList.contains('active'))renderActiveProxyView()}catch(e){console.warn(e)}}
+ if(window.__vkvCoreInitialized){try{renderLeave();const allot=document.getElementById('allot');if(allot&&allot.classList.contains('active'))renderActiveProxyView(true)}catch(e){console.warn(e)}}
 }
 async function pushToday(payload){
  if(!currentUser||!canWriteDaily()||cloudHydrating)return;
@@ -1958,7 +1961,7 @@ window.authoriseHistoricalProxyCloud=async function(date,reason){
 
 window.loadProxyWorkCloud=async function(date){
  if(!currentUser)return;
- const load=async()=>{if(cloudWriting)return;const refreshPlans=!window.__vkvApprovedProxyPlansLoadedAt||Date.now()-window.__vkvApprovedProxyPlansLoadedAt>60000,requests=[getDoc(doc(db,'dailyRecords',date)),getDoc(doc(db,'publishedProxy',date)),getDoc(doc(db,'proxyEditAuthorizations',date)),date!==todayKey()?getDoc(doc(db,'dailyRecords',todayKey())):Promise.resolve(null),getDoc(doc(db,'approvedDailyStatus',date)),refreshPlans?getDocs(collection(db,'approvedStatusPlans')):Promise.resolve(null)];const [daily,published,authorization,todayDaily,approvedDaily,approvedPlans]=await Promise.all(requests);window.__vkvApprovedProxyDaily=window.__vkvApprovedProxyDaily||{};window.__vkvApprovedProxyDaily[date]=approvedDaily.exists()?(approvedDaily.data().statuses||[]):[];if(approvedPlans){window.__vkvApprovedProxyPlans=[];approvedPlans.forEach(x=>{const p={id:x.id,...x.data()};if(p.active!==false&&p.approved!==false)window.__vkvApprovedProxyPlans.push(p)});window.__vkvApprovedProxyPlansLoadedAt=Date.now()}if(daily.exists())hydrateDaily(daily.data(),date);else hydrateDaily({date,dayName:dayNameForDate(date),statuses:[],allotments:allotData(date),supervisions:supervisionData(date)},date);window.__vkvWorkPublishedProxy=published.exists()?published.data():null;window.__vkvHistoricalProxyAuthorization=authorization.exists()?authorization.data():null;window.__vkvTodayStatusSummary=date===todayKey()?leaveData(date):(todayDaily&&todayDaily.exists()?(todayDaily.data().statuses||[]):[]);if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();if(window.renderProxyLockState)window.renderProxyLockState();if(document.getElementById('allot')?.classList.contains('active'))renderActiveProxyView()};
+ const load=async()=>{if(cloudWriting)return;const refreshPlans=!window.__vkvApprovedProxyPlansLoadedAt||Date.now()-window.__vkvApprovedProxyPlansLoadedAt>60000,requests=[getDoc(doc(db,'dailyRecords',date)),getDoc(doc(db,'publishedProxy',date)),getDoc(doc(db,'proxyEditAuthorizations',date)),date!==todayKey()?getDoc(doc(db,'dailyRecords',todayKey())):Promise.resolve(null),getDoc(doc(db,'approvedDailyStatus',date)),refreshPlans?getDocs(collection(db,'approvedStatusPlans')):Promise.resolve(null)];const [daily,published,authorization,todayDaily,approvedDaily,approvedPlans]=await Promise.all(requests);window.__vkvApprovedProxyDaily=window.__vkvApprovedProxyDaily||{};window.__vkvApprovedProxyDaily[date]=approvedDaily.exists()?(approvedDaily.data().statuses||[]):[];if(approvedPlans){window.__vkvApprovedProxyPlans=[];approvedPlans.forEach(x=>{const p={id:x.id,...x.data()};if(p.active!==false&&p.approved!==false)window.__vkvApprovedProxyPlans.push(p)});window.__vkvApprovedProxyPlansLoadedAt=Date.now()}if(daily.exists())hydrateDaily(daily.data(),date);else hydrateDaily({date,dayName:dayNameForDate(date),statuses:[],allotments:allotData(date),supervisions:supervisionData(date)},date);window.__vkvWorkPublishedProxy=published.exists()?published.data():null;window.__vkvHistoricalProxyAuthorization=authorization.exists()?authorization.data():null;window.__vkvTodayStatusSummary=date===todayKey()?leaveData(date):(todayDaily&&todayDaily.exists()?(todayDaily.data().statuses||[]):[]);if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();if(window.renderProxyLockState)window.renderProxyLockState();if(document.getElementById('allot')?.classList.contains('active'))renderActiveProxyView(true)};
  await load();if(proxyWorkPollTimer){clearInterval(proxyWorkPollTimer);proxyWorkPollTimer=null}if(date!==todayKey())proxyWorkPollTimer=setInterval(()=>load().catch(e=>console.warn('Next-day proxy sync:',e)),10000);
 };
 
