@@ -149,7 +149,7 @@ const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 let user=null,adminProfile=null,masterDoc=null,master=null,periods=[];
 
-$('backAdmin').onclick=()=>location.href='admin-dashboard.html';
+$('backAdmin').onclick=()=>location.href='admin-dashboard.html?v=65.4-dashboardfix';
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 
 onAuthStateChanged(auth,async u=>{
