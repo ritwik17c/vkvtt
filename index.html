@@ -169,7 +169,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 
 </style><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
 (function(){
-  const CURRENT_APP_VERSION = '65.3';
+  const CURRENT_APP_VERSION = '65.4';
   try{
     const u=new URL(window.location.href);
     if(u.searchParams.get('v')!==CURRENT_APP_VERSION){
@@ -181,7 +181,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 </script>
 
 </head><body><div id="authGate"><div class="authCard">
-<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.3</p>
+<h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v65.4</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="googleSwitchAccount">Use another Google account</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
@@ -194,6 +194,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <button id="myProxyTodayBtn" onclick="openMyProxyToday(this)">👥 My Proxy Today <span id="myProxyBadge" class="myBadge" style="display:none"></span></button>
 <button id="myProxyHistoryBtn" onclick="openMyProxyHistory(this)">🕘 My Past Proxy History</button>
 <button id="myStatusBtn" onclick="openMyStatus(this)">🗂 My Leave Record</button>
+<button onclick="location.href='attendance.html?v=65.4'">📍 My Attendance</button>
 </div>
 <div class="nav">
 <button onclick="show('teacher',this)">👨‍🏫 Teacher Wise</button><button onclick="show('class',this)">🏫 Class Wise</button><button onclick="show('day',this)">📅 Day Wise</button>
@@ -264,7 +265,8 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <section id="slot" class="view"><h2>Whose Period Is It?</h2><div class="controls"><div><label>Class</label><select id="slotClass" onchange="slotResult()"><option value="">Select…</option></select></div><div><label>Day</label><select id="slotDay" onchange="slotResult()"><option value="">Select…</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option></select></div><div><label>Period</label><select id="slotPeriod" onchange="slotResult()"><option value="">Select…</option><option value="1">1st Period · 8:35–9:25</option><option value="2">2nd Period · 9:25–10:05</option><option value="3">3rd Period · 10:05–10:45</option><option value="4">4th Period · 10:45–11:25</option><option value="5">5th Period · 11:55–12:35</option><option value="6">6th Period · 12:35–1:15</option><option value="7">7th Period · 1:15–1:45 Jr / 1:55 Sr</option><option value="8">8th Period · 1:55–2:35</option></select></div></div><div class="actions"><button onclick="copyView('slotResult','Class slot')">📋 Copy</button><button onclick="shareView('slotResult','Class slot')">↗ Share</button><span id="slotResultMsg" class="copymsg"></span></div><div id="slotResult" class="result">Select class, day and period.</div></section>
 
 <section id="allot" class="view"><h2><span id="proxyScopeTitle">Today’s</span> Proxy Allotment (All Teachers) <span class="small" id="proxyDateLabel"></span></h2>
-<div class="controls"><div><label>Proxy Date (today or next day)</label><input type="date" id="proxyWorkDate" onchange="changeProxyWorkDate()"></div></div>
+<div id="proxyTodayStatusSummary" class="result" style="margin-bottom:12px">Loading today’s Leave / OD / Assignment summary…</div>
+<div class="controls"><div><label>Proxy Date</label><input type="date" id="proxyWorkDate" onchange="changeProxyWorkDate()"><div class="small">Today and the next day are available normally. An earlier date requires Principal authorisation.</div></div></div>
 <div class="proxyTop">
   <button onclick="prevProxyPeriod()">← Previous</button>
   <div><b id="proxyPeriodTitle">Period</b><div id="proxyProgress" class="small"></div></div>
@@ -273,7 +275,7 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 <div class="controls"><div><label>Jump to Period</label><select id="allotPeriod" onchange="jumpProxyPeriod()"><option value="">Select…</option><option value="1">1st Period · 8:35–9:25</option><option value="2">2nd Period · 9:25–10:05</option><option value="3">3rd Period · 10:05–10:45</option><option value="4">4th Period · 10:45–11:25</option><option value="5">5th Period · 11:55–12:35</option><option value="6">6th Period · 12:35–1:15</option><option value="7">7th Period · 1:15–1:45 Jr / 1:55 Sr</option><option value="8">8th Period · 1:55–2:35</option></select></div></div>
 <div id="allotResult" class="result">Today's proxy requirements will appear period by period.</div>
 <div id="publishedDraftNote" class="draftNote" style="display:none"></div>
-<div class="actions"><button onclick="showAllProxyNeeds()">📋 Show All Required Proxies</button><button id="finaliseProxyBtn" onclick="finaliseProxies()">✓ Review & Finalise</button><button id="enableCorrectionBtn" style="display:none" onclick="enableProxyCorrection()">🔓 Principal: Enable Correction</button><span id="allotMsg" class="copymsg"></span></div><div id="allotReview" class="result" style="display:none"></div>
+<div class="actions"><button onclick="showAllProxyNeeds()">📋 Show All Required Proxies</button><button id="finaliseProxyBtn" onclick="finaliseProxies()">✓ Review & Finalise</button><button id="enableCorrectionBtn" style="display:none" onclick="enableProxyCorrection()">🔓 Principal: Enable Correction</button><button id="authorisePastProxyBtn" style="display:none" onclick="authoriseHistoricalProxy()">🗓 Principal: Authorise Earlier Record</button><span id="allotMsg" class="copymsg"></span></div><div id="allotReview" class="result" style="display:none"></div>
 </section>
 
 <section id="publishedProxy" class="view"><h2>Today’s Proxy Allotment (All Teachers) <span class="small" id="publishedProxyDate"></span></h2>
@@ -906,19 +908,23 @@ async function shareView(resultId,title){
 }
 
 function todayKey(){let n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0")}
-let proxyWorkDate=todayKey(),proxyWorkPollTimer=null;
+let proxyWorkDate=todayKey(),proxyWorkPollTimer=null,previousProxyWorkDate=todayKey();
 function proxyDateKey(){return proxyWorkDate||todayKey()}
 function proxyDayName(){return dayNameForDate(proxyDateKey())}
 function nextDayKey(){let d=dateFromKey(todayKey());d.setDate(d.getDate()+1);return dateKeyFromDate(d)}
-function setupProxyDateSelector(){const el=E("proxyWorkDate");if(!el)return;el.min=todayKey();el.max=nextDayKey();el.value=proxyDateKey();updateProxyDateUi()}
-function updateProxyDateUi(){const date=proxyDateKey(),isToday=date===todayKey();if(E("proxyScopeTitle"))E("proxyScopeTitle").textContent=isToday?"Today’s":"Next Day’s";if(E("proxyDateLabel"))E("proxyDateLabel").textContent="· "+displayDate(date)+" · "+proxyDayName()}
-async function changeProxyWorkDate(){const el=E("proxyWorkDate"),date=el&&el.value;if(![todayKey(),nextDayKey()].includes(date)){alert("Proxy arrangement is available only for today or the next day.");setupProxyDateSelector();return}proxyWorkDate=date;updateProxyDateUi();proxyPeriod=firstProxyPeriod();E("allotPeriod").value=String(proxyPeriod);E("allotReview").style.display="none";await loadProxyWorkState(date);showAllProxyNeeds()}
-async function loadProxyWorkState(date){if(window.loadProxyWorkCloud){try{await window.loadProxyWorkCloud(date)}catch(e){console.warn("Proxy date load:",e)}}renderProxyLockState();renderProxyPeriod()}
+function setupProxyDateSelector(){const el=E("proxyWorkDate");if(!el)return;el.removeAttribute("min");el.max=nextDayKey();el.value=proxyDateKey();updateProxyDateUi()}
+function updateProxyDateUi(){const date=proxyDateKey(),scope=date===todayKey()?"Today’s":date===nextDayKey()?"Next Day’s":"Earlier Date";if(E("proxyScopeTitle"))E("proxyScopeTitle").textContent=scope;if(E("proxyDateLabel"))E("proxyDateLabel").textContent="· "+displayDate(date)+" · "+proxyDayName()}
+function historicalProxyAuthorised(){return proxyDateKey()>=todayKey()||window.__vkvRole==='admin'||!!(window.__vkvHistoricalProxyAuthorization&&window.__vkvHistoricalProxyAuthorization.enabled===true&&window.__vkvHistoricalProxyAuthorization.date===proxyDateKey())}
+async function changeProxyWorkDate(){const el=E("proxyWorkDate"),date=el&&el.value;if(!date||date>nextDayKey()){alert("A proxy record cannot be prepared beyond the next day.");el.value=previousProxyWorkDate;return}const old=previousProxyWorkDate;proxyWorkDate=date;updateProxyDateUi();proxyPeriod=firstProxyPeriod();E("allotPeriod").value=String(proxyPeriod);E("allotReview").style.display="none";await loadProxyWorkState(date);if(date<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise historical proxy entry or correction first.");proxyWorkDate=old||todayKey();el.value=proxyWorkDate;updateProxyDateUi();await loadProxyWorkState(proxyWorkDate);return}previousProxyWorkDate=date;showAllProxyNeeds()}
+async function loadProxyWorkState(date){if(window.loadProxyWorkCloud){try{await window.loadProxyWorkCloud(date)}catch(e){console.warn("Proxy date load:",e)}}renderTodayProxyStatusSummary();renderProxyLockState();renderProxyPeriod()}
 function proxyIsLocked(){const p=window.__vkvWorkPublishedProxy;return !!(p&&p.date===proxyDateKey()&&!p.correctionEnabled)}
-function ensureProxyEditable(){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return false}if(proxyIsLocked()){alert("This proxy timetable is finalised and locked. The Principal must enable correction before it can be changed.");return false}return true}
-function renderProxyLockState(){const p=window.__vkvWorkPublishedProxy,locked=proxyIsLocked(),note=E("publishedDraftNote"),unlock=E("enableCorrectionBtn"),finalBtn=E("finaliseProxyBtn");if(note){note.style.display=p?"block":"none";note.innerHTML=locked?"<b>Finalised and locked.</b> The Principal may enable correction for a mistake or emergency.":p?"<b>Correction enabled.</b> Changes remain a draft until Review &amp; Finalise is completed again.":""}if(unlock)unlock.style.display=locked&&window.__vkvRole==='admin'?"inline-block":"none";if(finalBtn)finalBtn.disabled=locked}
+function ensureProxyEditable(){if(window.__vkvRole&&!['admin','manager','proxy_manager'].includes(window.__vkvRole)){alert('This account has view-only proxy access.');return false}if(proxyDateKey()<todayKey()&&!historicalProxyAuthorised()){alert("This earlier date is locked. The Principal must authorise it before the Proxy Manager can add or correct a record.");return false}if(proxyIsLocked()){alert("This proxy timetable is finalised and locked. The Principal must enable correction first.");return false}return true}
+function renderProxyLockState(){const p=window.__vkvWorkPublishedProxy,locked=proxyIsLocked(),past=proxyDateKey()<todayKey(),authorised=historicalProxyAuthorised(),note=E("publishedDraftNote"),unlock=E("enableCorrectionBtn"),pastBtn=E("authorisePastProxyBtn"),finalBtn=E("finaliseProxyBtn");if(note){note.style.display=(!!p||past)?"block":"none";note.innerHTML=locked?"<b>Finalised and locked.</b> The Principal may enable correction for a mistake or emergency.":past&&authorised?"<b>Earlier-date work authorised.</b> The Proxy Manager may add or correct this record and must Review &amp; Finalise it again.":past?"<b>Earlier date locked.</b> Principal authorisation is required before any entry or correction.":p?"<b>Correction enabled.</b> Changes remain a draft until Review &amp; Finalise is completed again.":""}if(unlock)unlock.style.display=locked&&window.__vkvRole==='admin'&&!past?"inline-block":"none";if(pastBtn)pastBtn.style.display=past&&window.__vkvRole==='admin'?"inline-block":"none";if(finalBtn)finalBtn.disabled=locked||!authorised}
 window.renderProxyLockState=renderProxyLockState;
 async function enableProxyCorrection(){if(window.__vkvRole!=="admin"){alert("Only the Principal can enable correction.");return}const reason=prompt("Reason for enabling correction (mistake or emergency):");if(!reason||!reason.trim())return;try{const pub=await window.enableProxyCorrectionCloud(proxyDateKey(),reason.trim());window.__vkvWorkPublishedProxy=pub;renderProxyLockState();E("allotMsg").textContent="Correction enabled. The Proxy Manager may now revise and re-finalise this date."}catch(e){alert("Could not enable correction: "+(e.message||e))}}
+async function authoriseHistoricalProxy(){if(window.__vkvRole!=="admin"){alert("Only the Principal can authorise an earlier proxy record.");return}if(proxyDateKey()>=todayKey()){alert("Select an earlier date first.");return}const reason=prompt("Reason for authorising this earlier proxy record or correction:");if(!reason||!reason.trim())return;try{const result=await window.authoriseHistoricalProxyCloud(proxyDateKey(),reason.trim());window.__vkvHistoricalProxyAuthorization=result.authorization;if(result.published)window.__vkvWorkPublishedProxy=result.published;renderProxyLockState();E("allotMsg").textContent="Earlier date authorised. The Proxy Manager may now add or correct and re-finalise this record."}catch(e){alert("Could not authorise the earlier record: "+(e.message||e))}}
+function renderTodayProxyStatusSummary(){const out=E("proxyTodayStatusSummary");if(!out)return;const base=Array.isArray(window.__vkvTodayStatusSummary)?window.__vkvTodayStatusSummary:leaveData(todayKey()),planned=window.plannedStatusesForDate?window.plannedStatusesForDate(todayKey()):[],seen=new Set(base.map(x=>x&&x.code).filter(Boolean)),rows=[...base,...planned.filter(x=>x&&x.code&&!seen.has(x.code))].filter(o=>o&&['full','half','od','special'].includes(o.type));if(!rows.length){out.innerHTML='<b>Today’s Leave / OD / Assignment Summary</b><div class="small" style="margin-top:5px">No approved Leave, On Duty or Special Assignment record is available for today.</div>';return}out.innerHTML='<b>Today’s Leave / OD / Assignment Summary</b><div class="small" style="margin:4px 0 8px">'+rows.length+' staff record'+(rows.length===1?'':'s')+' affecting today’s availability.</div>'+rows.map(o=>{const t=teacherByEffectiveCode(o.code,todayKey());return '<div style="padding:4px 0;border-top:1px solid #dbe7df"><b>'+esc(t?t.name:o.code)+'</b> ('+esc(o.code)+') — '+esc(statusLabel(o))+'</div>'}).join('')}
+window.renderTodayProxyStatusSummary=renderTodayProxyStatusSummary;
 function displayDate(k){if(k){const m=String(k).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(k)}let n=new Date();return String(n.getDate()).padStart(2,"0")+"/"+String(n.getMonth()+1).padStart(2,"0")+"/"+n.getFullYear()}
 function historyData(){try{return JSON.parse(localStorage.getItem("vkvHistory")||"{}")}catch(e){return{}}}
 function saveSnapshot(day=todayKey()){let h=historyData();h[day]={date:day,dayName:dayNameForDate(day),statuses:storedStatusData(day),allotments:allotData(day),supervisions:supervisionData(day)};localStorage.setItem("vkvHistory",JSON.stringify(h))}
@@ -1344,12 +1350,12 @@ window.refreshMyAreaIdentity=refreshMyAreaIdentity;
 function exportLeaveExcel(){if(window.exportLeaveExcelCloud)window.exportLeaveExcelCloud();else alert("Leave export is still loading. Please try again in a moment.")}
 window.exportLeaveExcel=exportLeaveExcel;
 function openAdminDashboard(){
- const w=window.open('admin-dashboard.html?v=65.2','vkvAdminDashboard');
- if(!w)location.href='admin-dashboard.html?v=65.2';
+ const w=window.open('admin-dashboard.html?v=65.4','vkvAdminDashboard');
+ if(!w)location.href='admin-dashboard.html?v=65.4';
 }
 function openApprovedLeaveRegister(){
- const w=window.open('admin-leave.html?v=65.2','vkvApprovedLeave');
- if(!w)location.href='admin-leave.html?v=65.2';
+ const w=window.open('admin-leave.html?v=65.4','vkvApprovedLeave');
+ if(!w)location.href='admin-leave.html?v=65.4';
 }
 window.openApprovedLeaveRegister=openApprovedLeaveRegister;
 function resetHome(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".nav button,.myGrid button,.opsGrid button,.homebar button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("select").forEach(x=>{if(!["historyDate"].includes(x.id))x.selectedIndex=0});document.querySelectorAll(".copymsg").forEach(x=>x.textContent="");window.scrollTo({top:0,behavior:"smooth"})}
@@ -1838,11 +1844,7 @@ function applyRoleUI(){
  if(approvedLeaveBtn)approvedLeaveBtn.style.display=(isAdmin()||role==='leave_viewer')?'inline-block':'none';
  const adminAccessBtn=document.getElementById('adminUserAccessBtn');
  if(adminAccessBtn){
-   const adminEmail=String(currentUser&&currentUser.email||'').trim().toLowerCase();
-   const isOwnerAdmin=isAdmin()&&currentUser&&(
-     currentUser.uid==='6EyzsGOVIDc9060gi95nZD11NZs2' ||
-     adminEmail==='REMOVED_EMAIL'
-   );
+   const isOwnerAdmin=isAdmin()&&currentUser&&currentUser.uid==='6EyzsGOVIDc9060gi95nZD11NZs2';
    adminAccessBtn.style.display=isOwnerAdmin?'inline-block':'none';
  }
  const emailViewer=!!currentProfile.emailViewer;
@@ -1920,9 +1922,23 @@ window.enableProxyCorrectionCloud=async function(date,reason){
  return {...old,correctionEnabled:true,locked:false,correctionReason:reason,correctionHistory:history};
 };
 
+window.authoriseHistoricalProxyCloud=async function(date,reason){
+ if(!currentUser||!isAdmin())throw new Error('Only the Principal can authorise an earlier proxy record.');
+ if(!date||date>=todayKey())throw new Error('Select an earlier date.');
+ const entry={date,enabled:true,reason,enabledAtMs:Date.now(),enabledByUid:currentUser.uid,enabledByName:currentUser.displayName||currentProfile.name||currentUser.email||'Principal',enabledByEmail:currentUser.email||'',updatedAt:serverTimestamp()};
+ await setDoc(doc(db,'proxyEditAuthorizations',date),entry);
+ const ref=doc(db,'publishedProxy',date),snap=await getDoc(ref);let published=null;
+ if(snap.exists()){
+   const old=snap.data(),history=[...(Array.isArray(old.correctionHistory)?old.correctionHistory:[]),{enabledAtMs:entry.enabledAtMs,enabledByUid:entry.enabledByUid,enabledByEmail:entry.enabledByEmail,reason,historical:true}].slice(-25);
+   await updateDoc(ref,{correctionEnabled:true,locked:false,correctionReason:reason,correctionEnabledAtMs:entry.enabledAtMs,correctionEnabledByUid:entry.enabledByUid,correctionEnabledByEmail:entry.enabledByEmail,correctionHistory:history,updatedAt:serverTimestamp()});
+   published={...old,correctionEnabled:true,locked:false,correctionReason:reason,correctionHistory:history};
+ }
+ return {authorization:{...entry,updatedAt:null},published};
+};
+
 window.loadProxyWorkCloud=async function(date){
  if(!currentUser)return;
- const load=async()=>{if(cloudWriting)return;const [daily,published]=await Promise.all([getDoc(doc(db,'dailyRecords',date)),getDoc(doc(db,'publishedProxy',date))]);if(daily.exists())hydrateDaily(daily.data(),date);window.__vkvWorkPublishedProxy=published.exists()?published.data():null;if(window.renderProxyLockState)window.renderProxyLockState()};
+ const load=async()=>{if(cloudWriting)return;const requests=[getDoc(doc(db,'dailyRecords',date)),getDoc(doc(db,'publishedProxy',date)),getDoc(doc(db,'proxyEditAuthorizations',date))];if(date!==todayKey())requests.push(getDoc(doc(db,'dailyRecords',todayKey())));const [daily,published,authorization,todayDaily]=await Promise.all(requests);if(daily.exists())hydrateDaily(daily.data(),date);window.__vkvWorkPublishedProxy=published.exists()?published.data():null;window.__vkvHistoricalProxyAuthorization=authorization.exists()?authorization.data():null;window.__vkvTodayStatusSummary=date===todayKey()?(daily.exists()?(daily.data().statuses||[]):[]):(todayDaily&&todayDaily.exists()?(todayDaily.data().statuses||[]):[]);if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();if(window.renderProxyLockState)window.renderProxyLockState()};
  await load();if(proxyWorkPollTimer){clearInterval(proxyWorkPollTimer);proxyWorkPollTimer=null}if(date!==todayKey())proxyWorkPollTimer=setInterval(()=>load().catch(e=>console.warn('Next-day proxy sync:',e)),10000);
 };
 
@@ -1954,67 +1970,6 @@ window.deleteAllHistory=async function(){if(!isAdmin()){alert('Only an Admin can
 function normalizePersonName(v){
  return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 }
-const SCHOOL_EMAIL_TEACHER_DEFAULTS=Object.freeze({
-  "REMOVED_EMAIL":"AD2",
-  "REMOVED_EMAIL":"AM",
-  "REMOVED_EMAIL":"AD1",
-  "REMOVED_EMAIL":"AD3",
-  "REMOVED_EMAIL":"AC",
-  "REMOVED_EMAIL":"BB2",
-  "REMOVED_EMAIL":"BD",
-  "REMOVED_EMAIL":"BB1",
-  "REMOVED_EMAIL":"DM",
-  "REMOVED_EMAIL":"DR",
-  "REMOVED_EMAIL":"DD1",
-  "REMOVED_EMAIL":"DB",
-  "REMOVED_EMAIL":"DD3",
-  "REMOVED_EMAIL":"DD2",
-  "REMOVED_EMAIL":"DK",
-  "REMOVED_EMAIL":"GP",
-  "REMOVED_EMAIL":"GG",
-  "REMOVED_EMAIL":"HS",
-  "REMOVED_EMAIL":"HB",
-  "REMOVED_EMAIL":"JM",
-  "REMOVED_EMAIL":"JD",
-  "REMOVED_EMAIL":"JK",
-  "REMOVED_EMAIL":"KCN",
-  "REMOVED_EMAIL":"MD",
-  "REMOVED_EMAIL":"MR",
-  "REMOVED_EMAIL":"ND",
-  "REMOVED_EMAIL":"NB",
-  "REMOVED_EMAIL":"NH",
-  "REMOVED_EMAIL":"PT",
-  "REMOVED_EMAIL":"PS",
-  "REMOVED_EMAIL":"PRS",
-  "REMOVED_EMAIL":"PB1",
-  "REMOVED_EMAIL":"RC2",
-  "REMOVED_EMAIL":"RC2",
-  "REMOVED_EMAIL":"RH",
-  "REMOVED_EMAIL":"SD",
-  "REMOVED_EMAIL":"SP",
-  "REMOVED_EMAIL":"SKK",
-  "REMOVED_EMAIL":"YJS"
-});
-const SCHOOL_TEMP_EMAIL_DEFAULTS=Object.freeze({
-  "REMOVED_EMAIL":"Jahnabi Barman"
-});
-function temporaryCodeForKnownEmail(email,masterData){
- const wanted=normalizePersonName(SCHOOL_TEMP_EMAIL_DEFAULTS[String(email||'').toLowerCase()]||'');
- if(!wanted)return '';
- const reps=Array.isArray(masterData&&masterData.temporaryReplacements)?masterData.temporaryReplacements:[];
- const today=todayKey();
- const matches=reps.filter(r=>normalizePersonName(r&&r.tempName)===wanted&&r&&r.tempCode);
- if(!matches.length)return '';
- const active=matches.find(r=>r.active!==false&&String(r.startDate||'')<=today&&today<=String(r.endDate||r.startDate||''));
- return String((active||matches.slice().sort((a,b)=>String(b.endDate||'').localeCompare(String(a.endDate||'')))[0]).tempCode||'');
-}
-function defaultTeacherCodeForEmail(email,masterData){
- email=String(email||'').trim().toLowerCase();
- if(!email)return '';
- const permanent=String(SCHOOL_EMAIL_TEACHER_DEFAULTS[email]||'');
- if(permanent)return permanent;
- return temporaryCodeForKnownEmail(email,masterData);
-}
 function resolveMyTeacherCode(user,profile,masterData){
  const teachers=Array.isArray(masterData&&masterData.teachers)?masterData.teachers:[];
  const reps=Array.isArray(masterData&&masterData.temporaryReplacements)?masterData.temporaryReplacements:[];
@@ -2023,8 +1978,6 @@ function resolveMyTeacherCode(user,profile,masterData){
  if(explicit&&knownCode(explicit))return explicit;
  const email=String((user&&user.email)||profile&&profile.email||'').trim().toLowerCase();
  if(email){
-   const preset=defaultTeacherCodeForEmail(email,masterData);
-   if(preset&&knownCode(preset))return preset;
    const emailMatches=teachers.filter(t=>{
      const vals=[t.email,t.gmail,t.googleEmail,t.google_email].concat(Array.isArray(t.emails)?t.emails:[]);
      return vals.some(v=>String(v||'').trim().toLowerCase()===email);

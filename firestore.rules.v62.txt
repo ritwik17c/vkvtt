@@ -75,6 +75,14 @@ service cloud.firestore {
       return isStatusEditor() || isProxyManager();
     }
 
+    function isAttendanceManager() {
+      return uidActive() && uidRole() in ['admin', 'manager', 'attendance_manager'];
+    }
+
+    function attendanceOwner() {
+      return signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
     function proxyOnlyUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'allotments',
@@ -137,10 +145,22 @@ service cloud.firestore {
     match /publishedProxy/{date} {
       allow read: if canReadSchool();
 
-      allow create, update: if canPublishProxy()
-                            && request.resource.data.date == date
-                            && request.resource.data.finalizedByUid == request.auth.uid;
+      allow create, update: if isAdmin()
+                            || (canPublishProxy()
+                                && request.resource.data.date == date
+                                && request.resource.data.finalizedByUid == request.auth.uid);
 
+      allow delete: if isAdmin();
+    }
+
+    // Principal-issued permission for creating or correcting an earlier proxy
+    // record. The dated document retains the reason, authoriser and timestamp.
+    match /proxyEditAuthorizations/{date} {
+      allow read: if uidActive() && uidRole() in ['admin', 'manager', 'proxy_manager'];
+      allow create, update: if isAdmin()
+                            && request.resource.data.date == date
+                            && request.resource.data.enabled == true
+                            && request.resource.data.enabledByUid == request.auth.uid;
       allow delete: if isAdmin();
     }
 
@@ -189,6 +209,81 @@ service cloud.firestore {
     match /legacyLeaveAccounting/{entryId} {
       allow read: if isAdmin();
       allow create, update, delete: if isAdmin();
+    }
+
+    // Version 65.4 pilot attendance configuration. Staff can read the schedule
+    // applied to them; only the Principal/Admin can alter school timing/geofence.
+    match /attendanceSettings/{documentId} {
+      allow read: if canReadSchool();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /attendanceSchedules/{scheduleId} {
+      allow read: if canReadSchool();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Original punches are append-only. Staff can create only their own event,
+    // and nobody edits or deletes an original punch from the browser app.
+    match /attendanceEvents/{eventId} {
+      allow get: if isAttendanceManager()
+                 || (canReadSchool() && resource.data.uid == request.auth.uid);
+      allow list: if isAttendanceManager()
+                  || (canReadSchool() && resource.data.uid == request.auth.uid);
+      allow create: if canReadSchool()
+                    && attendanceOwner()
+                    && request.resource.data.keys().hasAll([
+                      'uid', 'date', 'type', 'recordedAt', 'latitude', 'longitude',
+                      'accuracy', 'vpnMockAcknowledged', 'verificationStatus',
+                      'scheduleSnapshot'
+                    ])
+                    && request.resource.data.type in [
+                      'arrival', 'leave', 'return', 'final',
+                      'od_check_in', 'od_check_out'
+                    ]
+                    && request.resource.data.verificationStatus == 'provisional'
+                    && request.resource.data.vpnMockAcknowledged == true;
+      allow update, delete: if false;
+    }
+
+    // Privacy-safe school-wide Latecomers Today projection: no coordinates,
+    // IP address, movement reason or private remarks are permitted.
+    match /attendanceLate/{lateId} {
+      allow read: if canReadSchool();
+      allow create: if canReadSchool()
+                    && attendanceOwner()
+                    && request.resource.data.keys().hasOnly([
+                      'date', 'uid', 'staffName', 'staffGroup', 'arrivalTime',
+                      'arrivalClientTimeMs', 'lateMinutes',
+                      'lateThresholdMinutes', 'verificationStatus'
+                    ])
+                    && request.resource.data.verificationStatus == 'provisional';
+      allow update, delete: if isAttendanceManager();
+    }
+
+    // OD assignments are approved by an authorised manager. A staff member can
+    // read only an assignment addressed to their UID or verified email.
+    match /odAssignments/{assignmentId} {
+      allow get, list: if isAttendanceManager()
+                       || (canReadSchool()
+                           && (resource.data.staffUid == request.auth.uid
+                               || (verifiedEmail() && resource.data.staffEmail == authEmail())));
+      allow create, update, delete: if isAttendanceManager();
+    }
+
+    // Biometric comparison/correction is separate from the immutable app event.
+    // The original event snapshot and verifier identity form the audit record.
+    match /attendanceVerifications/{eventId} {
+      allow get, list: if isAttendanceManager()
+                       || (canReadSchool() && resource.data.uid == request.auth.uid);
+      allow create, update: if isAttendanceManager()
+                            && request.resource.data.eventId == eventId
+                            && request.resource.data.verifiedBy == request.auth.uid
+                            && request.resource.data.status in [
+                              'verified', 'verified_correction', 'app_only',
+                              'biometric_only', 'mismatch'
+                            ];
+      allow delete: if isAdmin();
     }
 
     match /{document=**} {
