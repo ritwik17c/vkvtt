@@ -1,0 +1,14 @@
+{
+  "name": "VKV Nalbari Timetable",
+  "short_name": "VKVTT",
+  "description": "Vivekananda Kendra Vidyalaya Nalbari timetable and school operations app",
+  "start_url": "/vkvtt/",
+  "scope": "/vkvtt/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b2f6b",
+  "icons": [
+    {"src": "icon-192-2.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512-3.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
