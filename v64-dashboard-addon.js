@@ -8,7 +8,7 @@ admin-dashboard.html module script:
 <script src="v64-dashboard-addon.js"></script>
 */
 (() => {
-  const VERSION='66.0';
+  const VERSION='66.0-leave-fix-1';
 
   const style=document.createElement('style');
   style.textContent=`
