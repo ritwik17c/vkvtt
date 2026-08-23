@@ -49,11 +49,23 @@ html.v66-ui body {
 html.v66-ui body > header:not(.topbar) {
   position: relative;
   z-index: 20;
+  overflow: hidden;
   border-bottom: 3px solid var(--vkv-gold-500);
   background: linear-gradient(112deg, var(--vkv-navy-950), var(--vkv-navy-800));
   color: #fff;
   box-shadow: 0 6px 24px rgba(11, 43, 66, .13);
 }
+html.v66-ui body > header:not(.topbar)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 auto;
+  width: min(48vw, 620px);
+  opacity: .64;
+  background: right center / auto 122% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 620 180'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='2' opacity='.17' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 150h580'/%3E%3Cpath d='M76 150V76h126v74M64 76l75-48 75 48M106 150v-34h66v34M96 91h18v18H96zM164 91h18v18h-18z'/%3E%3Cpath d='M259 53h106v76H259zM274 70h76M274 86h76M274 102h76M294 53v76M329 53v76'/%3E%3Ccircle cx='436' cy='84' r='42'/%3E%3Cpath d='M436 61v24l17 10'/%3E%3Cpath d='M502 122c20-12 41-12 62 0v26c-21-12-42-12-62 0-20-12-41-12-62 0v-26c21-12 42-12 62 0Z'/%3E%3Cpath d='M502 122v26'/%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+html.v66-ui body > header:not(.topbar) > * { position: relative; z-index: 1; }
 html.v66-ui body > header:not(.topbar)::after {
   content: "";
   position: absolute;
@@ -61,6 +73,53 @@ html.v66-ui body > header:not(.topbar)::after {
   height: 1px;
   background: rgba(255,255,255,.16);
 }
+
+/* A quiet, recognisably school-focused identity panel for the two landing pages. */
+html.v66-ui .v66-school-ribbon {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+  align-items: center;
+  min-height: 142px;
+  overflow: hidden;
+  margin: 0 0 18px;
+  border: 1px solid #cbdde6;
+  border-radius: 18px;
+  background: linear-gradient(108deg, rgba(255,255,255,.98), rgba(239,247,249,.96));
+  box-shadow: var(--vkv-shadow-sm);
+}
+html.v66-ui .v66-school-ribbon::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(var(--vkv-gold-500), #e0ad45 52%, var(--vkv-navy-700) 52%);
+}
+html.v66-ui .v66-school-copy { padding: 22px 16px 22px 25px; }
+html.v66-ui .v66-school-copy .v66-eyebrow { color: var(--vkv-gold-600); }
+html.v66-ui .v66-school-copy strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--vkv-navy-950);
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+html.v66-ui .v66-school-copy p {
+  max-width: 620px;
+  margin: 5px 0 0;
+  color: var(--vkv-muted);
+  font-size: .86rem;
+}
+html.v66-ui .v66-school-illustration {
+  width: 100%;
+  height: 142px;
+  color: var(--vkv-navy-700);
+  opacity: .82;
+}
+html.v66-ui .v66-school-illustration .v66-gold-line { stroke: var(--vkv-gold-500); }
+html.v66-ui .v66-school-illustration .v66-soft-fill { fill: rgba(31,102,140,.055); }
+html.v66-ui .v66-school-illustration .v66-gold-fill { fill: rgba(200,138,24,.08); }
 
 html.v66-ui .wrap,
 html.v66-ui main.wrap,
@@ -300,7 +359,15 @@ html.v66-ui .cloudBadge {
 /* Homepage working surface */
 html.v66-ui body[data-page="index"] > header { padding-block: 18px; }
 html.v66-ui body[data-page="index"] .head { gap: 14px; }
-html.v66-ui body[data-page="index"] .logo { width: 60px; height: 60px; border: 2px solid rgba(255,255,255,.85); box-shadow: 0 4px 16px rgba(0,0,0,.16); }
+html.v66-ui body[data-page="index"] .logo {
+  width: 50px;
+  height: 70px;
+  border: 2px solid rgba(255,255,255,.9);
+  border-radius: 48% / 40%;
+  background: #fff;
+  object-fit: contain;
+  box-shadow: 0 5px 18px rgba(0,0,0,.18);
+}
 html.v66-ui body[data-page="index"] .activeScheduleBanner {
   position: relative;
   margin-bottom: 18px;
@@ -325,9 +392,11 @@ html.v66-ui body[data-page="index"] .opsGrid { grid-template-columns: repeat(5, 
 html.v66-ui body[data-page="index"] .myGrid button,
 html.v66-ui body[data-page="index"] .nav button,
 html.v66-ui body[data-page="index"] .opsGrid button {
+  position: relative;
   display: flex;
   align-items: center;
   min-height: 62px;
+  overflow: hidden;
   justify-content: flex-start;
   gap: 10px;
   border-color: var(--vkv-line);
@@ -336,6 +405,32 @@ html.v66-ui body[data-page="index"] .opsGrid button {
   text-align: left;
   box-shadow: var(--vkv-shadow-sm);
 }
+html.v66-ui body[data-page="index"] .myGrid button::after,
+html.v66-ui body[data-page="index"] .nav button::after,
+html.v66-ui body[data-page="index"] .opsGrid button::after {
+  content: "";
+  position: absolute;
+  inset: auto -11px -16px auto;
+  width: 62px;
+  height: 62px;
+  border: 1px solid rgba(31,102,140,.09);
+  border-radius: 14px;
+  background:
+    linear-gradient(rgba(31,102,140,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31,102,140,.055) 1px, transparent 1px);
+  background-size: 13px 13px;
+  transform: rotate(9deg);
+  pointer-events: none;
+}
+html.v66-ui body[data-page="index"] .myGrid button:nth-child(4n+1),
+html.v66-ui body[data-page="index"] .nav button:nth-child(3n+1),
+html.v66-ui body[data-page="index"] .opsGrid button:nth-child(5n+1) { border-left: 3px solid var(--vkv-navy-700); }
+html.v66-ui body[data-page="index"] .myGrid button:nth-child(4n+2),
+html.v66-ui body[data-page="index"] .nav button:nth-child(3n+2),
+html.v66-ui body[data-page="index"] .opsGrid button:nth-child(5n+2) { border-left: 3px solid var(--vkv-success); }
+html.v66-ui body[data-page="index"] .myGrid button:nth-child(4n+3),
+html.v66-ui body[data-page="index"] .nav button:nth-child(3n),
+html.v66-ui body[data-page="index"] .opsGrid button:nth-child(5n+3) { border-left: 3px solid var(--vkv-gold-500); }
 html.v66-ui body[data-page="index"] .myGrid button:hover,
 html.v66-ui body[data-page="index"] .nav button:hover,
 html.v66-ui body[data-page="index"] .opsGrid button:hover { border-color: #8db0c2; box-shadow: 0 10px 24px rgba(11, 43, 66, .09); }
@@ -369,6 +464,20 @@ html.v66-ui body[data-page="admin-dashboard"] .tile {
   box-shadow: none;
   transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
+html.v66-ui body[data-page="admin-dashboard"] .tile > :not(.v66-tile-motif) { position: relative; z-index: 1; }
+html.v66-ui body[data-page="admin-dashboard"] .v66-tile-motif {
+  position: absolute;
+  right: 12px;
+  bottom: 9px;
+  width: 48px;
+  height: 48px;
+  color: var(--vkv-navy-700);
+  opacity: .085;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+html.v66-ui body[data-page="admin-dashboard"] .tile:nth-child(3n+2) .v66-tile-motif { color: var(--vkv-gold-600); }
+html.v66-ui body[data-page="admin-dashboard"] .tile:nth-child(3n) .v66-tile-motif { color: var(--vkv-success); }
 html.v66-ui body[data-page="admin-dashboard"] .tile::before {
   content: "";
   position: absolute;
@@ -508,6 +617,10 @@ html.v66-ui :where(a, button, input, select, textarea, [role="button"]):focus-vi
   html.v66-ui body[data-page="index"] .nav button,
   html.v66-ui body[data-page="index"] .opsGrid button { min-height: 54px; }
   html.v66-ui body[data-page="admin-dashboard"] .tile { min-height: 104px; }
+  html.v66-ui .v66-school-ribbon { grid-template-columns: 1fr; min-height: 0; }
+  html.v66-ui .v66-school-copy { padding: 18px 18px 8px 22px; }
+  html.v66-ui .v66-school-illustration { height: 92px; }
+  html.v66-ui body[data-page="index"] .logo { width: 43px; height: 60px; }
   html.v66-ui .table,
   html.v66-ui .tablewrap,
   html.v66-ui .tableWrap,
