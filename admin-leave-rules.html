@@ -27,8 +27,8 @@
     <div class="grid2">
       <div><label>Period type</label><select id="periodType"><option value="">Select…</option><option value="session">Academic Session</option><option value="calendar">Calendar Year</option><option value="fiscal">Fiscal Year</option><option value="custom">Custom</option></select></div>
       <div><label>Description</label><input id="periodDescription" placeholder="e.g. Session label"></div>
-      <div><label>Start date</label><input id="periodStart" type="date"></div>
-      <div><label>End date</label><input id="periodEnd" type="date"></div>
+      <div><label>Start date (dd/mm/yyyy)</label><input id="periodStart" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
+      <div><label>End date (dd/mm/yyyy)</label><input id="periodEnd" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
     </div>
     <div class="actions"><button id="savePeriod" class="primary">Save Entitlement Period</button></div>
     <div class="small">Changing the period does not move legacy accounting automatically. Legacy items must be explicitly assigned to the appropriate period.</div>
@@ -96,6 +96,8 @@ const $=id=>document.getElementById(id),safe=x=>String(x??'').replace(/[&<>"']/g
 let user=null,master=null,rules=[],entitlementPeriod=null,staffCategoryOverrides={},staffCategories=[],staffConditionalEligibility={},legacy=[],editingCode='',editingStaffCategoryCode='';
 
 function msg(text,kind='info'){const e=$('pageMsg');e.innerHTML=`<div class="status ${kind}">${safe(text)}</div>`}
+function displayDate(k){const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(k||'')}
+function inputDate(v){const m=String(v||'').trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return'';const iso=`${m[3]}-${m[2]}-${m[1]}`,d=new Date(iso+'T00:00:00');return d.getFullYear()===Number(m[3])&&d.getMonth()+1===Number(m[2])&&d.getDate()===Number(m[1])?iso:''}
 function periodKey(p=entitlementPeriod){return p&&p.startDate&&p.endDate?String(p.key||`${p.startDate}__${p.endDate}`):''}
 function periodValid(p=entitlementPeriod){return !!(p&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.startDate||''))&&/^\d{4}-\d{2}-\d{2}$/.test(String(p.endDate||''))&&p.startDate<=p.endDate)}
 const DEFAULT_STAFF_CATEGORIES=[{code:'teaching',name:'Teaching Staff',active:true,protected:true,sortOrder:10},{code:'administrative',name:'Administrative Staff',active:true,protected:true,sortOrder:20},{code:'non-teaching',name:'Non-Teaching Staff',active:true,protected:true,sortOrder:30}];
@@ -129,8 +131,8 @@ async function loadAll(){
 }
 function renderAll(){renderPeriod();renderRules();renderStaffCategories();renderStaff();renderLegacy()}
 function renderPeriod(){
- $('periodType').value=entitlementPeriod?.type||'';$('periodDescription').value=entitlementPeriod?.description||'';$('periodStart').value=entitlementPeriod?.startDate||'';$('periodEnd').value=entitlementPeriod?.endDate||'';
- $('periodState').textContent=periodValid()?`${entitlementPeriod.startDate} → ${entitlementPeriod.endDate}`:'Not configured';
+ $('periodType').value=entitlementPeriod?.type||'';$('periodDescription').value=entitlementPeriod?.description||'';$('periodStart').value=displayDate(entitlementPeriod?.startDate||'');$('periodEnd').value=displayDate(entitlementPeriod?.endDate||'');
+ $('periodState').textContent=periodValid()?`${displayDate(entitlementPeriod.startDate)} → ${displayDate(entitlementPeriod.endDate)}`:'Not configured';
 }
 function renderRules(){
  const box=$('ruleGrid');if(!rules.length){box.innerHTML='<div class="status warn">No leave categories configured yet.</div>';return}
@@ -160,13 +162,13 @@ function renderLegacy(){
  const key=periodKey(),rows=finalLegacy().slice().sort((a,b)=>String(a.teacherName||a.teacherCode).localeCompare(String(b.teacherName||b.teacherCode))||String(a.month||'').localeCompare(String(b.month||'')));
  status.className='status info';status.innerHTML=`Current period key: <span class="code">${safe(key)}</span>. Assign only verified records that belong to this period.`;
  if(!rows.length){$('legacyTable').innerHTML='<div class="status info">No active final non-dated legacy accounting items.</div>';return}
- $('legacyTable').innerHTML='<div class="tablewrap"><table><thead><tr><th>Staff</th><th>Month / Category</th><th>Units</th><th>Current assignment</th><th>Action</th></tr></thead><tbody>'+rows.map(x=>{const assigned=String(x.entitlementPeriodKey||''),current=assigned===key,verifiedVL=x.vlHasVerifiedRange===true&&x.vlFromDate&&x.vlToDate;return `<tr><td>${safe(x.teacherName||x.teacherCode)}<div class="small code">${safe(x.teacherCode||'')}</div></td><td>${safe(x.month||'—')} · ${safe(x.category||'—')}${verifiedVL?`<div class="small">Verified range: ${safe(x.vlFromDate)} → ${safe(x.vlToDate)}</div>`:''}</td><td>${safe(x.units||0)}</td><td>${current?'<span class="pill">Current period</span>':assigned?`<span class="small code">${safe(assigned)}</span>`:'<span class="pill">Unassigned</span>'}</td><td>${current?`<button data-clear-legacy="${safe(x.id)}">Clear assignment</button>`:`<button class="amber" data-assign-legacy="${safe(x.id)}">Assign to current period</button>`}</td></tr>`}).join('')+'</tbody></table></div>';
+ $('legacyTable').innerHTML='<div class="tablewrap"><table><thead><tr><th>Staff</th><th>Month / Category</th><th>Units</th><th>Current assignment</th><th>Action</th></tr></thead><tbody>'+rows.map(x=>{const assigned=String(x.entitlementPeriodKey||''),current=assigned===key,verifiedVL=x.vlHasVerifiedRange===true&&x.vlFromDate&&x.vlToDate;return `<tr><td>${safe(x.teacherName||x.teacherCode)}<div class="small code">${safe(x.teacherCode||'')}</div></td><td>${safe(x.month||'—')} · ${safe(x.category||'—')}${verifiedVL?`<div class="small">Verified range: ${safe(displayDate(x.vlFromDate))} → ${safe(displayDate(x.vlToDate))}</div>`:''}</td><td>${safe(x.units||0)}</td><td>${current?'<span class="pill">Current period</span>':assigned?`<span class="small code">${safe(assigned)}</span>`:'<span class="pill">Unassigned</span>'}</td><td>${current?`<button data-clear-legacy="${safe(x.id)}">Clear assignment</button>`:`<button class="amber" data-assign-legacy="${safe(x.id)}">Assign to current period</button>`}</td></tr>`}).join('')+'</tbody></table></div>';
  document.querySelectorAll('[data-assign-legacy]').forEach(b=>b.onclick=()=>assignLegacy(b.dataset.assignLegacy));document.querySelectorAll('[data-clear-legacy]').forEach(b=>b.onclick=()=>clearLegacyAssignment(b.dataset.clearLegacy));
 }
 async function assignLegacy(id){
  const x=legacy.find(a=>a.id===id);if(!x||!periodValid())return;
  const label=`${x.teacherName||x.teacherCode} · ${x.month||'Unknown month'} · ${x.category||'Unknown category'} · ${x.units||0} unit(s)`;
- if(!confirm(`ASSIGN LEGACY ACCOUNTING TO CURRENT ENTITLEMENT PERIOD\n\n${label}\n\nPeriod: ${entitlementPeriod.startDate} to ${entitlementPeriod.endDate}\n\nThis records period membership only. It does NOT invent leave dates and does NOT create proxy duties.\n\nContinue only if verified.`))return;
+ if(!confirm(`ASSIGN LEGACY ACCOUNTING TO CURRENT ENTITLEMENT PERIOD\n\n${label}\n\nPeriod: ${displayDate(entitlementPeriod.startDate)} to ${displayDate(entitlementPeriod.endDate)}\n\nThis records period membership only. It does NOT invent leave dates and does NOT create proxy duties.\n\nContinue only if verified.`))return;
  await setDoc(doc(db,'legacyLeaveAccounting',id),{entitlementPeriodKey:periodKey(),entitlementPeriodStart:entitlementPeriod.startDate,entitlementPeriodEnd:entitlementPeriod.endDate,entitlementPeriodAssignedAt:serverTimestamp(),entitlementPeriodAssignedBy:user.uid,entitlementPeriodAssignedByEmail:user.email||''},{merge:true});
  Object.assign(x,{entitlementPeriodKey:periodKey(),entitlementPeriodStart:entitlementPeriod.startDate,entitlementPeriodEnd:entitlementPeriod.endDate});
  msg('Legacy accounting period assignment saved.','ok');renderLegacy();
@@ -179,8 +181,8 @@ async function clearLegacyAssignment(id){
 }
 
 $('savePeriod').onclick=async()=>{
- const type=$('periodType').value,startDate=$('periodStart').value,endDate=$('periodEnd').value,description=$('periodDescription').value.trim();
- if(!type||!startDate||!endDate){msg('Period type, start date and end date are required.','error');return}
+ const type=$('periodType').value,startDate=inputDate($('periodStart').value),endDate=inputDate($('periodEnd').value),description=$('periodDescription').value.trim();
+ if(!type||!startDate||!endDate){msg('Period type and valid Start/End dates in dd/mm/yyyy are required.','error');return}
  if(startDate>endDate){msg('Entitlement period start date cannot be later than the end date.','error');return}
  entitlementPeriod={type,startDate,endDate,description,key:`${startDate}__${endDate}`};
  try{await saveRulesDoc();msg('Entitlement period saved. Existing legacy records were not moved automatically.','ok');renderAll()}catch(e){msg('Could not save entitlement period: '+(e.message||e),'error')}
