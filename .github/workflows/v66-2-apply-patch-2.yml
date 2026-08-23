@@ -1,0 +1,45 @@
+name: Apply VKVTT v66.2 homepage leave patch
+
+on:
+  push:
+    branches:
+      - v66-2-refinement
+    paths:
+      - tools/apply_v66_2_patch_2.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+          fetch-depth: 0
+      - name: Apply homepage leave/proxy patch
+        run: python tools/apply_v66_2_patch_2.py
+      - name: Validate
+        run: |
+          git diff --check
+          node --check v66-home.js
+          node --check v66-home-cloud.js
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert 'homepageLeaveSnapshot' in s
+          assert 'homepageLeaveRuleWarning' in s
+          print('Homepage leave UI validation passed')
+          PY
+      - name: Commit patched files
+        run: |
+          if git diff --quiet -- index.html v66-home.js v66-home-cloud.js FIRESTORE_RULES_V66_REPLACE_ALL.txt admin-leave-editor.html; then
+            echo "No target-file changes to commit."
+            exit 0
+          fi
+          git config user.name "VKVTT Patch Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html v66-home.js v66-home-cloud.js FIRESTORE_RULES_V66_REPLACE_ALL.txt admin-leave-editor.html
+          git commit -m "Add homepage leave balances and vacant proxy summary [skip ci]"
+          git push origin HEAD:v66-2-refinement
