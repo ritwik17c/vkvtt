@@ -139,7 +139,7 @@ window.loadHomepageLeaveContext=async function(code,force=false){
  if(isAdmin()){
    try{const ls=await getDocs(collection(db,'legacyLeaveAccounting'));ls.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}));legacyAvailable=true}catch(e){console.warn('Homepage legacy leave context:',e)}
  }
- const data={categories:Array.isArray(rd.categories)?rd.categories:[],entitlementPeriod:rd.entitlementPeriod||null,staffCategoryOverrides:rd.staffCategoryOverrides||{},scheduled,manual,legacy,legacyAvailable,loadedAt:now};
+ const data={categories:Array.isArray(rd.categories)?rd.categories:[],entitlementPeriod:rd.entitlementPeriod||null,staffCategoryOverrides:rd.staffCategoryOverrides||{},staffCategories:Array.isArray(rd.staffCategories)?rd.staffCategories:[],staffConditionalEligibility:rd.staffConditionalEligibility||{},scheduled,manual,legacy,legacyAvailable,loadedAt:now};
  homepageLeaveContextCache={at:now,data};
  return data;
 };

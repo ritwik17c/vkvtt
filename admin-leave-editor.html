@@ -338,7 +338,7 @@ if(QUICK_MODE)document.body.classList.add('quick-mode');
 
 let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[];
 let coreLoaded=false,secondaryLoaded=false,bulkDeleteSelection=new Set(),recordRenderLimit=40;
-let leaveRules=[],entitlementPeriod=null,leaveRulesLoadState='idle',staffCategoryOverrides={};
+let leaveRules=[],entitlementPeriod=null,leaveRulesLoadState='idle',staffCategoryOverrides={},leaveStaffCategories=[],staffConditionalEligibility={};
 let leaveRulePreviewTimer=0,lastRuleEvaluation=null;
 let editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
 const TYPES=new Set(['full','half','od','special']);
@@ -408,11 +408,14 @@ function validEntitlementPeriod(){
  return !!(entitlementPeriod&&/^\d{4}-\d{2}-\d{2}$/.test(String(entitlementPeriod.startDate||''))&&/^\d{4}-\d{2}-\d{2}$/.test(String(entitlementPeriod.endDate||''))&&entitlementPeriod.startDate<=entitlementPeriod.endDate);
 }
 function leaveRuleFor(code){const c=String(code||'').trim().toUpperCase();return leaveRules.find(r=>String(r.code||'').trim().toUpperCase()===c)||null}
+function ruleApplicableCodes(rule){const a=Array.isArray(rule&&rule.applicableStaffCategories)?rule.applicableStaffCategories.map(String):[];if(a.length)return a;const out=[];if(rule?.teaching===true)out.push('teaching');if(rule?.admin===true)out.push('administrative');if(rule?.nonTeaching===true)out.push('non-teaching');return out}
 function ruleComplete(rule){
  if(!rule||!String(rule.code||'').trim()||rule.active!==true)return false;
- if(!(rule.teaching===true||rule.admin===true||rule.nonTeaching===true))return false;
+ if(!ruleApplicableCodes(rule).length)return false;
  const n=Number(rule.max);return rule.unlimited===true||(Number.isFinite(n)&&n>0&&Math.round(n*2)===n*2);
 }
+function conditionalEligibilityRequired(rule){return String(rule&&rule.ruleType||'regular')==='conditional'&&rule.requiresIndividualEligibility===true}
+function conditionalEligible(code,category){return !!(staffConditionalEligibility&&staffConditionalEligibility[code]&&staffConditionalEligibility[code][String(category||'').toUpperCase()]===true)}
 function activeLeaveRules(){return leaveRules.filter(ruleComplete).slice().sort((a,b)=>Number(a.sortOrder||999)-Number(b.sortOrder||999)||String(a.code||'').localeCompare(String(b.code||'')))}
 function leaveRuleLabel(code){
  const r=leaveRuleFor(code);return r&&r.name?String(r.name):catLabel(code)
@@ -425,16 +428,16 @@ function leaveCategoryOptions(existingCategory=''){
  return out.join('');
 }
 function detectStaffCategory(code){
- const c=String(code||''),t=teacherByCode(c),explicit=String(t&&t.leaveStaffCategory||'');
- if(['teaching','administrative','non-teaching'].includes(explicit))return explicit;
+ const c=String(code||''),t=teacherByCode(c),known=new Set((leaveStaffCategories||[]).map(x=>String(x.code))),explicit=String(t&&t.leaveStaffCategory||'');
+ if(known.has(explicit)||['teaching','administrative','non-teaching'].includes(explicit))return explicit;
  const override=String(staffCategoryOverrides[c]||'');
- if(['teaching','administrative','non-teaching'].includes(override))return override;
+ if(known.has(override)||['teaching','administrative','non-teaching'].includes(override))return override;
  if((master?.nonTeachingStaff||[]).some(x=>String(x.code)===c))return'non-teaching';
  if((master?.teachers||[]).some(x=>String(x.code)===c))return'teaching';
  return'unknown';
 }
 function ruleAppliesTo(rule,staffCategory){
- return !!rule&&((staffCategory==='teaching'&&rule.teaching===true)||(staffCategory==='administrative'&&rule.admin===true)||(staffCategory==='non-teaching'&&rule.nonTeaching===true));
+ return !!rule&&ruleApplicableCodes(rule).includes(String(staffCategory||''));
 }
 function dateInEntitlementPeriod(date){
  return validEntitlementPeriod()&&String(date||'')>=entitlementPeriod.startDate&&String(date||'')<=entitlementPeriod.endDate;
@@ -477,6 +480,7 @@ function calculateLeaveUsage(code,category,{excludeOriginalIds=[],excludeManualK
  if(!ruleComplete(rule))return{configError:`${leaveRuleLabel(category)} has an incomplete Leave Rule.`,rule,staffCategory};
  if(staffCategory==='unknown')return{configError:'Staff category is not configured for this person.',rule,staffCategory};
  const applicable=ruleAppliesTo(rule,staffCategory);
+ if(conditionalEligibilityRequired(rule)&&!conditionalEligible(code,category))return{configError:`${leaveRuleLabel(category)} requires explicit individual eligibility for this staff member. Enable it in Leave Rules → Staff Leave Classification & Conditional Eligibility.`,rule,staffCategory,applicable:false,conditionalEligibilityMissing:true};
  if(rule.unlimited===true){
    return{rule,staffCategory,applicable,unlimited:true,entitlement:null,datedUsed:null,legacyAssigned:0,legacyUnassigned:0,used:null,balance:null};
  }
@@ -518,8 +522,8 @@ async function loadLeaveRules(){
  leaveRulesLoadState='loading';renderLeaveRulesStatus();
  try{
    const s=await getDoc(doc(db,'leaveRules','current'));
-   if(!s.exists()){leaveRules=[];entitlementPeriod=null;staffCategoryOverrides={};leaveRulesLoadState='missing'}
-   else{const d=s.data()||{};leaveRules=Array.isArray(d.categories)?d.categories:[];entitlementPeriod=d.entitlementPeriod||null;staffCategoryOverrides=d.staffCategoryOverrides||{};leaveRulesLoadState='ready'}
+   if(!s.exists()){leaveRules=[];entitlementPeriod=null;staffCategoryOverrides={};leaveStaffCategories=[];staffConditionalEligibility={};leaveRulesLoadState='missing'}
+   else{const d=s.data()||{};leaveRules=Array.isArray(d.categories)?d.categories:[];entitlementPeriod=d.entitlementPeriod||null;staffCategoryOverrides=d.staffCategoryOverrides||{};leaveStaffCategories=Array.isArray(d.staffCategories)?d.staffCategories:[];staffConditionalEligibility=d.staffConditionalEligibility||{};leaveRulesLoadState='ready'}
  }catch(e){leaveRules=[];entitlementPeriod=null;staffCategoryOverrides={};leaveRulesLoadState='error';console.warn('Leave Rules:',e)}
  renderLeaveRulesStatus();
 }
