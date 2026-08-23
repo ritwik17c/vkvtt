@@ -1,0 +1,28 @@
+name: Apply configurable Approved Leave labels
+on:
+  push:
+    branches: [v66-2-refinement]
+    paths: [tools/trigger_approved_labels_fix.txt]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+          fetch-depth: 0
+      - run: python tools/apply_dynamic_approved_leave_labels.py
+      - name: Validate
+        run: |
+          git diff --check
+          grep -q "leaveRuleLabels" admin-leave.html
+          if grep -q "const CAT={VL:'VL'" admin-leave.html; then exit 1; fi
+      - name: Commit
+        run: |
+          git config user.name "VKVTT Patch Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add admin-leave.html
+          git commit -m "Make Approved Leave labels follow configured categories"
+          git push origin HEAD:v66-2-refinement
