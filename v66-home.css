@@ -161,3 +161,9 @@ button.active,
 }
 button.active *{color:inherit !important}
 /* marker: vkv-selected-gold-outline */
+
+/* v66.2 Swamiji identity motif — exact supplied portrait, gold line treatment. */
+.head{position:relative;overflow:hidden}
+.homeTitleBlock{min-width:0;position:relative;z-index:2}
+.swamijiHomePortrait{margin-left:auto;width:clamp(92px,12vw,150px);height:auto;max-height:118px;object-fit:contain;opacity:.78;align-self:center;pointer-events:none;filter:drop-shadow(0 3px 8px rgba(91,61,8,.07))}
+@media(max-width:620px){.swamijiHomePortrait{width:86px;max-height:88px;opacity:.68}.head{gap:10px}.homeTitleBlock h1{font-size:1.15rem}}
