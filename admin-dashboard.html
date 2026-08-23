@@ -158,8 +158,9 @@ async function verifyAndOpenAdmin(user){
    profile=ps.data();
    $('gate').style.display='none';$('app').style.display='block';$('app').style.opacity='1';$('app').style.pointerEvents='auto';$('app').removeAttribute('aria-busy');
    showDashboard();
-   // Preload master only when the browser is idle. Do not render heavy tables yet.
-   const preload=()=>ensureMasterLoaded(false).catch(()=>{});
+   // Preload master only when the browser is idle. Keep heavy tables lazy,
+   // but update the lightweight dashboard schedule/metrics as soon as data arrives.
+   const preload=()=>ensureMasterLoaded(false).then(renderDashboardSummary).catch(e=>renderDashboardLoadError(e));
    if('requestIdleCallback' in window)requestIdleCallback(preload,{timeout:2500});else setTimeout(preload,1200);
  }catch(e){if(token!==adminCheckToken)return;$('gateMsg').className='status error';$('gateMsg').textContent='Could not open Admin Dashboard: '+(e.message||e);$('retryAdminBtn').style.display='inline-block'}
  finally{clearTimeout(slowTimer)}
@@ -193,9 +194,22 @@ async function loadMaster(){master=null;masterRendered=false;return ensureMaster
 
 function activeSchedule(){const id=master.activeScheduleProfileId||'normal',profiles=master.scheduleProfiles||{};return profiles[id]||profiles.normal||{name:'Normal Schedule'}}
 function activeReplacements(date=todayKey()){return master.temporaryReplacements.filter(r=>r&&r.active!==false&&r.startDate&&r.endDate&&date>=r.startDate&&date<=r.endDate)}
+function renderDashboardSummary(){
+ if(!master||!Array.isArray(master.records))return;
+ const ap=activeSchedule(),status=$('activeScheduleStatus');
+ if(status){status.className='status ok';status.innerHTML='<b>Active Schedule:</b> '+safe(ap.name||'Normal Schedule')}
+ if($('mTeachers'))$('mTeachers').textContent=master.teachers.length;
+ if($('mClasses'))$('mClasses').textContent=master.classes.length;
+ if($('mEntries'))$('mEntries').textContent=master.records.length;
+ if($('mTemp'))$('mTemp').textContent=activeReplacements().length;
+}
+function renderDashboardLoadError(e){
+ const status=$('activeScheduleStatus');if(!status)return;
+ status.className='status error';
+ status.innerHTML='<b>Active schedule unavailable.</b> '+safe((e&&e.message)||e||'Please retry.');
+}
 function renderAll(){
- const ap=activeSchedule();$('activeScheduleStatus').innerHTML='<b>Active Schedule:</b> '+safe(ap.name||'Normal Schedule');
- $('mTeachers').textContent=master.teachers.length;$('mClasses').textContent=master.classes.length;$('mEntries').textContent=master.records.length;$('mTemp').textContent=activeReplacements().length;
+ renderDashboardSummary();
  fill($('editDay'),DAYS.map(x=>({value:x,label:x})));fill($('editClass'),master.classes.map(x=>({value:x,label:x})));fill($('replacementOriginal'),master.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>({value:t.code,label:t.name+' ('+t.code+')'})));
  renderTeacherTable();renderClassTable();renderReplacementList();renderNonTeachingList();renderHistory();renderOverview();
  if(!$('editDay').value)$('editDay').value='Monday';if(!$('editClass').value)$('editClass').value=master.classes[0]||'';updatePeriods();

@@ -559,6 +559,14 @@ async function verify(u){
  master=m.data().data||m.data();
  teachers=[...(master.teachers||[]),...(master.nonTeachingStaff||[]).filter(x=>x&&x.active!==false).map(x=>({...x,name:x.name+' — Non-Teaching · '+(x.designation||'Staff')}))].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
+async function requireAdminSession(){
+ const current=auth.currentUser;
+ if(!current)throw new Error('Your Admin session needs to be refreshed. Please sign in again. No leave record has been saved.');
+ const p=await getDoc(doc(db,'authorizedUsers',current.uid));
+ if(!p.exists()||p.data().active!==true||String(p.data().role||'')!=='admin')throw new Error('Admin access is no longer available for this account. No leave record has been saved.');
+ user=current;
+ return current;
+}
 async function loadAll(){
  await loadLeaveRules();
  const core=await Promise.allSettled([
@@ -1180,8 +1188,8 @@ function startNew(){
  $('editorWarning').className='status info';$('editorWarning').innerHTML='<b>New approved record.</b> One Date Row is ready. Add more Date Rows or Date-Range Rows only when required.';
  $('archiveBtn').classList.add('hide');openEditor('New approved leave / OD / special record',QUICK_MODE?'Quick Add Leave · Admin Dashboard':'Principal/Admin master template');updateReconcile();renderSelectedTeacherHistory();
 }
-function makePlan(row,code,stamp,i){
- const id=`le_${code}_${row.date.replaceAll('-','')}_${stamp}_${i}`,p={id,code,type:row.type,mode:'single',startDate:row.date,endDate:row.date,active:true,source:'admin-leave-editor-v64',createdAtMs:Date.now(),updatedAtMs:Date.now(),updatedBy:user.uid,updatedByEmail:user.email||''};
+function makePlan(row,code,stamp,i,actor){
+ const id=`le_${code}_${row.date.replaceAll('-','')}_${stamp}_${i}`,p={id,code,type:row.type,mode:'single',startDate:row.date,endDate:row.date,active:true,source:'admin-leave-editor-v64',createdAtMs:Date.now(),updatedAtMs:Date.now(),updatedBy:actor.uid,updatedByEmail:actor.email||''};
  if(row.type==='full'||row.type==='half'){p.leaveCategory=row.category;p.leaveUnits=Math.round(Number(row.units||0)*2)/2;if(row.type==='half'){p.from=row.from||5;p.to=row.to||8;p.duration='half'}}
  else{if(row.part==='am'){p.from=1;p.to=4;p.duration='custom'}else if(row.part==='pm'){p.from=5;p.to=8;p.duration='half'}else if(row.part==='custom'){p.from=row.from;p.to=row.to;p.duration='custom'}else{p.from=0;p.to=0;p.duration='full'}}
  if(row.note)p.note=row.note;return p;
@@ -1228,6 +1236,7 @@ async function removeManualSource(m){
  const email=teacherEmail(m.code);if(email){try{const pr=doc(db,'personalStatus',email,'records',m._date),ps=await getDoc(pr);if(ps.exists()){const data=ps.data()||{};delete data.manualStatus;await setDoc(pr,{...data,updatedAt:serverTimestamp()},{merge:false})}}catch(e){}}
 }
 async function savePlans(rows,reason){
+ const actor=await requireAdminSession();
  const code=$('editTeacher').value;if(!code)throw new Error('Select the teacher.');
  const err=validateRows(rows);if(err)throw new Error(err);
  const ruleEvaluation=await evaluateLeaveTransaction(rows,code);lastRuleEvaluation=ruleEvaluation;setOverrideVisibility(ruleEvaluation);
@@ -1240,14 +1249,14 @@ async function savePlans(rows,reason){
  if(integrity.exact.length)throw new Error(`Exact duplicate leave record detected for ${[...new Set(integrity.exact.map(x=>displayDate(x.proposed.date)))].join(', ')}. The duplicate has not been saved.`);
  if(integrity.conflict.length)throw new Error(`Conflicting / overlapping approved status already exists for ${[...new Set(integrity.conflict.map(x=>displayDate(x.proposed.date)))].join(', ')}. Review the existing record first.`);
  const published=await hasPublishedPast(rows.map(r=>r.date));if(published.length&&!confirm(`WARNING — PAST PUBLISHED PROXY EXISTS\n\nA final proxy record already exists for ${published.map(displayDate).join(', ')}.\n\nThis leave correction will NOT rewrite that historical proxy. Continue?`))return false;
- const stamp=Date.now(),newPlans=rows.map((r,i)=>makePlan(r,code,stamp,i)),old=editorState.originalIds.map(id=>plans[id]).filter(Boolean),manualOld=editorState.manualOriginal?{...editorState.manualOriginal}:null,newMap={...plans};
+ const stamp=Date.now(),newPlans=rows.map((r,i)=>makePlan(r,code,stamp,i,actor)),old=editorState.originalIds.map(id=>plans[id]).filter(Boolean),manualOld=editorState.manualOriginal?{...editorState.manualOriginal}:null,newMap={...plans};
  for(const p of old)delete newMap[p.id];for(const p of newPlans)newMap[p.id]=p;if(manualOld)await removeManualSource(manualOld);
- await setDoc(doc(db,'dailyRecords','__leavePlans'),{date:'__leavePlans',dayName:'Scheduled Leave / Status Plans',plans:newMap,updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:false});
+ await setDoc(doc(db,'dailyRecords','__leavePlans'),{date:'__leavePlans',dayName:'Scheduled Leave / Status Plans',plans:newMap,updatedAt:serverTimestamp(),updatedBy:actor.uid,updatedByEmail:actor.email||''},{merge:false});
  for(const p of old){try{await deleteDoc(doc(db,'approvedStatusPlans',String(p.id)))}catch(e){}try{await removePersonalProjection(p)}catch(e){}}
- for(const p of newPlans){await setDoc(doc(db,'approvedStatusPlans',String(p.id)),{...p,approved:true,source:p.source||'admin-leave-editor-v64',updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''},{merge:true});try{await addPersonalProjection(p)}catch(e){}}
+ for(const p of newPlans){await setDoc(doc(db,'approvedStatusPlans',String(p.id)),{...p,approved:true,source:p.source||'admin-leave-editor-v64',updatedAt:serverTimestamp(),updatedBy:actor.uid,updatedByEmail:actor.email||''},{merge:true});try{await addPersonalProjection(p)}catch(e){}}
  plans=newMap;
- if(editorState.pendingId){const x=legacy.find(a=>a.id===editorState.pendingId);if(x){await setDoc(doc(db,'legacyLeaveAccounting',x.id),{resolutionStatus:'resolved-dated',active:false,resolvedPlanIds:newPlans.map(p=>p.id),resolutionNote:reason,resolvedAt:serverTimestamp(),resolvedBy:user.uid,resolvedByEmail:user.email||''},{merge:true});x.resolutionStatus='resolved-dated';x.active=false;x.resolvedPlanIds=newPlans.map(p=>p.id)}}
- const t=teacherByCode(code)||{name:code},auditDoc={action:editorState.pendingId?'Resolved pending legacy leave':(old.length?'Edited approved leave':'Created approved leave'),teacherCode:code,teacherName:t.name||code,reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),before:manualOld?[manualOld]:old,after:newPlans,pendingSourceId:editorState.pendingId||''};
+ if(editorState.pendingId){const x=legacy.find(a=>a.id===editorState.pendingId);if(x){await setDoc(doc(db,'legacyLeaveAccounting',x.id),{resolutionStatus:'resolved-dated',active:false,resolvedPlanIds:newPlans.map(p=>p.id),resolutionNote:reason,resolvedAt:serverTimestamp(),resolvedBy:actor.uid,resolvedByEmail:actor.email||''},{merge:true});x.resolutionStatus='resolved-dated';x.active=false;x.resolvedPlanIds=newPlans.map(p=>p.id)}}
+ const t=teacherByCode(code)||{name:code},auditDoc={action:editorState.pendingId?'Resolved pending legacy leave':(old.length?'Edited approved leave':'Created approved leave'),teacherCode:code,teacherName:t.name||code,reason,adminUid:actor.uid,adminEmail:actor.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),before:manualOld?[manualOld]:old,after:newPlans,pendingSourceId:editorState.pendingId||''};
  if(ruleEvaluation.policyViolations.length){
    auditDoc.ruleOverride=true;
    auditDoc.overrideReason=String($('ruleOverrideReason')?.value||'').trim();

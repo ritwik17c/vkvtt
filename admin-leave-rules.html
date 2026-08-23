@@ -57,6 +57,7 @@
     <div class="help">The existing teacher/non-teaching roster remains unchanged. Use an explicit override only where a staff member should be treated as Administrative, Teaching or Non-Teaching for leave applicability.</div>
     <div id="staffTable" class="tablewrap"></div>
     <div class="actions"><button id="saveStaffCategories" class="primary">Save Staff Classifications</button></div>
+    <div id="staffCategorySaveStatus" class="status info hide" aria-live="polite"></div>
   </section>
 
   <section class="card">
@@ -85,8 +86,17 @@ function ruleComplete(r){const n=Number(r?.max);return !!r&&String(r.code||'').t
 function inferredStaffCategory(x,source){const explicit=String(x.leaveStaffCategory||'');if(['teaching','administrative','non-teaching'].includes(explicit))return explicit;const ov=String(staffCategoryOverrides[x.code]||'');if(['teaching','administrative','non-teaching'].includes(ov))return ov;return source==='non-teaching'?'non-teaching':'teaching'}
 function resolutionState(x){if(x.resolutionStatus)return x.resolutionStatus;const r=String(x.reason||'');return(/admin-reviewed/i.test(r)&&/retained/i.test(r))?'pending':'final-accounting'}
 
+async function requireAdminSession(){
+ const current=auth.currentUser;
+ if(!current)throw new Error('Your Admin session needs to be refreshed. Please sign in again. No changes have been saved.');
+ const p=await getDoc(doc(db,'authorizedUsers',current.uid));
+ if(!p.exists()||p.data().active!==true||String(p.data().role||'')!=='admin')throw new Error('Admin access is no longer available for this account. No changes have been saved.');
+ user=current;
+ return current;
+}
 async function saveRulesDoc(extra={}){
- await setDoc(doc(db,'leaveRules','current'),{categories:rules,entitlementPeriod,staffCategoryOverrides,updatedAt:serverTimestamp(),updatedByUid:user.uid,updatedByEmail:user.email||'',...extra},{merge:true});
+ const actor=await requireAdminSession();
+ await setDoc(doc(db,'leaveRules','current'),{categories:rules,entitlementPeriod,staffCategoryOverrides,updatedAt:serverTimestamp(),updatedByUid:actor.uid,updatedByEmail:actor.email||'',...extra},{merge:true});
 }
 async function loadAll(){
  const [rs,ms,ls]=await Promise.all([getDoc(doc(db,'leaveRules','current')),getDoc(doc(db,'master','current')),getDocs(collection(db,'legacyLeaveAccounting'))]);
@@ -159,8 +169,18 @@ $('saveRule').onclick=async()=>{
  try{await saveRulesDoc();msg('Leave category saved.','ok');$('ruleForm').classList.add('hide');editingCode='';renderRules()}catch(e){msg('Could not save category: '+(e.message||e),'error')}
 };
 $('saveStaffCategories').onclick=async()=>{
+ const btn=$('saveStaffCategories'),local=$('staffCategorySaveStatus');
  const map={};document.querySelectorAll('[data-staff-code]').forEach(sel=>{map[sel.dataset.staffCode]=sel.value});staffCategoryOverrides=map;
- try{await saveRulesDoc();msg('Staff leave classifications saved.','ok');renderStaff()}catch(e){msg('Could not save staff classifications: '+(e.message||e),'error')}
+ btn.disabled=true;btn.textContent='Saving…';
+ if(local){local.className='status info';local.textContent='Saving staff classifications…';local.classList.remove('hide')}
+ try{
+   await saveRulesDoc();
+   if(local){local.className='status ok';local.textContent='✓ Staff classifications saved successfully.'}
+   msg('Staff leave classifications saved.','ok');renderStaff();
+ }catch(e){
+   if(local){local.className='status error';local.textContent='Could not save staff classifications: '+(e.message||e)}
+   msg('Could not save staff classifications: '+(e.message||e),'error');
+ }finally{btn.disabled=false;btn.textContent='Save Staff Classifications'}
 };
 
 onAuthStateChanged(auth,async u=>{
