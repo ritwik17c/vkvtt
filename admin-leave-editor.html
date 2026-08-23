@@ -544,7 +544,7 @@ async function renderLeaveRulePreview(){
    const after=Math.round((x.balance-x.units)*2)/2;return `<div class="teacherHistoryMetric"><b>${safe(after)}</b><span>${safe(leaveRuleLabel(x.category))} after proposal · ${safe(x.used)} used + ${safe(x.units)} proposed of ${safe(x.entitlement)}${x.balance<=0?' · EXHAUSTED':''}</span></div>`
  }).join('');
  const warnings=[...evaluation.configErrors.map(x=>`<div class="status error">${safe(x)}</div>`),...(evaluation.warnings||[]).map(x=>`<div class="status warn">⚠ ${safe(x)}</div>`),...evaluation.policyViolations.map(x=>`<div class="status warn">${safe(policyViolationText(x))}</div>`)].join('');
- box.classList.remove('hide');box.innerHTML=`<div class="teacherHistoryHead"><div><h3>Proposed leave rule check</h3><div class="help">Live calculation for all Full/Half Date Rows and Date-Range Rows in this transaction.</div></div></div><div class="teacherHistoryMetrics">${lines||'<div class="help">No Full/Half leave in this transaction.</div>'}</div>${warnings}`;
+ box.classList.remove('hide');box.innerHTML=`<div class="teacherHistoryHead"><div><h3>Proposed leave rule check</h3><div class="help">Leave calculation for all Full/Half Date Rows and Date-Range Rows in this transaction.</div></div></div><div class="teacherHistoryMetrics">${lines||'<div class="help">No Full/Half leave in this transaction.</div>'}</div>${warnings}`;
  setOverrideVisibility(evaluation);
 }
 function scheduleLeaveRulePreview(){clearTimeout(leaveRulePreviewTimer);leaveRulePreviewTimer=setTimeout(()=>renderLeaveRulePreview().catch(e=>console.warn('Leave Rule preview:',e)),120)}

@@ -253,7 +253,8 @@ service cloud.firestore {
     // Principal/Admin-configured leave entitlements, applicability and period metadata.
     // The Leave Master Editor is Principal/Admin-only, so keep this configuration narrow.
     match /leaveRules/{documentId} {
-      allow read, create, update: if isAdmin();
+      allow read: if isStatusEditor();
+      allow create, update: if isAdmin();
       allow delete: if false;
     }
 

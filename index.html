@@ -101,7 +101,7 @@
 <section id="slot" class="view"><h2>Whose Period Is It?</h2><div class="controls"><div><label>Class</label><select id="slotClass" onchange="slotResult()"><option value="">Select…</option></select></div><div><label>Day</label><select id="slotDay" onchange="slotResult()"><option value="">Select…</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option></select></div><div><label>Period</label><select id="slotPeriod" onchange="slotResult()"><option value="">Select…</option><option value="1">1st Period · 8:35–9:25</option><option value="2">2nd Period · 9:25–10:05</option><option value="3">3rd Period · 10:05–10:45</option><option value="4">4th Period · 10:45–11:25</option><option value="5">5th Period · 11:55–12:35</option><option value="6">6th Period · 12:35–1:15</option><option value="7">7th Period · 1:15–1:45 Jr / 1:55 Sr</option><option value="8">8th Period · 1:55–2:35</option></select></div></div><div class="actions"><button onclick="copyView('slotResult','Class slot')">📋 Copy</button><button onclick="shareView('slotResult','Class slot')">↗ Share</button><span id="slotResultMsg" class="copymsg"></span></div><div id="slotResult" class="result">Select class, day and period.</div></section>
 
 <section id="allot" class="view"><h2><span id="proxyScopeTitle">Today’s</span> Proxy Allotment (All Teachers) <span class="small" id="proxyDateLabel"></span></h2>
-<div id="proxyTodayStatusSummary" class="result" style="margin-bottom:12px">Loading today’s Leave / OD / Assignment summary…</div>
+<div id="proxyTodayStatusSummary" class="result" style="margin-bottom:12px">Loading today’s Leave / Duty Leave / Operational Status summary…</div>
 <div class="controls"><div><label>Proxy Date (dd/mm/yyyy)</label><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" id="proxyWorkDate" onchange="changeProxyWorkDate()"><div class="small">Today and the coming three days are available normally. An earlier date requires Principal authorisation.</div></div></div>
 <div class="proxyTop">
   <button onclick="prevProxyPeriod()">← Previous</button>
@@ -120,7 +120,8 @@
 </section>
 
 <section id="leave" class="view"><h2>Leave / On Duty / Special Assignment / Vacant Position</h2>
-<div class="controls"><div><label>Teacher</label><select id="leaveTeacher"><option value="">Select...</option></select></div></div>
+<div class="controls"><div><label>Teacher</label><select id="leaveTeacher" onchange="onHomepageLeaveTeacherChange()"><option value="">Select...</option></select></div></div>
+<div id="homepageLeaveSnapshot" class="proxycard" style="display:none" aria-live="polite"></div>
 
 <div class="proxycard leaveCalendarCard">
 <div class="proxyhead">1. Select date(s)</div>
@@ -157,7 +158,7 @@
 <div id="leaveCategoryBox" class="proxycard disabledBox">
 <div class="proxyhead">3. Leave Category &amp; Leave Account</div>
 <div class="small">Required for Full Leave / Half Leave. This lets the timetable app become the leave register too, so the same leave need not be entered again in a separate Excel sheet.</div>
-<div class="leaveBtns categoryQuickBtns" style="margin-top:10px">
+<div id="leaveCategoryQuickBtns" class="leaveBtns categoryQuickBtns" style="margin-top:10px">
 <button data-leave-category="VL" onclick="chooseLeaveCategory('VL',this)">VL</button>
 <button data-leave-category="EL" onclick="chooseLeaveCategory('EL',this)">EL</button>
 <button data-leave-category="CL" onclick="chooseLeaveCategory('CL',this)">CL</button>
@@ -166,10 +167,11 @@
 <button data-leave-category="MATERNITY" onclick="chooseLeaveCategory('MATERNITY',this)">Maternity Leave</button>
 </div>
 <div class="controls">
-<div><label>Leave Category</label><select id="leaveCategory" onchange="refreshLeaveCategoryUi(false)"><option value="">Select…</option><option value="VL">VL</option><option value="EL">EL</option><option value="CL">CL</option><option value="SEL">SEL</option><option value="EOL">EOL</option><option value="MATERNITY">Maternity Leave</option></select></div>
-<div><label>Leave Days</label><input id="leaveUnits" type="number" min="0" step="0.5" placeholder="Auto calculated"><div class="small">Auto-calculated from the selected dates; you may correct it when school leave-counting rules require a different figure.</div></div>
+<div><label>Leave Category</label><select id="leaveCategory" onchange="refreshLeaveCategoryUi(false)"><option value="">Select…</option></select></div>
+<div><label>Leave Days</label><input id="leaveUnits" type="number" min="0" step="0.5" placeholder="Auto calculated" oninput="renderHomepageLeaveRuleWarning()"><div class="small">Auto-calculated from the selected dates; you may correct it when school leave-counting rules require a different figure.</div></div>
 </div>
 <div class="actions" style="margin-top:8px"><button type="button" onclick="autoFillLeaveUnits()">↻ Auto Calculate Leave Days</button><span id="leaveAccountHint" class="small"></span></div>
+<div id="homepageLeaveRuleWarning" class="small" style="margin-top:9px" aria-live="polite"></div>
 </div>
 <div id="dutyDurationBox" class="proxycard disabledBox">
 <div class="proxyhead">4. Duration for On Duty / Special Assignment</div>

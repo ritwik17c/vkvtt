@@ -5,7 +5,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestam
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),switchAccountBtn=document.getElementById('googleSwitchAccount'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSwitchAccount=document.getElementById('cloudSwitchAccount'),cloudSignOut=document.getElementById('cloudSignOut');
-let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,leavePlanPollTimer=null,schedulePollTimer=null,accessCheckTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
+let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,leavePlanPollTimer=null,schedulePollTimer=null,accessCheckTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false,homepageLeaveContextCache=null;
 const statusEditorRoles=new Set(['admin','manager']);
 const proxyRoles=new Set(['admin','manager','proxy_manager']);
 const isAdmin=()=>currentProfile&&currentProfile.role==='admin';
@@ -122,6 +122,28 @@ window.addEventListener('focus',()=>{refreshActiveScheduleFromCloud();if(current
 
 const LEAVE_PLAN_DOC='__leavePlans';
 const PERSONAL_STATUS_TYPES=new Set(['full','half','od','special']);
+
+window.loadHomepageLeaveContext=async function(code,force=false){
+ if(!currentUser||!canEditStatus())throw new Error('Admin or Manager access is required to view staff leave balances.');
+ const now=Date.now();
+ if(!force&&homepageLeaveContextCache&&now-homepageLeaveContextCache.at<30000)return homepageLeaveContextCache.data;
+ const [ruleSnap,dailySnap]=await Promise.all([getDoc(doc(db,'leaveRules','current')),getDocs(collection(db,'dailyRecords'))]);
+ const rd=ruleSnap.exists()?(ruleSnap.data()||{}):{},scheduled=[],manual=[];
+ dailySnap.forEach(d=>{
+   const data=d.data()||{};
+   if(d.id===LEAVE_PLAN_DOC){Object.values(data.plans||{}).forEach(p=>{if(p&&p.active!==false)scheduled.push({...p})});return}
+   const date=data.date||d.id;
+   (data.statuses||[]).forEach(x=>{if(x)manual.push({...x,_date:date})});
+ });
+ let legacy=[],legacyAvailable=false;
+ if(isAdmin()){
+   try{const ls=await getDocs(collection(db,'legacyLeaveAccounting'));ls.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}));legacyAvailable=true}catch(e){console.warn('Homepage legacy leave context:',e)}
+ }
+ const data={categories:Array.isArray(rd.categories)?rd.categories:[],entitlementPeriod:rd.entitlementPeriod||null,staffCategoryOverrides:rd.staffCategoryOverrides||{},scheduled,manual,legacy,legacyAvailable,loadedAt:now};
+ homepageLeaveContextCache={at:now,data};
+ return data;
+};
+window.invalidateHomepageLeaveContext=()=>{homepageLeaveContextCache=null};
 function normalizedEmail(v){return String(v||'').trim().toLowerCase()}
 function teacherEmailForCode(code){
  code=String(code||'').trim();if(!code)return '';
@@ -333,6 +355,7 @@ async function pushToday(payload){
      try{await syncPersonalManualStatusesForDate(p.date,oldStatuses,p.statuses||[])}catch(e){console.warn('Personal Leave / OD daily sync:',e)}
      try{await syncApprovedManualStatusesForDate(p.date,p.statuses||[])}catch(e){console.warn('Approved Leave daily sync:',e)}
    }
+   homepageLeaveContextCache=null;
    cloudSync.textContent='Synced';
  }finally{
    cloudWriting=false;
