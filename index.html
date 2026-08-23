@@ -16,6 +16,14 @@
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0b2f6b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VKVTT">
+<link rel="apple-touch-icon" href="./icon-192-2.png">
 </head><body><div id="authGate"><div class="authCard">
 <h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v66.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
@@ -208,4 +216,12 @@
 <div id="historyResult" class="result">Select a date.</div></section>
 </main>
 <script src="v66-home.js?v=66.0-home-fix-1"></script><script type="module" src="v66-home-cloud.js?v=66.0-home-fix-1"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.error('Service worker registration failed:', err));
+  });
+}
+</script>
 </body></html>
