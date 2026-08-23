@@ -1,11 +1,11 @@
-name: Apply VKVTT v66.2 homepage leave patch
+name: Apply VKVTT v66.2 refinement patch runner
 
 on:
   push:
     branches:
       - v66-2-refinement
     paths:
-      - tools/apply_v66_2_patch_2.py
+      - tools/trigger_proven_runner.txt
 
 permissions:
   contents: write
@@ -18,8 +18,8 @@ jobs:
         with:
           ref: v66-2-refinement
           fetch-depth: 0
-      - name: Apply homepage leave/proxy patch
-        run: python tools/apply_v66_2_patch_2.py
+      - name: Apply terminology/staff-category patch
+        run: python tools/apply_v66_2_patch_3.py
       - name: Validate
         run: |
           git diff --check
@@ -27,19 +27,21 @@ jobs:
           node --check v66-home-cloud.js
           python - <<'PY'
           from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8')
-          assert 'homepageLeaveSnapshot' in s
-          assert 'homepageLeaveRuleWarning' in s
-          print('Homepage leave UI validation passed')
+          a=Path('admin-leave-rules.html').read_text(encoding='utf-8')
+          b=Path('admin-leave-editor.html').read_text(encoding='utf-8')
+          assert 'id="staffCategoryGrid"' in a
+          assert 'Conditional / Special Leave' in a
+          assert 'conditionalEligibilityMissing' in b
+          print('Terminology/staff-category validation passed')
           PY
       - name: Commit patched files
         run: |
-          if git diff --quiet -- index.html v66-home.js v66-home-cloud.js FIRESTORE_RULES_V66_REPLACE_ALL.txt admin-leave-editor.html; then
+          if git diff --quiet -- admin-leave-rules.html admin-leave-editor.html v66-home.js v66-home-cloud.js; then
             echo "No target-file changes to commit."
             exit 0
           fi
           git config user.name "VKVTT Patch Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html v66-home.js v66-home-cloud.js FIRESTORE_RULES_V66_REPLACE_ALL.txt admin-leave-editor.html
-          git commit -m "Add homepage leave balances and vacant proxy summary [skip ci]"
+          git add admin-leave-rules.html admin-leave-editor.html v66-home.js v66-home-cloud.js
+          git commit -m "Integrate leave types, staff categories and conditional eligibility [skip ci]"
           git push origin HEAD:v66-2-refinement
