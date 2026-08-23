@@ -250,6 +250,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Principal/Admin-configured leave entitlements, applicability and period metadata.
+    // The Leave Master Editor is Principal/Admin-only, so keep this configuration narrow.
+    match /leaveRules/{documentId} {
+      allow read, create, update: if isAdmin();
+      allow delete: if false;
+    }
+
     // Version 65.4 pilot attendance configuration. Staff can read the schedule
     // applied to them; only the Principal/Admin can alter school timing/geofence.
     match /attendanceSettings/{documentId} {

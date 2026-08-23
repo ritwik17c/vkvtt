@@ -217,6 +217,17 @@ body.quick-mode .wrap{max-width:none}
     <div class="help">Select a teacher to see the leave history and recorded balances before allotting leave.</div>
   </div>
 
+  <div id="leaveRulesStatus" class="status info" aria-live="polite">Leave Rules: loading…</div>
+  <div id="ruleTransactionSummary" class="teacherHistoryPanel hide" aria-live="polite"></div>
+  <div id="ruleOverrideBox" class="status warn hide">
+    <label style="display:flex;gap:8px;align-items:flex-start;margin:0;color:inherit">
+      <input id="ruleOverrideCheck" type="checkbox" style="width:auto;margin-top:3px">
+      <span><b>Principal Override</b><br><span class="small">Use only for an exceptional entitlement or applicability decision. Configuration errors cannot be overridden.</span></span>
+    </label>
+    <label for="ruleOverrideReason">Override reason <span style="color:#8b2d2d">*</span></label>
+    <textarea id="ruleOverrideReason" placeholder="State the exceptional reason for approving this leave despite the configured rule."></textarea>
+  </div>
+
   <div class="entryShell">
     <div class="entryHeader">
       <div>
@@ -327,6 +338,8 @@ if(QUICK_MODE)document.body.classList.add('quick-mode');
 
 let user=null,master=null,teachers=[],plans={},manualRecords=[],legacy=[],viewerEmails=[],audit=[];
 let coreLoaded=false,secondaryLoaded=false,bulkDeleteSelection=new Set(),recordRenderLimit=40;
+let leaveRules=[],entitlementPeriod=null,leaveRulesLoadState='idle',staffCategoryOverrides={};
+let leaveRulePreviewTimer=0,lastRuleEvaluation=null;
 let editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};
 const TYPES=new Set(['full','half','od','special']);
 const CATS=['VL','EL','CL','SEL','EOL','MATERNITY'];
@@ -387,6 +400,155 @@ function activePlans(){return Object.values(plans).filter(p=>p&&p.active!==false
 function pendingItems(){return legacy.filter(x=>x&&x.active!==false&&resolutionState(x)==='pending')}
 function finalItems(){return legacy.filter(x=>x&&x.active!==false&&resolutionState(x)!=='pending')}
 
+function rulePeriodKey(period=entitlementPeriod){
+ if(!period||!period.startDate||!period.endDate)return'';
+ return String(period.key||`${period.startDate}__${period.endDate}`);
+}
+function validEntitlementPeriod(){
+ return !!(entitlementPeriod&&/^\d{4}-\d{2}-\d{2}$/.test(String(entitlementPeriod.startDate||''))&&/^\d{4}-\d{2}-\d{2}$/.test(String(entitlementPeriod.endDate||''))&&entitlementPeriod.startDate<=entitlementPeriod.endDate);
+}
+function leaveRuleFor(code){const c=String(code||'').trim().toUpperCase();return leaveRules.find(r=>String(r.code||'').trim().toUpperCase()===c)||null}
+function ruleComplete(rule){
+ if(!rule||!String(rule.code||'').trim()||rule.active!==true)return false;
+ if(!(rule.teaching===true||rule.admin===true||rule.nonTeaching===true))return false;
+ const n=Number(rule.max);return rule.unlimited===true||(Number.isFinite(n)&&n>0&&Math.round(n*2)===n*2);
+}
+function activeLeaveRules(){return leaveRules.filter(ruleComplete).slice().sort((a,b)=>Number(a.sortOrder||999)-Number(b.sortOrder||999)||String(a.code||'').localeCompare(String(b.code||'')))}
+function leaveRuleLabel(code){
+ const r=leaveRuleFor(code);return r&&r.name?String(r.name):catLabel(code)
+}
+function leaveCategoryOptions(existingCategory=''){
+ const existing=String(existingCategory||'').trim().toUpperCase(),rules=activeLeaveRules(),seen=new Set(),out=[];
+ for(const r of rules){const code=String(r.code||'').trim().toUpperCase();if(!code||seen.has(code))continue;seen.add(code);out.push(`<option value="${safe(code)}">${safe(leaveRuleLabel(code))}</option>`)}
+ if(existing&&!seen.has(existing)){const r=leaveRuleFor(existing),tag=r?(r.active===false?' · inactive':' · historical'):' · historical';out.push(`<option value="${safe(existing)}">${safe(leaveRuleLabel(existing)+tag)}</option>`)}
+ if(!out.length)out.push('<option value="" disabled>Configure active Leave Rules first</option>');
+ return out.join('');
+}
+function detectStaffCategory(code){
+ const c=String(code||''),t=teacherByCode(c),explicit=String(t&&t.leaveStaffCategory||'');
+ if(['teaching','administrative','non-teaching'].includes(explicit))return explicit;
+ const override=String(staffCategoryOverrides[c]||'');
+ if(['teaching','administrative','non-teaching'].includes(override))return override;
+ if((master?.nonTeachingStaff||[]).some(x=>String(x.code)===c))return'non-teaching';
+ if((master?.teachers||[]).some(x=>String(x.code)===c))return'teaching';
+ return'unknown';
+}
+function ruleAppliesTo(rule,staffCategory){
+ return !!rule&&((staffCategory==='teaching'&&rule.teaching===true)||(staffCategory==='administrative'&&rule.admin===true)||(staffCategory==='non-teaching'&&rule.nonTeaching===true));
+}
+function dateInEntitlementPeriod(date){
+ return validEntitlementPeriod()&&String(date||'')>=entitlementPeriod.startDate&&String(date||'')<=entitlementPeriod.endDate;
+}
+function legacyPeriodState(x){
+ const currentKey=rulePeriodKey();if(!currentKey)return'unknown';
+ const assigned=String(x.entitlementPeriodKey||'');
+ if(assigned)return assigned===currentKey?'current':'other';
+ if(x.vlHasVerifiedRange===true&&x.vlFromDate&&x.vlToDate){
+   if(x.vlFromDate>=entitlementPeriod.startDate&&x.vlToDate<=entitlementPeriod.endDate)return'current';
+   if(x.vlToDate<entitlementPeriod.startDate||x.vlFromDate>entitlementPeriod.endDate)return'other';
+ }
+ return'unknown';
+}
+function datedUsageForCategory(code,category,{excludeOriginalIds=[],excludeManualKey=''}={}){
+ const excluded=new Set(excludeOriginalIds.map(String)),cat=String(category||'').toUpperCase();let units=0;
+ for(const x of teacherHistoryRecords(code)){
+   if(!['full','half'].includes(String(x.type||''))||String(x.leaveCategory||'').toUpperCase()!==cat)continue;
+   if(x._kind==='plan'&&excluded.has(String(x.id||'')))continue;
+   if(x._kind==='manual'&&excludeManualKey&&manualKey(x)===excludeManualKey)continue;
+   const perDate=x.type==='half'?0.5:1;
+   for(const d of teacherRecordDates(x))if(dateInEntitlementPeriod(d))units+=perDate;
+ }
+ return Math.round(units*2)/2;
+}
+function legacyUsageForCategory(code,category){
+ const cat=String(category||'').toUpperCase();let assigned=0,unassigned=0;
+ if(!validEntitlementPeriod())return{assigned:0,unassigned:0};
+ for(const x of finalItems()){
+   if(String(x.teacherCode)!==String(code)||String(x.category||'').toUpperCase()!==cat||x.resolutionStatus==='resolved-dated')continue;
+   const n=Number(x.units||0);if(!Number.isFinite(n)||n<=0)continue;
+   const state=legacyPeriodState(x);
+   if(state==='current')assigned+=n;else if(state==='unknown')unassigned+=n;
+ }
+ return{assigned:Math.round(assigned*2)/2,unassigned:Math.round(unassigned*2)/2};
+}
+function calculateLeaveUsage(code,category,{excludeOriginalIds=[],excludeManualKey=''}={}){
+ const rule=leaveRuleFor(category),staffCategory=detectStaffCategory(code);
+ if(!rule||rule.active!==true)return{configError:`${catLabel(category)} has no active Leave Rule.`,rule,staffCategory};
+ if(!ruleComplete(rule))return{configError:`${leaveRuleLabel(category)} has an incomplete Leave Rule.`,rule,staffCategory};
+ if(staffCategory==='unknown')return{configError:'Staff category is not configured for this person.',rule,staffCategory};
+ const applicable=ruleAppliesTo(rule,staffCategory);
+ if(rule.unlimited===true){
+   return{rule,staffCategory,applicable,unlimited:true,entitlement:null,datedUsed:null,legacyAssigned:0,legacyUnassigned:0,used:null,balance:null};
+ }
+ if(!validEntitlementPeriod())return{configError:'Entitlement period is not configured for limited leave.',rule,staffCategory};
+ const datedUsed=datedUsageForCategory(code,category,{excludeOriginalIds,excludeManualKey}),legacyPart=legacyUsageForCategory(code,category),used=Math.round((datedUsed+legacyPart.assigned)*2)/2,entitlement=Number(rule.max),balance=Math.round((entitlement-used)*2)/2;
+ return{rule,staffCategory,applicable,unlimited:false,entitlement,datedUsed,legacyAssigned:legacyPart.assigned,legacyUnassigned:legacyPart.unassigned,used,balance};
+}
+function groupProposedLeave(rows){
+ const by={};for(const r of rows){if(!['full','half'].includes(String(r.type||'')))continue;const c=String(r.category||'').trim().toUpperCase();if(!c)continue;if(!by[c])by[c]={category:c,units:0,dates:[]};by[c].units+=Number(r.units||0);if(r.date)by[c].dates.push(r.date)}
+ for(const v of Object.values(by))v.units=Math.round(v.units*2)/2;
+ return Object.values(by);
+}
+async function evaluateLeaveTransaction(rows,code){
+ if(!groupProposedLeave(rows).length)return{configErrors:[],warnings:[],policyViolations:[],results:[],allowOverride:false};
+ if(leaveRulesLoadState!=='ready')return{configErrors:[leaveRulesLoadState==='missing'?'Leave Rules are not configured. Open Leave Rules from the Admin Dashboard.':'Leave Rules could not be loaded. Retry before saving limited leave.'],warnings:[],policyViolations:[],results:[],allowOverride:false};
+ await loadSecondaryData();
+ const excludeOriginalIds=editorState.originalIds||[],excludeManualKey=editorState.manualOriginal?manualKey(editorState.manualOriginal):'',configErrors=[],warnings=[],policyViolations=[],results=[];
+ for(const g of groupProposedLeave(rows)){
+   const usage=calculateLeaveUsage(code,g.category,{excludeOriginalIds,excludeManualKey});
+   const item={...g,...usage};results.push(item);
+   if(usage.configError){configErrors.push(`${leaveRuleLabel(g.category)}: ${usage.configError}`);continue}
+   if(!usage.applicable)policyViolations.push({category:g.category,type:'applicability',staffCategory:usage.staffCategory,requestedUnits:g.units});
+   if(!usage.unlimited&&usage.legacyUnassigned>0)warnings.push(`${leaveRuleLabel(g.category)} has ${usage.legacyUnassigned} period-unassigned legacy unit${usage.legacyUnassigned===1?'':'s'}. ${usage.legacyUnassigned===1?'It is':'They are'} not included in the current entitlement balance. Review the legacy period assignment when reliable evidence is available.`);
+   if(!usage.unlimited&&g.units>usage.balance)policyViolations.push({category:g.category,type:'entitlement',entitlement:usage.entitlement,usedBefore:usage.used,requestedUnits:g.units,remainingBefore:usage.balance,overage:Math.round((g.units-usage.balance)*2)/2,staffCategory:usage.staffCategory,entitlementPeriod:{...entitlementPeriod}});
+ }
+ return{configErrors:[...new Set(configErrors)],warnings:[...new Set(warnings)],policyViolations,results,allowOverride:!configErrors.length&&policyViolations.length>0};
+}
+function renderLeaveRulesStatus(){
+ const el=$('leaveRulesStatus');if(!el)return;
+ if(leaveRulesLoadState==='ready'){
+   const period=validEntitlementPeriod()?`${displayDate(entitlementPeriod.startDate)} → ${displayDate(entitlementPeriod.endDate)}`:'not configured for limited leave';
+   el.className='status '+(activeLeaveRules().length?'info':'warn');
+   el.innerHTML=`<b>Leave Rules:</b> ${activeLeaveRules().length} active configured categor${activeLeaveRules().length===1?'y':'ies'} · Entitlement period: ${safe(period)}.`;
+ }else if(leaveRulesLoadState==='missing'){el.className='status warn';el.innerHTML='<b>Leave Rules are not configured.</b> Configure them from the Admin Dashboard before saving Full/Half leave.'}
+ else if(leaveRulesLoadState==='error'){el.className='status error';el.innerHTML='<b>Leave Rules could not be loaded.</b> Full/Half leave saving is blocked until configuration loads successfully.'}
+ else{el.className='status info';el.textContent='Leave Rules: loading…'}
+}
+async function loadLeaveRules(){
+ leaveRulesLoadState='loading';renderLeaveRulesStatus();
+ try{
+   const s=await getDoc(doc(db,'leaveRules','current'));
+   if(!s.exists()){leaveRules=[];entitlementPeriod=null;staffCategoryOverrides={};leaveRulesLoadState='missing'}
+   else{const d=s.data()||{};leaveRules=Array.isArray(d.categories)?d.categories:[];entitlementPeriod=d.entitlementPeriod||null;staffCategoryOverrides=d.staffCategoryOverrides||{};leaveRulesLoadState='ready'}
+ }catch(e){leaveRules=[];entitlementPeriod=null;staffCategoryOverrides={};leaveRulesLoadState='error';console.warn('Leave Rules:',e)}
+ renderLeaveRulesStatus();
+}
+function policyViolationText(v){
+ if(v.type==='applicability')return `${leaveRuleLabel(v.category)} is not configured for ${String(v.staffCategory||'this').replaceAll('-',' ')} staff.`;
+ return `${leaveRuleLabel(v.category)} exceeds the available balance by ${v.overage} unit${v.overage===1?'':'s'} (available ${v.remainingBefore}, requested ${v.requestedUnits}).`;
+}
+function setOverrideVisibility(evaluation){
+ const box=$('ruleOverrideBox'),check=$('ruleOverrideCheck'),reason=$('ruleOverrideReason');if(!box)return;
+ if(evaluation&&evaluation.allowOverride){box.classList.remove('hide')}
+ else{box.classList.add('hide');if(check)check.checked=false;if(reason)reason.value=''}
+}
+async function renderLeaveRulePreview(){
+ const box=$('ruleTransactionSummary'),code=$('editTeacher').value;if(!box)return;
+ const rows=rowData(),proposed=groupProposedLeave(rows);
+ if(!code||!proposed.length){box.classList.add('hide');box.innerHTML='';lastRuleEvaluation=null;setOverrideVisibility(null);return}
+ const token=(window.__leaveRulePreviewToken||0)+1;window.__leaveRulePreviewToken=token;
+ const evaluation=await evaluateLeaveTransaction(rows,code);if(window.__leaveRulePreviewToken!==token)return;lastRuleEvaluation=evaluation;
+ const lines=evaluation.results.map(x=>{
+   if(x.configError)return `<div class="teacherHistoryMetric"><b>⚠</b><span>${safe(leaveRuleLabel(x.category))} · ${safe(x.configError)}</span></div>`;
+   if(x.unlimited)return `<div class="teacherHistoryMetric"><b>∞</b><span>${safe(leaveRuleLabel(x.category))} · Unlimited · Proposed ${safe(x.units)}</span></div>`;
+   const after=Math.round((x.balance-x.units)*2)/2;return `<div class="teacherHistoryMetric"><b>${safe(after)}</b><span>${safe(leaveRuleLabel(x.category))} after proposal · ${safe(x.used)} used + ${safe(x.units)} proposed of ${safe(x.entitlement)}${x.balance<=0?' · EXHAUSTED':''}</span></div>`
+ }).join('');
+ const warnings=[...evaluation.configErrors.map(x=>`<div class="status error">${safe(x)}</div>`),...(evaluation.warnings||[]).map(x=>`<div class="status warn">⚠ ${safe(x)}</div>`),...evaluation.policyViolations.map(x=>`<div class="status warn">${safe(policyViolationText(x))}</div>`)].join('');
+ box.classList.remove('hide');box.innerHTML=`<div class="teacherHistoryHead"><div><h3>Proposed leave rule check</h3><div class="help">Live calculation for all Full/Half Date Rows and Date-Range Rows in this transaction.</div></div></div><div class="teacherHistoryMetrics">${lines||'<div class="help">No Full/Half leave in this transaction.</div>'}</div>${warnings}`;
+ setOverrideVisibility(evaluation);
+}
+function scheduleLeaveRulePreview(){clearTimeout(leaveRulePreviewTimer);leaveRulePreviewTimer=setTimeout(()=>renderLeaveRulePreview().catch(e=>console.warn('Leave Rule preview:',e)),120)}
+
 async function verify(u){
  const [p,m]=await Promise.all([
    getDoc(doc(db,'authorizedUsers',u.uid)),
@@ -398,6 +560,7 @@ async function verify(u){
  teachers=[...(master.teachers||[]),...(master.nonTeachingStaff||[]).filter(x=>x&&x.active!==false).map(x=>({...x,name:x.name+' — Non-Teaching · '+(x.designation||'Staff')}))].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 async function loadAll(){
+ await loadLeaveRules();
  const core=await Promise.allSettled([
    getDoc(doc(db,'dailyRecords','__leavePlans')),
    getDocs(collection(db,'legacyLeaveAccounting'))
@@ -475,6 +638,7 @@ function populateSelectors(){
  const opts=teachers.map(t=>`<option value="${safe(t.code)}">${safe(t.name)} (${safe(t.code)})</option>`).join('');
  $('filterTeacher').innerHTML='<option value="">All teachers</option>'+opts;
  $('editTeacher').innerHTML='<option value="">Select teacher…</option>'+opts;
+ const ft=$('filterType');if(ft){const old=ft.value,codes=[...new Set([...CATS,...leaveRules.map(r=>String(r.code||'').toUpperCase()).filter(Boolean)])];ft.innerHTML='<option value="">All</option>'+codes.map(c=>`<option value="${safe(c)}">${safe(leaveRuleLabel(c))}</option>`).join('')+'<option value="od">OD</option><option value="special">Special Assignment</option>';if([...ft.options].some(o=>o.value===old))ft.value=old}
 }
 function teacherHistoryRecords(code){
  const scheduled=activePlans().filter(p=>String(p.code)===String(code)),rows=scheduled.map(p=>({...p,_kind:'plan'}));
@@ -496,7 +660,26 @@ async function renderSelectedTeacherHistory(){
  const out=$('selectedTeacherHistory'),code=$('editTeacher').value,token=++teacherHistoryToken;if(!out)return;
  if(!code){out.innerHTML='<div class="help">Select a teacher to see the leave history and recorded balances before allotting leave.</div>';return}
  const tt=teacherByCode(code)||{name:code};out.innerHTML='<div class="help">Loading '+safe(tt.name)+'\'s leave history…</div>';
- try{await loadSecondaryData();if(token!==teacherHistoryToken)return;const records=teacherHistoryRecords(code),dated={VL:0,EL:0,CL:0,SEL:0,EOL:0,MATERNITY:0};for(const x of records){const cat=String(x.leaveCategory||'').toUpperCase();if((x.type==='full'||x.type==='half')&&Object.prototype.hasOwnProperty.call(dated,cat))dated[cat]+=Number(x.leaveUnits||0)}const finalLegacy=finalItems().filter(x=>String(x.teacherCode)===String(code)&&x.resolutionStatus!=='resolved-dated'),legacyTotals={};for(const x of finalLegacy){const cat=String(x.category||'').toUpperCase();legacyTotals[cat]=(legacyTotals[cat]||0)+Number(x.units||0)}const used=cat=>Number(dated[cat]||0)+Number(legacyTotals[cat]||0),metric=(cat,limit)=>{const n=used(cat),detail=limit?`${Math.max(0,limit-n)} remaining of ${limit}`:'recorded use';return `<div class="teacherHistoryMetric"><b>${safe(n)}</b><span>${safe(catLabel(cat))} used · ${safe(detail)}</span></div>`};const compact=compactTeacherHistory(records),today=todayIso(),ordered=[...compact].sort((a,b)=>{const af=a.dates.some(d=>d>=today),bf=b.dates.some(d=>d>=today);return Number(bf)-Number(af)||String(b.last).localeCompare(String(a.last))}).slice(0,10),lines=ordered.map(g=>{const x=g.item,state=g.dates.includes(today)?'Current':(g.dates.some(d=>d>today)?'Upcoming':'Past'),category=historyCategoryText(g),units=(x.type==='full'||x.type==='half')?`${g.units} unit${g.units===1?'':'s'}`:'—';return `<div class="teacherHistoryLine"><div class="teacherHistoryDate">${safe(historyDateText(g))}</div><div>${safe(category)} · ${safe(units)} <span class="pill">${safe(state)}</span></div><div>${safe((g.remarks||[]).join(' · ')||'No remarks')}</div></div>`}).join('');out.innerHTML=`<div class="teacherHistoryHead"><div><h3>${safe(tt.name)} · Leave snapshot</h3><div class="help">Approved dated records${finalLegacy.length?' plus final non-dated accounting':''}. CL and SEL balances use the annual entitlements recorded in this app.</div></div><span class="pill">${records.length} saved dated record${records.length===1?'':'s'}</span></div><div class="teacherHistoryMetrics">${metric('CL',12)}${metric('SEL',10)}${metric('VL')}${metric('EL')}${metric('EOL')}${metric('MATERNITY')}</div><div class="teacherHistoryList">${lines||'<div class="empty">No approved dated leave history for this teacher.</div>'}</div>${compact.length>10?`<div class="small" style="margin-top:8px">Showing 10 recent/current/upcoming approval lines of ${compact.length}. Open the Approved Leave Register for the full history.</div>`:''}`
+ try{
+  await loadSecondaryData();if(token!==teacherHistoryToken)return;
+  const records=teacherHistoryRecords(code),compact=compactTeacherHistory(records),today=todayIso(),ordered=[...compact].sort((a,b)=>{const af=a.dates.some(d=>d>=today),bf=b.dates.some(d=>d>=today);return Number(bf)-Number(af)||String(b.last).localeCompare(String(a.last))}).slice(0,10);
+  const finalLegacy=finalItems().filter(x=>String(x.teacherCode)===String(code)&&x.resolutionStatus!=='resolved-dated');
+  const categories=[...new Set([...CATS,...leaveRules.map(r=>String(r.code||'').toUpperCase()).filter(Boolean),...records.map(x=>String(x.leaveCategory||'').toUpperCase()).filter(Boolean),...finalLegacy.map(x=>String(x.category||'').toUpperCase()).filter(Boolean)])];
+  const metrics=categories.map(cat=>{
+    const rule=leaveRuleFor(cat),usage=rule?calculateLeaveUsage(code,cat):null;
+    if(rule&&rule.active===true&&ruleComplete(rule)){
+      if(usage?.configError)return `<div class="teacherHistoryMetric"><b>⚠</b><span>${safe(leaveRuleLabel(cat))} · ${safe(usage.configError)}</span></div>`;
+      if(usage?.unlimited)return `<div class="teacherHistoryMetric"><b>∞</b><span>${safe(leaveRuleLabel(cat))} · Unlimited</span></div>`;
+      const review=usage?.legacyUnassigned>0?` · ${usage.legacyUnassigned} legacy unassigned`:'';
+      return `<div class="teacherHistoryMetric"><b>${safe(usage?.used??0)}</b><span>${safe(leaveRuleLabel(cat))} used · ${safe(usage?.balance??'—')} remaining of ${safe(usage?.entitlement??'—')}${usage?.balance<=0?' · EXHAUSTED':''}${safe(review)}</span></div>`;
+    }
+    const dated=records.filter(x=>['full','half'].includes(String(x.type||''))&&String(x.leaveCategory||'').toUpperCase()===cat).reduce((n,x)=>n+Number(x.leaveUnits||0),0),legacyTotal=finalLegacy.filter(x=>String(x.category||'').toUpperCase()===cat).reduce((n,x)=>n+Number(x.units||0),0),n=Math.round((dated+legacyTotal)*2)/2;
+    return `<div class="teacherHistoryMetric"><b>${safe(n)}</b><span>${safe(catLabel(cat))} recorded use · ${rule?'rule inactive/incomplete':'no active rule'}</span></div>`;
+  }).join('');
+  const lines=ordered.map(g=>{const x=g.item,state=g.dates.includes(today)?'Current':(g.dates.some(d=>d>today)?'Upcoming':'Past'),category=historyCategoryText(g),units=(x.type==='full'||x.type==='half')?`${g.units} unit${g.units===1?'':'s'}`:'—';return `<div class="teacherHistoryLine"><div class="teacherHistoryDate">${safe(historyDateText(g))}</div><div>${safe(category)} · ${safe(units)} <span class="pill">${safe(state)}</span></div><div>${safe((g.remarks||[]).join(' · ')||'No remarks')}</div></div>`}).join('');
+  const periodText=validEntitlementPeriod()?`${displayDate(entitlementPeriod.startDate)} → ${displayDate(entitlementPeriod.endDate)}`:'not configured';
+  out.innerHTML=`<div class="teacherHistoryHead"><div><h3>${safe(tt.name)} · Leave snapshot</h3><div class="help">Configured entitlement view for ${safe(periodText)}. Historical/non-dated accounting is never assigned to a period unless verified or explicitly assigned.</div></div><span class="pill">${records.length} saved dated record${records.length===1?'':'s'}</span></div><div class="teacherHistoryMetrics">${metrics||'<div class="help">No leave categories to display.</div>'}</div><div class="teacherHistoryList">${lines||'<div class="empty">No approved dated leave history for this teacher.</div>'}</div>${compact.length>10?`<div class="small" style="margin-top:8px">Showing 10 recent/current/upcoming approval lines of ${compact.length}. Open the Approved Leave Register for the full history.</div>`:''}`;
+  scheduleLeaveRulePreview();
  }catch(e){if(token===teacherHistoryToken)out.innerHTML='<div class="status warn">Leave history could not load: '+safe(e.message||e)+'</div>'}
 }
 function renderControl(){
@@ -533,7 +716,7 @@ function filteredRecords(){
  let arr=[...activePlans().map(p=>({...p,_kind:'plan'})),...manualRecords.map(m=>({...m}))],
  tc=$('filterTeacher').value,ft=$('filterType').value,from=dateToIso($('filterFrom').value),q=String($('filterSearch').value||'').trim().toLowerCase();
  if(tc)arr=arr.filter(p=>String(p.code)===tc);
- if(ft)arr=arr.filter(p=>CATS.includes(ft)?String(p.leaveCategory||'').toUpperCase()===ft:String(p.type||'')===ft);
+ if(ft)arr=arr.filter(p=>(ft==='od'||ft==='special')?String(p.type||'')===ft:String(p.leaveCategory||'').toUpperCase()===ft);
  if(from)arr=arr.filter(p=>(p._kind==='manual'?[p._date]:planDates(p)).some(d=>d>=from));
  if(q)arr=arr.filter(p=>{const tt=teacherByCode(p.code);return[tt&&tt.name,p.code,p.note,p.source,p.leaveCategory,p._kind].some(v=>String(v||'').toLowerCase().includes(q))});
  return arr.sort((a,b)=>String((b._kind==='manual'?b._date:planDates(b)[0])||'').localeCompare(String((a._kind==='manual'?a._date:planDates(a)[0])||''))||String(a.code).localeCompare(String(b.code)));
@@ -755,7 +938,7 @@ function addDateRow(data={}){
  const row=document.createElement('div');row.className='dateRow';
  row.innerHTML=`<div><input class="rDate dateInput" placeholder="DD/MM/YYYY" inputmode="numeric" value="${safe(data.date?displayDate(data.date):'')}"></div>
  <div><select class="rType"><option value="full">Full Leave</option><option value="half">Half Leave</option><option value="od">On Duty</option><option value="special">Special Assignment</option></select></div>
- <div><select class="rCat"><option value="">—</option>${CATS.map(c=>`<option value="${c}">${safe(catLabel(c))}</option>`).join('')}</select></div>
+ <div><select class="rCat"><option value="">—</option>${leaveCategoryOptions(data.category||'')}</select></div>
  <div><input class="rUnits" type="number" min="0" step="0.5" value="${safe(data.units??defaultUnitsForType(data.type||'full'))}" readonly></div>
  <div><select class="rPart"><option value="full">Full day</option><option value="am">P1–P4</option><option value="pm">P5–P8</option><option value="custom">Custom</option></select></div>
  <div><input class="rFrom" type="number" min="1" max="8" value="${safe(data.from||'')}"></div>
@@ -793,6 +976,7 @@ function updateReconcile(){
  const bits=[`${individual.length} date row${individual.length===1?'':'s'}`,`${ranges.length} date-range row${ranges.length===1?'':'s'}`,...Object.entries(byCat).map(([k,v])=>`${k}: ${v}`)];
  const od=rows.filter(r=>r.type==='od').length,sp=rows.filter(r=>r.type==='special').length;if(od)bits.push(`OD dates: ${od}`);if(sp)bits.push(`Special dates: ${sp}`);
  $('reconcileBreakdown').textContent=bits.join(' · ');
+ scheduleLeaveRulePreview();
 }
 function rangeDates(from,to){
  if(!from||!to||from>to)return[];const out=[],d=new Date(from+'T00:00:00'),end=new Date(to+'T00:00:00');let guard=0;
@@ -811,7 +995,7 @@ function addRangeRow(data={}){
  row.innerHTML=`<div><input class="rrFrom dateInput" placeholder="DD/MM/YYYY" inputmode="numeric" value="${safe(data.fromDate?displayDate(data.fromDate):'')}"></div>
  <div><input class="rrTo dateInput" placeholder="DD/MM/YYYY" inputmode="numeric" value="${safe(data.toDate?displayDate(data.toDate):'')}"></div>
  <div><select class="rrType"><option value="full">Full Leave</option><option value="half">Half Leave</option><option value="od">On Duty</option><option value="special">Special Assignment</option></select></div>
- <div><select class="rrCat"><option value="">—</option>${CATS.map(c=>`<option value="${c}">${safe(catLabel(c))}</option>`).join('')}</select></div>
+ <div><select class="rrCat"><option value="">—</option>${leaveCategoryOptions(data.category||'')}</select></div>
  <div><input class="rrUnits" type="number" value="${safe(defaultUnitsForType(data.type||'full'))}" readonly></div>
  <div><div class="rangeTotalBox">0</div></div>
  <div class="rangePartWrap"><select class="rrPart"><option value="full">Full day</option><option value="am">P1–P4</option><option value="pm">P5–P8</option><option value="custom">Custom</option></select><div class="customPeriods"><input class="rrPFrom" type="number" min="1" max="8" placeholder="From P"><input class="rrPTo" type="number" min="1" max="8" placeholder="To P"></div></div>
@@ -951,6 +1135,8 @@ function proposedIntegrity(rows,code){
 function clearEditor(){
  editorState={mode:'new',originalIds:[],manualOriginal:null,pendingId:'',expectedUnits:null};$('dateRows').innerHTML='';$('editTeacher').value='';$('editReason').value='';resetTools();
  renderSelectedTeacherHistory();
+ if($('ruleOverrideCheck'))$('ruleOverrideCheck').checked=false;if($('ruleOverrideReason'))$('ruleOverrideReason').value='';setOverrideVisibility(null);lastRuleEvaluation=null;
+ if($('ruleTransactionSummary')){$('ruleTransactionSummary').classList.add('hide');$('ruleTransactionSummary').innerHTML=''}
  if(!QUICK_MODE)$('editorPanel').classList.add('hide');$('editorWarning').classList.add('hide');$('saveMsg').classList.add('hide');$('archiveBtn').classList.add('hide');updateExpectedCorrectionButton()
 }
 function openEditor(title,source){
@@ -1009,7 +1195,7 @@ function validateRows(rows){
  for(const r of rangeRowData()){
   if(!r.fromDate||!r.toDate)return'Every Date-Range Row needs valid From and To dates in DD/MM/YYYY.';
   if(r.fromDate>r.toDate)return`From Date cannot be later than To Date (${displayDate(r.fromDate)} → ${displayDate(r.toDate)}).`;
-  if((r.type==='full'||r.type==='half')&&!CATS.includes(String(r.category||'').toUpperCase()))return`Select a leave category for the range ${displayDate(r.fromDate)} to ${displayDate(r.toDate)}.`;
+  if((r.type==='full'||r.type==='half')&&!String(r.category||'').trim())return`Select a leave category for the range ${displayDate(r.fromDate)} to ${displayDate(r.toDate)}.`;
   if((r.type==='half'||((r.type==='od'||r.type==='special')&&r.part==='custom'))&&r.part==='custom'&&(!r.from||!r.to||r.from>r.to))return`Check the custom period range for ${displayDate(r.fromDate)} to ${displayDate(r.toDate)}.`;
  }
  if(!rows.length)return'Add at least one Date Row or Date-Range Row.';
@@ -1020,7 +1206,7 @@ function validateRows(rows){
   if(seen.has(k))return`The same leave/status is entered more than once for ${displayDate(r.date)}. Check overlapping Date-Range Rows or repeated Date Rows.`;
   seen.add(k);
   if(!TYPES.has(r.type))return`Select a valid status for ${displayDate(r.date)}.`;
-  if(r.type==='full'||r.type==='half'){if(!CATS.includes(String(r.category||'').toUpperCase()))return`Select a leave category for ${displayDate(r.date)}.`;if(!r.units||r.units<=0)return`Leave units could not be calculated for ${displayDate(r.date)}.`}
+  if(r.type==='full'||r.type==='half'){if(!String(r.category||'').trim())return`Select a leave category for ${displayDate(r.date)}.`;if(!r.units||r.units<=0)return`Leave units could not be calculated for ${displayDate(r.date)}.`}
   if(r.type==='half'&&(!r.from||!r.to))return`Select the half-day part for ${displayDate(r.date)}.`;
   if((r.type==='od'||r.type==='special')&&r.part==='custom'&&(!r.from||!r.to||r.from>r.to))return`Check the custom period range for ${displayDate(r.date)}.`;
  }
@@ -1044,6 +1230,12 @@ async function removeManualSource(m){
 async function savePlans(rows,reason){
  const code=$('editTeacher').value;if(!code)throw new Error('Select the teacher.');
  const err=validateRows(rows);if(err)throw new Error(err);
+ const ruleEvaluation=await evaluateLeaveTransaction(rows,code);lastRuleEvaluation=ruleEvaluation;setOverrideVisibility(ruleEvaluation);
+ if(ruleEvaluation.configErrors.length)throw new Error(ruleEvaluation.configErrors.join(' '));
+ const overrideChecked=$('ruleOverrideCheck')?.checked===true,overrideReason=String($('ruleOverrideReason')?.value||'').trim();
+ if(ruleEvaluation.policyViolations.length&&!overrideChecked)throw new Error(ruleEvaluation.policyViolations.map(policyViolationText).join(' ')+' Principal Override is required to continue.');
+ if(overrideChecked&&!ruleEvaluation.policyViolations.length)throw new Error('Principal Override is not available because there is no overrideable Leave Rule violation.');
+ if(overrideChecked&&overrideReason.length<5)throw new Error('Enter a clear Principal Override reason before saving.');
  const integrity=proposedIntegrity(rows,code);
  if(integrity.exact.length)throw new Error(`Exact duplicate leave record detected for ${[...new Set(integrity.exact.map(x=>displayDate(x.proposed.date)))].join(', ')}. The duplicate has not been saved.`);
  if(integrity.conflict.length)throw new Error(`Conflicting / overlapping approved status already exists for ${[...new Set(integrity.conflict.map(x=>displayDate(x.proposed.date)))].join(', ')}. Review the existing record first.`);
@@ -1056,6 +1248,13 @@ async function savePlans(rows,reason){
  plans=newMap;
  if(editorState.pendingId){const x=legacy.find(a=>a.id===editorState.pendingId);if(x){await setDoc(doc(db,'legacyLeaveAccounting',x.id),{resolutionStatus:'resolved-dated',active:false,resolvedPlanIds:newPlans.map(p=>p.id),resolutionNote:reason,resolvedAt:serverTimestamp(),resolvedBy:user.uid,resolvedByEmail:user.email||''},{merge:true});x.resolutionStatus='resolved-dated';x.active=false;x.resolvedPlanIds=newPlans.map(p=>p.id)}}
  const t=teacherByCode(code)||{name:code},auditDoc={action:editorState.pendingId?'Resolved pending legacy leave':(old.length?'Edited approved leave':'Created approved leave'),teacherCode:code,teacherName:t.name||code,reason,adminUid:user.uid,adminEmail:user.email||'',createdAtMs:Date.now(),whenText:displayDateTime(Date.now()),before:manualOld?[manualOld]:old,after:newPlans,pendingSourceId:editorState.pendingId||''};
+ if(ruleEvaluation.policyViolations.length){
+   auditDoc.ruleOverride=true;
+   auditDoc.overrideReason=String($('ruleOverrideReason')?.value||'').trim();
+   auditDoc.ruleOverrides=ruleEvaluation.policyViolations;
+   auditDoc.staffCategory=detectStaffCategory(code);
+   auditDoc.entitlementPeriod=validEntitlementPeriod()?{...entitlementPeriod}:null;
+ }
  const aid=`audit_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;await setDoc(doc(db,'leaveAudit',aid),{...auditDoc,createdAt:serverTimestamp()});audit.push({id:aid,...auditDoc});await syncLeaveControl();return true;
 }
 function showSave(msg,error=false,good=false){$('saveMsg').className='status '+(error?'error':good?'ok':'info');$('saveMsg').textContent=msg;$('saveMsg').classList.remove('hide')}
@@ -1107,7 +1306,8 @@ $('refreshBtn').onclick=async()=>{try{secondaryLoaded=false;window.__leaveAuditL
 $('newBtn').onclick=startNew;$('cancelBtn').onclick=clearEditor;$('addOneDateBtn').onclick=()=>addDateRow({date:todayIso(),type:'full',units:1});
 $('addRangeRowBtn').onclick=()=>addRangeRow();
 $('saveBtn').onclick=saveEditor;
-$('editTeacher').onchange=renderSelectedTeacherHistory;
+if($('ruleOverrideCheck'))$('ruleOverrideCheck').onchange=scheduleLeaveRulePreview;if($('ruleOverrideReason'))$('ruleOverrideReason').oninput=scheduleLeaveRulePreview;
+$('editTeacher').onchange=()=>{renderSelectedTeacherHistory();scheduleLeaveRulePreview()};
 $('correctExpectedBtn').onclick=()=>{if(editorState.pendingId)correctLegacyExpectedUnits(editorState.pendingId)};
 $('runIntegrityBtn').onclick=async()=>{
  if(!secondaryLoaded){$('duplicateToolMsg').textContent='Loading daily-status history for integrity scan…';await loadSecondaryData();}
