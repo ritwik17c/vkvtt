@@ -7,6 +7,7 @@ on:
     paths:
       - tools/apply_v66_2_patch_3.py
       - tools/trigger_v66_2_patch_3.txt
+      - .github/workflows/v66-2-apply-patch-3.yml
 
 permissions:
   contents: write
@@ -19,8 +20,10 @@ jobs:
         with:
           ref: v66-2-refinement
           fetch-depth: 0
-      - run: python tools/apply_v66_2_patch_3.py
-      - run: |
+      - name: Apply exact terminology patch
+        run: python tools/apply_v66_2_patch_3.py
+      - name: Validate changed sources
+        run: |
           git diff --check
           node --check v66-home.js
           python - <<'PY'
@@ -30,7 +33,8 @@ jobs:
               assert 'Conditional / Special Leave' in s
           print('Terminology validation passed')
           PY
-      - run: |
+      - name: Commit target changes
+        run: |
           if git diff --quiet -- admin-leave-rules.html admin-leave-editor.html v66-home.js v66-home-cloud.js; then
             echo "No target changes"
             exit 0
