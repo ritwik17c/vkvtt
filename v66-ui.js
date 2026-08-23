@@ -12,6 +12,9 @@
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     building: '<path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-4h6v4"/><path d="M9 10h.01M15 10h.01M9 13h.01M15 13h.01"/>',
     book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z"/><path d="M4 6.5A2.5 2.5 0 0 1 6.5 9H20"/>',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
+    board: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21l4-4 4 4M7 9h4M7 12h7"/>',
+    pencil: '<path d="m4 20 4-1 11-11a2.1 2.1 0 0 0-3-3L5 16l-1 4Z"/><path d="m14 7 3 3"/>',
     file: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
     swap: '<path d="m17 3 4 4-4 4M3 7h18M7 21l-4-4 4-4M21 17H3"/>',
     pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
@@ -33,9 +36,11 @@
     const t = String(text || '').toLowerCase();
     if (/return|back|home|reset/.test(t)) return 'home';
     if (/calendar|date|day wise|annual/.test(t)) return 'calendar';
+    if (/bell|announcement|notice/.test(t)) return 'bell';
     if (/history|past|schedule|period|time/.test(t)) return 'clock';
     if (/teacher|staff|member|proxy|supervision/.test(t)) return /proxy|supervision/.test(t) ? 'swap' : 'people';
     if (/class|section|room|venue|school/.test(t)) return 'building';
+    if (/studio|generate|candidate/.test(t)) return 'board';
     if (/timetable|subject|workload/.test(t)) return 'book';
     if (/leave|assignment|record|document/.test(t)) return 'file';
     if (/attendance|geofence|where now|location|on duty/.test(t)) return 'pin';
@@ -47,6 +52,7 @@
     if (/import|upload|restore/.test(t)) return 'upload';
     if (/backup|database|cloud|sync/.test(t)) return 'database';
     if (/edit|correction|update|master/.test(t)) return 'edit';
+    if (/write|allocation|lesson/.test(t)) return 'pencil';
     if (/test|mock|trial/.test(t)) return 'flask';
     if (/save|finali[sz]e|accept|working/.test(t)) return 'check';
     if (/user|my /.test(t)) return 'user';
@@ -88,9 +94,44 @@
     else el.removeAttribute('aria-busy');
   }
 
+  function schoolIllustration() {
+    return '<svg class="v66-school-illustration" viewBox="0 0 460 142" role="img" aria-label="Line illustration of a school, timetable, clock and open book">' +
+      '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M14 119h430" opacity=".32"/>' +
+      '<path class="v66-soft-fill" d="M31 119V58h118v61M21 58l69-41 69 41M63 119V91h54v28"/>' +
+      '<path d="M31 119V58h118v61M21 58l69-41 69 41M63 119V91h54v28M52 70h17v16H52zM111 70h17v16h-17z"/>' +
+      '<path class="v66-gold-line" d="M90 17v19M80 27h20"/>' +
+      '<rect class="v66-soft-fill" x="190" y="30" width="105" height="77" rx="5"/>' +
+      '<path d="M190 30h105v77H190zM205 49h75M205 66h75M205 83h75M225 30v77M258 30v77"/>' +
+      '<circle class="v66-gold-fill" cx="349" cy="59" r="31"/><circle cx="349" cy="59" r="31"/><path class="v66-gold-line" d="M349 42v18l13 8"/>' +
+      '<path class="v66-gold-fill" d="M372 101c17-10 34-10 51 0v25c-17-10-34-10-51 0-17-10-34-10-51 0v-25c17-10 34-10 51 0Z"/>' +
+      '<path d="M372 101c17-10 34-10 51 0v25c-17-10-34-10-51 0-17-10-34-10-51 0v-25c17-10 34-10 51 0ZM372 101v25"/>' +
+      '</g></svg>';
+  }
+
+  function addSchoolRibbon(file) {
+    if (!['index', 'admin-dashboard'].includes(file) || document.querySelector('.v66-school-ribbon')) return;
+    const ribbon = document.createElement('section');
+    ribbon.className = 'v66-school-ribbon';
+    const admin = file === 'admin-dashboard';
+    ribbon.innerHTML = '<div class="v66-school-copy"><div class="v66-eyebrow">Vivekananda Kendra Vidyalaya, Nalbari</div>' +
+      '<strong>' + (admin ? 'School Administration Workspace' : 'School Day Operations') + '</strong>' +
+      '<p>' + (admin ? 'Timetable, classes, staff, attendance and academic records in one organised workspace.' : 'Timetables, classes, teachers, leave and daily school coordination at a glance.') + '</p></div>' + schoolIllustration();
+    if (admin) {
+      const host = document.getElementById('dashboardHome');
+      const anchor = document.getElementById('activeScheduleStatus');
+      if (host) host.insertBefore(ribbon, anchor || host.firstChild);
+    } else {
+      const anchor = document.getElementById('activeScheduleBanner');
+      if (anchor?.parentElement) anchor.insertAdjacentElement('afterend', ribbon);
+      else document.querySelector('main')?.prepend(ribbon);
+    }
+  }
+
   function enhance() {
     const file = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/i, '') || 'index';
     document.body.dataset.page = file;
+    document.body.classList.add('v66-school-context');
 
     const pageHeading = document.querySelector('body > header:not(.topbar) h1');
     if (pageHeading && !pageHeading.parentElement.querySelector('.v66-eyebrow')) {
@@ -121,7 +162,14 @@
           tile.click();
         }
       });
+      if (!tile.querySelector('.v66-tile-motif')) {
+        const motif = makeIcon(iconName(tile.textContent));
+        motif.classList.add('v66-tile-motif');
+        tile.appendChild(motif);
+      }
     });
+
+    addSchoolRibbon(file);
 
     document.querySelectorAll('button').forEach(button => {
       if (/delete|remove|archive/i.test(button.textContent || '')) button.dataset.tone = 'destructive';
