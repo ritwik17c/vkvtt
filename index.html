@@ -29,7 +29,7 @@
 <button id="myTimetableBtn" onclick="openMyTimetable(this)">📘 My Timetable</button>
 <button id="myProxyTodayBtn" onclick="openMyProxyToday(this)">👥 My Proxy Today <span id="myProxyBadge" class="myBadge" style="display:none"></span></button>
 <button id="myProxyHistoryBtn" onclick="openMyProxyHistory(this)">🕘 My Past Proxy History</button>
-<button id="myStatusBtn" onclick="openMyStatus(this)">🗂 My Leave Record</button>
+<button id="myStatusBtn" onclick="openMyStatus(this)">🗂 My Leave &amp; Duty Leave</button>
 <button id="myAttendanceBtn" onclick="location.href='attendance.html?v=66.0'">📍 My Attendance</button>
 </div>
 <div class="nav">
@@ -37,7 +37,7 @@
 </div><div class="homebar"><button onclick="resetHome()">🏠 Home / Reset View</button><button id="annualCalendarBtn" style="display:none" onclick="location.href='annual-calendar-2026-27.html?v=66.0'">🗓 Annual Calendar</button><button id="historyBtn" onclick="show('history',this);renderHistory()">📚 History</button><button id="approvedLeaveBtn" class="leaveRegisterLink" onclick="openApprovedLeaveRegister()">🗂 Approved Leave</button><button id="adminUserAccessBtn" class="adminOnlyLink" onclick="openAdminDashboard()">⚙️ Admin Dashboard</button></div>
 <div class="opsTitle">Daily Management</div>
 <div class="opsGrid">
-<button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / OD / Special / Vacant</button>
+<button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / Duty Leave / Vacant</button>
 <button id="proxyWorkBtn" onclick="openProxyAllotment(this)">👥 Proxy Allotment</button>
 <button id="publishedProxyBtn" onclick="openPublishedProxy(this)">✅ Today’s Proxy Allotment (All Teachers)</button>
 <button onclick="show('free',this)">🕐 Free Teachers</button>
@@ -74,7 +74,7 @@
 </section>
 
 <section id="myStatus" class="view">
-<h2>My Leave / OD / Special Assignment</h2><div class="small">All approved records linked to your account are shown here — past, current and future.</div>
+<h2>My Leave &amp; Duty Leave</h2><div class="small">All approved records linked to your account are shown here — past, current and future.</div>
 <div id="myStatusIdentity" class="myIdentity"></div>
 <div class="small">Only school-saved records linked to your authorised Google account are shown here. Vacant-position records are not included.</div>
 <div class="actions"><button onclick="loadMyStatus()">↻ Refresh</button><span id="myStatusMsg" class="copymsg"></span></div>
@@ -119,7 +119,7 @@
 <div class="actions"><button onclick="copyPublishedProxy()">📋 Copy</button><button onclick="sharePublishedProxy()">↗ Share</button><button onclick="printPublishedProxy()">🖨 Print</button><span id="publishedProxyMsg" class="copymsg"></span></div>
 </section>
 
-<section id="leave" class="view"><h2>Leave / On Duty / Special Assignment / Vacant Position</h2>
+<section id="leave" class="view"><h2>Leave / Duty Leave / Operational Status</h2>
 <div class="controls"><div><label>Teacher</label><select id="leaveTeacher" onchange="onHomepageLeaveTeacherChange()"><option value="">Select...</option></select></div></div>
 <div id="homepageLeaveSnapshot" class="proxycard" style="display:none" aria-live="polite"></div>
 
@@ -151,9 +151,9 @@
 <div class="leaveBtns">
 <button data-leave-type="full" onclick="chooseStatus('full',this)">Full Leave</button>
 <button data-leave-type="half" onclick="chooseStatus('half',this)">Half Leave · P5–P8</button>
-<button data-leave-type="od" onclick="chooseStatus('od',this)">On Duty</button>
-<button data-leave-type="special" onclick="chooseStatus('special',this)">Special Assignment</button>
-<button data-leave-type="vacant" onclick="chooseStatus('vacant',this)">Vacant Position</button>
+<button data-leave-type="od" onclick="chooseStatus('od',this)">Duty Leave · On Duty</button>
+<button data-leave-type="special" onclick="chooseStatus('special',this)">Duty Leave · Special Assignment</button>
+<button data-leave-type="vacant" onclick="chooseStatus('vacant',this)">Operational Status · Vacant Position</button>
 </div>
 <div id="leaveCategoryBox" class="proxycard disabledBox">
 <div class="proxyhead">3. Leave Category &amp; Leave Account</div>
@@ -174,7 +174,7 @@
 <div id="homepageLeaveRuleWarning" class="small" style="margin-top:9px" aria-live="polite"></div>
 </div>
 <div id="dutyDurationBox" class="proxycard disabledBox">
-<div class="proxyhead">4. Duration for On Duty / Special Assignment</div>
+<div class="proxyhead">4. Duty Leave Duration · On Duty / Special Assignment</div>
 <div class="leaveBtns durationBtns">
 <button data-duration="full" onclick="chooseDutyDuration('full',this)">Full Day</button>
 <button data-duration="half" onclick="chooseDutyDuration('half',this)">Half Day · P5–P8</button>

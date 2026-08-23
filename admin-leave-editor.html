@@ -674,9 +674,9 @@ async function renderSelectedTeacherHistory(){
  const tt=teacherByCode(code)||{name:code};out.innerHTML='<div class="help">Loading '+safe(tt.name)+'\'s leave history…</div>';
  try{
   await loadSecondaryData();if(token!==teacherHistoryToken)return;
-  const records=teacherHistoryRecords(code),compact=compactTeacherHistory(records),today=todayIso(),ordered=[...compact].sort((a,b)=>{const af=a.dates.some(d=>d>=today),bf=b.dates.some(d=>d>=today);return Number(bf)-Number(af)||String(b.last).localeCompare(String(a.last))}).slice(0,10);
+  const records=teacherHistoryRecords(code),leaveRecords=records.filter(x=>['full','half'].includes(String(x.type||''))),compact=compactTeacherHistory(leaveRecords),today=todayIso(),ordered=[...compact].sort((a,b)=>{const af=a.dates.some(d=>d>=today),bf=b.dates.some(d=>d>=today);return Number(bf)-Number(af)||String(b.last).localeCompare(String(a.last))}).slice(0,10);
   const finalLegacy=finalItems().filter(x=>String(x.teacherCode)===String(code)&&x.resolutionStatus!=='resolved-dated');
-  const categories=[...new Set([...CATS,...leaveRules.map(r=>String(r.code||'').toUpperCase()).filter(Boolean),...records.map(x=>String(x.leaveCategory||'').toUpperCase()).filter(Boolean),...finalLegacy.map(x=>String(x.category||'').toUpperCase()).filter(Boolean)])];
+  const categories=[...new Set([...CATS,...leaveRules.map(r=>String(r.code||'').toUpperCase()).filter(Boolean),...leaveRecords.map(x=>String(x.leaveCategory||'').toUpperCase()).filter(Boolean),...finalLegacy.map(x=>String(x.category||'').toUpperCase()).filter(Boolean)])];
   const metrics=categories.map(cat=>{
     const rule=leaveRuleFor(cat),usage=rule?calculateLeaveUsage(code,cat):null;
     if(rule&&rule.active===true&&ruleComplete(rule)){
@@ -690,7 +690,7 @@ async function renderSelectedTeacherHistory(){
   }).join('');
   const lines=ordered.map(g=>{const x=g.item,state=g.dates.includes(today)?'Current':(g.dates.some(d=>d>today)?'Upcoming':'Past'),category=historyCategoryText(g),units=(x.type==='full'||x.type==='half')?`${g.units} unit${g.units===1?'':'s'}`:'—';return `<div class="teacherHistoryLine"><div class="teacherHistoryDate">${safe(historyDateText(g))}</div><div>${safe(category)} · ${safe(units)} <span class="pill">${safe(state)}</span></div><div>${safe((g.remarks||[]).join(' · ')||'No remarks')}</div></div>`}).join('');
   const periodText=validEntitlementPeriod()?`${displayDate(entitlementPeriod.startDate)} → ${displayDate(entitlementPeriod.endDate)}`:'not configured';
-  out.innerHTML=`<div class="teacherHistoryHead"><div><h3>${safe(tt.name)} · Leave snapshot</h3><div class="help">Configured entitlement view for ${safe(periodText)}. Historical/non-dated accounting is never assigned to a period unless verified or explicitly assigned.</div></div><span class="pill">${records.length} saved dated record${records.length===1?'':'s'}</span></div><div class="teacherHistoryMetrics">${metrics||'<div class="help">No leave categories to display.</div>'}</div><div class="teacherHistoryList">${lines||'<div class="empty">No approved dated leave history for this teacher.</div>'}</div>${compact.length>10?`<div class="small" style="margin-top:8px">Showing 10 recent/current/upcoming approval lines of ${compact.length}. Open the Approved Leave Register for the full history.</div>`:''}`;
+  out.innerHTML=`<div class="teacherHistoryHead"><div><h3>${safe(tt.name)} · Leave snapshot</h3><div class="help">Configured entitlement view for ${safe(periodText)}. Historical/non-dated accounting is never assigned to a period unless verified or explicitly assigned.</div></div><span class="pill">${leaveRecords.length} saved dated leave record${leaveRecords.length===1?'':'s'}</span></div><div class="teacherHistoryMetrics">${metrics||'<div class="help">No leave categories to display.</div>'}</div><div class="teacherHistoryList">${lines||'<div class="empty">No approved Regular / Conditional Leave history for this teacher. Duty Leave is listed separately in Approved Records.</div>'}</div>${compact.length>10?`<div class="small" style="margin-top:8px">Showing 10 recent/current/upcoming approval lines of ${compact.length}. Open the Approved Leave Register for the full history.</div>`:''}`;
   scheduleLeaveRulePreview();
  }catch(e){if(token===teacherHistoryToken)out.innerHTML='<div class="status warn">Leave history could not load: '+safe(e.message||e)+'</div>'}
 }
@@ -724,6 +724,7 @@ function renderFinalAccounting(){
  document.querySelectorAll('[data-delete-final]').forEach(b=>b.onclick=()=>deleteErroneousLegacyCard(b.dataset.deleteFinal));
  document.querySelectorAll('[data-vl-edit]').forEach(b=>b.onclick=()=>editVlException(b.dataset.vlEdit));
 }
+function recordSystemLabel(p){const t=String(p&&p.type||'');return(t==='od'||t==='special')?'Duty Leave':(t==='full'||t==='half')?'Leave':'Operational Status'}
 function filteredRecords(){
  let arr=[...activePlans().map(p=>({...p,_kind:'plan'})),...manualRecords.map(m=>({...m}))],
  tc=$('filterTeacher').value,ft=$('filterType').value,from=dateToIso($('filterFrom').value),q=String($('filterSearch').value||'').trim().toLowerCase();

@@ -727,13 +727,13 @@ window.loadMyStatusCloud=async function(){
      const a=x.startDate||x.date||'',b=x.endDate||a;return a===b?displayDate(a):(displayDate(a)+' → '+displayDate(b));
    };
    const labelOf=x=>window.statusLabel?window.statusLabel(x):(x.type||'Status');
-   const groups={current:[],upcoming:[],past:[]};items.forEach(x=>groups[stateOf(x)].push(x));
-   groups.current.sort((a,b)=>dateSortKey(a).localeCompare(dateSortKey(b)));groups.upcoming.sort((a,b)=>dateSortKey(a).localeCompare(dateSortKey(b)));groups.past.sort((a,b)=>dateSortKey(b).localeCompare(dateSortKey(a)));
-   const section=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.map(x=>'<tr><td>'+safe(labelOf(x))+'</td><td>'+safe(x.leaveCategory?leaveCategoryLabel(x.leaveCategory):'—')+'</td><td>'+safe((x.type==='full'||x.type==='half')?(x.leaveUnits||'—'):'—')+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
+   const leaveItems=items.filter(x=>['full','half'].includes(String(x.type||''))),dutyItems=items.filter(x=>['od','special'].includes(String(x.type||'')));
+   const stateLabel=x=>{const s=stateOf(x);return s==='current'?'Current':s==='upcoming'?'Upcoming':'Past'};
+   const categorySection=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>State</th><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.sort((a,b)=>dateSortKey(b).localeCompare(dateSortKey(a))).map(x=>'<tr><td>'+safe(stateLabel(x))+'</td><td>'+safe(labelOf(x))+'</td><td>'+safe(x.leaveCategory?leaveCategoryLabel(x.leaveCategory):'—')+'</td><td>'+safe((x.type==='full'||x.type==='half')?(x.leaveUnits||'—'):'—')+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
    if(!items.length){
-     out.innerHTML='<div class="slotComplete">No approved Leave / OD / Special Assignment record is available for you yet.</div><div class="small">If an older approved record is missing, the Admin can run “Sync My Area Records” once from User Access & Roles.</div>';
+     out.innerHTML='<div class="slotComplete">No approved Leave or Duty Leave record is available for you yet.</div><div class="small">If an older approved record is missing, the Admin can run “Sync My Area Records” once from User Access & Roles.</div>';
    }else{
-     out.innerHTML='<div class="slotComplete"><b>'+items.length+' approved record'+(items.length===1?'':'s')+' available.</b></div>'+section('Current',groups.current,'No current Leave / OD / Special Assignment.')+section('Upcoming',groups.upcoming,'No upcoming approved record.')+section('Past',groups.past,'No past approved record in the synced history.');
+     out.innerHTML='<div class="slotComplete"><b>'+items.length+' approved record'+(items.length===1?'':'s')+' available.</b> Leave and Duty Leave are shown separately.</div>'+categorySection('Leave History',leaveItems,'No approved Leave history.')+categorySection('Duty Leave History',dutyItems,'No approved Duty Leave history.');
    }
    if(msg)msg.textContent='Updated';
  }catch(e){
