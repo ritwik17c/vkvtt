@@ -1,0 +1,33 @@
+name: VKVTT PWA index patch
+on:
+  push:
+    branches: [pwa-installability]
+    paths: ['.github/workflows/pwa-index-patch.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add PWA metadata and service worker registration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          head='''\n<link rel="manifest" href="./manifest.webmanifest">\n<meta name="theme-color" content="#0b2f6b">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="default">\n<meta name="apple-mobile-web-app-title" content="VKVTT">\n<link rel="apple-touch-icon" href="./icon-192-2.png">\n'''
+          reg='''\n<script>\nif ('serviceWorker' in navigator) {\n  window.addEventListener('load', () => {\n    navigator.serviceWorker.register('./sw.js').catch(err => console.error('Service worker registration failed:', err));\n  });\n}\n</script>\n'''
+          if 'manifest.webmanifest' not in s:
+              s=s.replace('</head>', head+'</head>', 1)
+          if "navigator.serviceWorker.register('./sw.js')" not in s:
+              s=s.replace('</body>', reg+'</body>', 1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "VKVTT PWA Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Enable VKVTT PWA installability [skip ci]"
+          git push
