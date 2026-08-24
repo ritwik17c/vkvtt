@@ -166,6 +166,23 @@ body.quick-mode .wrap{max-width:none}
   <div id="metrics" class="metrics"></div>
 </section>
 
+<section class="card quick-hide" id="leaveIntegritySection">
+  <div class="sectionTitle">
+    <div>
+      <h2>🧹 Leave Integrity Checker & Duplicate Remover</h2>
+      <div class="help">Scans approved dated leave for exact duplicates and overlapping contradictions. Safe same-kind exact duplicates can be archived in bulk; cross-source or contradictory records remain for review.</div>
+    </div>
+    <button id="runIntegrityBtn">↻ Re-scan</button>
+  </div>
+  <div id="integritySummary" class="status info">Scanning leave records…</div>
+  <div id="integrityMetrics" class="integrityMetrics"></div>
+  <div class="duplicateTools">
+    <button id="removeSafeDuplicatesBtn" class="danger">🧹 Remove Safe Exact Duplicates</button>
+    <span id="duplicateToolMsg" class="duplicatePreview"></span>
+  </div>
+  <div id="integrityResults"></div>
+</section>
+
 <section class="card quick-hide">
   <details class="guide">
     <summary>⚠ Correction warnings & practical tips</summary>
@@ -299,22 +316,7 @@ body.quick-mode .wrap{max-width:none}
   <div id="finalAccountingList"></div>
 </section>
 
-<section class="card quick-hide" id="leaveIntegritySection">
-  <div class="sectionTitle">
-    <div>
-      <h2>🧹 Leave Integrity Checker & Duplicate Remover</h2>
-      <div class="help">Scans approved dated leave for exact duplicates and overlapping contradictions. Safe same-kind exact duplicates can be archived in bulk; cross-source or contradictory records remain for review.</div>
-    </div>
-    <button id="runIntegrityBtn">↻ Re-scan</button>
-  </div>
-  <div id="integritySummary" class="status info">Scanning leave records…</div>
-  <div id="integrityMetrics" class="integrityMetrics"></div>
-  <div class="duplicateTools">
-    <button id="removeSafeDuplicatesBtn" class="danger">🧹 Remove Safe Exact Duplicates</button>
-    <span id="duplicateToolMsg" class="duplicatePreview"></span>
-  </div>
-  <div id="integrityResults"></div>
-</section>
+
 
 <section class="card quick-hide">
   <h2>🧾 Recent Leave Edit Audit</h2><div class="actions"><button id="loadAuditBtn">Load / Refresh Audit</button></div>
