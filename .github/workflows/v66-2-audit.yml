@@ -1,0 +1,24 @@
+name: v66.2 audit
+on:
+  push:
+    branches: [v66-2-refinement]
+    paths: ['tools/run-v66-2-audit.txt']
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python tools/audit_v66_2.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add V66_2_AUDIT.txt
+          git diff --cached --quiet || git commit -m "Audit v66.2 current branch"
+          git push
