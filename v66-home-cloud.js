@@ -620,13 +620,15 @@ function normalizePersonName(v){
 }
 function resolveMyTeacherCode(user,profile,masterData){
  const teachers=Array.isArray(masterData&&masterData.teachers)?masterData.teachers:[];
+ const nonTeaching=Array.isArray(masterData&&masterData.nonTeachingStaff)?masterData.nonTeachingStaff.filter(x=>x&&x.active!==false):[];
  const reps=Array.isArray(masterData&&masterData.temporaryReplacements)?masterData.temporaryReplacements:[];
- const knownCode=c=>teachers.some(t=>String(t.code)===String(c))||reps.some(r=>String(r&&r.tempCode)===String(c));
+ const personalStaff=[...teachers,...nonTeaching];
+ const knownCode=c=>personalStaff.some(t=>String(t.code)===String(c))||reps.some(r=>String(r&&r.tempCode)===String(c));
  const explicit=String((profile&&(profile.teacherCode||profile.teacher_code||profile.code||profile.teacherId))||'').trim();
  if(explicit&&knownCode(explicit))return explicit;
  const email=String((user&&user.email)||profile&&profile.email||'').trim().toLowerCase();
  if(email){
-   const emailMatches=teachers.filter(t=>{
+   const emailMatches=personalStaff.filter(t=>{
      const vals=[t.email,t.gmail,t.googleEmail,t.google_email].concat(Array.isArray(t.emails)?t.emails:[]);
      return vals.some(v=>String(v||'').trim().toLowerCase()===email);
    });
@@ -637,7 +639,7 @@ function resolveMyTeacherCode(user,profile,masterData){
  }
  const names=[profile&&profile.teacherName,profile&&profile.name,user&&user.displayName].map(normalizePersonName).filter(Boolean);
  for(const n of names){
-   const exact=teachers.filter(t=>normalizePersonName(t.name)===n);
+   const exact=personalStaff.filter(t=>normalizePersonName(t.name)===n);
    if(exact.length===1)return String(exact[0].code);
    const temp=reps.filter(r=>normalizePersonName(r&&r.tempName)===n&&r&&r.tempCode);
    if(temp.length===1)return String(temp[0].tempCode);
