@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1">
 <script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
 <link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
 <body>
 <header><div class="wrap headline"><div><h1>⚙️ Leave Rules</h1><div class="subtitle">Entitlements, applicability, staff classification and period control · Cloud v66.1</div></div><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a></div></header>
@@ -88,11 +89,13 @@
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import{getAuth,onAuthStateChanged,setPersistence,browserLocalPersistence}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(cfg),auth=getAuth(fb),db=getFirestore(fb);
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 const $=id=>document.getElementById(id),safe=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let user=null,master=null,rules=[],entitlementPeriod=null,staffCategoryOverrides={},staffCategories=[],staffConditionalEligibility={},legacy=[],editingCode='',editingStaffCategoryCode='';
 

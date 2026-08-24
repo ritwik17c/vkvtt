@@ -1,4 +1,4 @@
-V66.2 FINAL STATIC VERIFICATION: 54 PASS / 1 FAIL
+V66.2 FINAL STATIC VERIFICATION: 55 PASS / 0 FAIL
 
 PASS	file index.html	
 PASS	file admin-dashboard.html	
@@ -53,6 +53,5 @@ PASS	node check period-notifications.js
 PASS	node module admin-leave-editor.html#0	
 PASS	node module admin-leave.html#0	
 PASS	node module admin-dashboard.html#0	
-FAIL	daily history live summary hook	
+PASS	daily history hook	
 PASS	leave integrity section	
-VERIFY EXIT=1

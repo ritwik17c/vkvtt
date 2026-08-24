@@ -152,6 +152,7 @@ body.quick-mode .wrap{max-width:none}
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
 <link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
 <link rel="stylesheet" href="v66-remaining-polish.css?v=66.2-remain-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
 <body>
 <header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v66.0</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=66.0">🗂 Approved Leave</a></div></div></header>
@@ -294,6 +295,14 @@ body.quick-mode .wrap{max-width:none}
   <div id="saveMsg" class="status info hide"></div>
 </section>
 
+
+<section class="card quick-hide" id="legacyDatedRecoverySection">
+  <div class="sectionTitle"><div><h2>♻ Recover Verified Dated Leave Records</h2><div class="help">Shows older leave/accounting cards that already contain verified dates or a verified date range but are not yet visible as operational leave. No dates are invented.</div></div><button id="scanRecoverableBtn">↻ Scan</button></div>
+  <div id="recoverableSummary" class="status info">Scanning saved legacy cards…</div>
+  <div class="actions"><button id="recoverVerifiedBtn" class="primary">♻ Recover / Sync Safe Verified Records</button></div>
+  <div id="recoverableList"></div>
+</section>
+
 <section class="card quick-hide" id="vlBulkSection">
   <div class="sectionTitle">
     <div>
@@ -342,11 +351,13 @@ body.quick-mode .wrap{max-width:none}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import{getFirestore,doc,getDoc,setDoc,deleteDoc,collection,getDocs,serverTimestamp,writeBatch}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(cfg),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 const $=id=>document.getElementById(id);
 const safe=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const QUICK_MODE=new URLSearchParams(location.search).get('quick')==='1';
@@ -406,7 +417,7 @@ function statusText(p){
  return String(p.type||'')
 }
 function recordText(p){
- const ds=planDates(p);return ds.length<=5?ds.map(displayDate).join(' · '):`${ds.slice(0,5).map(displayDate).join(' · ')} · +${ds.length-5} more`
+ const ds=planDates(p);if(p.mode!=='multiple'&&p.startDate){const a=p.startDate||p.date,b=p.endDate||a;return a===b?displayDate(a):`${displayDate(a)} → ${displayDate(b)} · ${ds.length} day${ds.length===1?'':'s'}`;}return ds.length<=5?ds.map(displayDate).join(' · '):`${ds.slice(0,5).map(displayDate).join(' · ')} · +${ds.length-5} more`;
 }
 function resolutionState(x){
  if(x.resolutionStatus)return x.resolutionStatus;
@@ -718,9 +729,11 @@ async function renderSelectedTeacherHistory(){
     const dated=records.filter(x=>['full','half'].includes(String(x.type||''))&&String(x.leaveCategory||'').toUpperCase()===cat).reduce((n,x)=>n+Number(x.leaveUnits||0),0),legacyTotal=finalLegacy.filter(x=>String(x.category||'').toUpperCase()===cat).reduce((n,x)=>n+Number(x.units||0),0),n=Math.round((dated+legacyTotal)*2)/2;
     return `<div class="teacherHistoryMetric"><b>${safe(n)}</b><span>${safe(catLabel(cat))} recorded use · ${rule?'rule inactive/incomplete':'no active rule'}</span></div>`;
   }).join('');
-  const lines=ordered.map(g=>{const x=g.item,state=g.dates.includes(today)?'Current':(g.dates.some(d=>d>today)?'Upcoming':'Past'),category=historyCategoryText(g),units=(x.type==='full'||x.type==='half')?`${g.units} unit${g.units===1?'':'s'}`:'—';return `<div class="teacherHistoryLine"><div class="teacherHistoryDate">${safe(historyDateText(g))}</div><div>${safe(category)} · ${safe(units)} <span class="pill">${safe(state)}</span></div><div>${safe((g.remarks||[]).join(' · ')||'No remarks')}</div></div>`}).join('');
+  const lines=ordered.map(g=>{const x=g.item,state=g.dates.includes(today)?'Current':(g.dates.some(d=>d>today)?'Upcoming':'Past'),category=historyCategoryText(g),units=(x.type==='full'||x.type==='half')?`${g.units} unit${g.units===1?'':'s'}`:'—',editKind=x._kind==='manual'?'manual':'plan',editKey=x._kind==='manual'?manualKey(x):x.id;return `<div class="teacherHistoryLine"><div class="teacherHistoryDate">${safe(historyDateText(g))}</div><div>${safe(category)} · ${safe(units)} <span class="pill">${safe(state)}</span></div><div>${safe((g.remarks||[]).join(' · ')||'No remarks')}</div><div><button type="button" class="historyEditBtn" data-history-edit-kind="${editKind}" data-history-edit-key="${safe(editKey)}">✏ Edit</button></div></div>`}).join('');
   const periodText=validEntitlementPeriod()?`${displayDate(entitlementPeriod.startDate)} → ${displayDate(entitlementPeriod.endDate)}`:'not configured';
   out.innerHTML=`<div class="teacherHistoryHead"><div><h3>${safe(tt.name)} · Leave snapshot</h3><div class="help">Configured entitlement view for ${safe(periodText)}. Historical/non-dated accounting is never assigned to a period unless verified or explicitly assigned.</div></div><span class="pill">${leaveRecords.length} saved dated leave record${leaveRecords.length===1?'':'s'}</span></div><div class="teacherHistoryMetrics">${metrics||'<div class="help">No leave categories to display.</div>'}</div><div class="teacherHistoryList">${lines||'<div class="empty">No approved Regular / Conditional Leave history for this teacher. Duty Leave is listed separately in Approved Records.</div>'}</div>${compact.length>10?`<div class="small" style="margin-top:8px">Showing 10 recent/current/upcoming approval lines of ${compact.length}. Open the Approved Leave Register for the full history.</div>`:''}`;
+
+  out.querySelectorAll('[data-history-edit-key]').forEach(b=>b.onclick=()=>b.dataset.historyEditKind==='manual'?startEditManual(b.dataset.historyEditKey):startEditPlan(b.dataset.historyEditKey));
   scheduleLeaveRulePreview();
  }catch(e){if(token===teacherHistoryToken)out.innerHTML='<div class="status warn">Leave history could not load: '+safe(e.message||e)+'</div>'}
 }
@@ -812,7 +825,7 @@ function renderAudit(){
  $('auditList').innerHTML=rows.length?rows.map(x=>`<div class="auditItem"><b>${safe(x.action||'Leave edit')}</b> · ${safe(x.teacherName||x.teacherCode||'')} ${x.teacherCode?`(${safe(x.teacherCode)})`:''}<br><span class="small">${safe(x.reason||'No reason recorded')} · ${safe(x.adminEmail||'Admin')} · ${safe(x.whenText||'')}</span></div>`).join(''):'<div class="empty">No Leave Master Editor audit entries yet.</div>';
 }
 function renderAll(){
- renderControl();renderPending();renderRecords();renderFinalAccounting();
+ renderControl();renderPending();renderRecords();renderFinalAccounting();renderRecoverableLegacy();
  updateExpectedCorrectionButton();
  if($('vlBulkPreview'))renderVlBulkPreview();
  if($('integritySummary')&&!window.__leaveIntegrityRun){
@@ -883,6 +896,58 @@ async function deleteErroneousLegacyCard(id){
  await syncLeaveControl();renderControl();renderPending();renderRecords();renderFinalAccounting();
 }
 
+
+
+function explicitLegacyDateInfo(x){
+ const marker=x&&((x.vlHasVerifiedRange===true)||(x.hasVerifiedDates===true)||(x.datesVerified===true)||(x.verified===true)||(String(x.resolutionStatus||'')==='resolved-dated'));
+ if(!marker)return{dates:[],reason:'No explicit date-verification marker'};
+ let dates=[];
+ if(Array.isArray(x.verifiedDates))dates=x.verifiedDates.filter(Boolean);
+ else if(Array.isArray(x.resolvedDates))dates=x.resolvedDates.filter(Boolean);
+ else if(Array.isArray(x.dates)&&x.hasVerifiedDates===true)dates=x.dates.filter(Boolean);
+ else{
+   const a=x.vlFromDate||x.verifiedFromDate||x.fromDate||'',b=x.vlToDate||x.verifiedToDate||x.toDate||a;
+   if(a&&b)dates=rangeDates(a,b);
+ }
+ dates=[...new Set(dates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d))))].sort();
+ if(!dates.length)return{dates:[],reason:'Verified marker exists but no valid saved dates were found'};
+ const units=Number(x.units||0),cat=String(x.category||'').trim().toUpperCase();
+ if(!cat)return{dates,reason:'Leave category is missing'};
+ if(!(units>0))return{dates,reason:'Leave units are missing'};
+ if(Math.abs(units-dates.length)>0.001)return{dates,reason:`Saved units (${units}) do not match ${dates.length} verified full-day date${dates.length===1?'':'s'}`};
+ return{dates,category:cat,units,reason:''};
+}
+function legacyRecoveryState(x){
+ const info=explicitLegacyDateInfo(x);if(!info.dates.length||info.reason)return{...info,state:'review'};
+ const existing=activePlans().filter(p=>String(p.code)===String(x.teacherCode)&&String(p.leaveCategory||'').toUpperCase()===info.category),covered=new Set();
+ for(const p of existing)for(const d of planDates(p))covered.add(d);
+ const hits=info.dates.filter(d=>covered.has(d));
+ return{...info,state:hits.length===info.dates.length?'already':hits.length?'partial':'safe',hits};
+}
+function renderRecoverableLegacy(){
+ const box=$('recoverableList'),sum=$('recoverableSummary');if(!box||!sum)return;
+ const rows=legacy.filter(x=>x&&x.active!==false).map(x=>({x,st:legacyRecoveryState(x)})).filter(z=>z.st.dates.length||z.x.vlHasVerifiedRange===true||z.x.hasVerifiedDates===true||z.x.datesVerified===true);
+ const safeRows=rows.filter(z=>z.st.state==='safe'),partial=rows.filter(z=>z.st.state==='partial'),already=rows.filter(z=>z.st.state==='already'),review=rows.filter(z=>z.st.state==='review');
+ sum.className='status '+(partial.length||review.length?'warn':'ok');sum.innerHTML=`<b>${rows.length}</b> dated/verified legacy card${rows.length===1?'':'s'} found · ${safeRows.length} safe to recover · ${already.length} already represented · ${partial.length+review.length} need review.`;
+ box.innerHTML=rows.length?rows.map(({x,st})=>`<div class="recoveryCard ${st.state==='already'?'ok':st.state==='safe'?'ok':'warn'}"><div class="cardTop"><div><div class="cardTitle">${safe(x.teacherName||teacherByCode(x.teacherCode)?.name||x.teacherCode)} <span class="pill">${safe(x.teacherCode||'')}</span></div><div class="meta">${safe(catLabel(x.category))} · ${safe(x.units||'—')} unit${Number(x.units)===1?'':'s'} · ${st.dates.length?(safe(displayDate(st.dates[0]))+(st.dates.length>1?' → '+safe(displayDate(st.dates[st.dates.length-1]))+` · ${st.dates.length} days`:'')):'No saved dates'}<br>${safe(x.reason||x.resolutionNote||'Older saved leave/accounting card')}</div></div><span class="pill ${st.state==='safe'||st.state==='already'?'ok':'warn'}">${st.state==='safe'?'Safe to recover':st.state==='already'?'Already visible':st.state==='partial'?'Partial overlap':'Review needed'}</span></div>${st.reason?`<div class="small">${safe(st.reason)}</div>`:''}<label class="small"><input class="bulkSelect" type="checkbox" data-bulk-del="legacy|${safe(x.id)}" ${bulkDeleteSelection.has('legacy|'+x.id)?'checked':''}> Select for bulk erroneous/duplicate cleanup</label></div>`).join(''):'<div class="empty">No saved legacy cards with explicit verified dates were found.</div>';
+ wireBulkDeleteSelection();updateBulkDeleteCount();
+}
+async function recoverVerifiedLegacy(){
+ await requireAdminSession();await loadSecondaryData();
+ const candidates=legacy.filter(x=>x&&x.active!==false).map(x=>({x,st:legacyRecoveryState(x)})).filter(z=>z.st.state==='safe');
+ if(!candidates.length){alert('No safe verified legacy records are waiting for recovery.');renderRecoverableLegacy();return}
+ if(!confirm(`Recover ${candidates.length} verified dated legacy record${candidates.length===1?'':'s'} into the operational leave register?\n\nOnly cards with explicit saved dates and matching full-day unit totals will be recovered. No dates will be invented.`))return;
+ const actor=await requireAdminSession(),newMap={...plans};let recovered=0;
+ for(const {x,st} of candidates){
+   const stamp=Date.now()+recovered,created=[];
+   st.dates.forEach((date,i)=>{const row={date,type:'full',category:st.category,units:1,part:'full',from:0,to:0,note:`Recovered from verified legacy record ${x.id}${x.month?' · '+x.month:''}`},p=makePlan(row,String(x.teacherCode),stamp,i,actor);p.source='legacy-verified-recovery-v66.2';p.legacySourceId=x.id;newMap[p.id]=p;created.push(p)});
+   for(const p of created){await setDoc(doc(db,'approvedStatusPlans',String(p.id)),{...p,approved:true,updatedAt:serverTimestamp(),updatedBy:actor.uid,updatedByEmail:actor.email||''},{merge:true});try{await addPersonalProjection(p)}catch(e){}}
+   await setDoc(doc(db,'legacyLeaveAccounting',x.id),{resolutionStatus:'resolved-dated',active:false,resolvedPlanIds:created.map(p=>p.id),resolutionNote:'Recovered from previously verified dated legacy leave card.',resolvedAt:serverTimestamp(),resolvedBy:actor.uid,resolvedByEmail:actor.email||''},{merge:true});
+   x.resolutionStatus='resolved-dated';x.active=false;x.resolvedPlanIds=created.map(p=>p.id);recovered++;
+ }
+ await setDoc(doc(db,'dailyRecords','__leavePlans'),{date:'__leavePlans',dayName:'Scheduled Leave / Status Plans',plans:newMap,updatedAt:serverTimestamp(),updatedBy:actor.uid,updatedByEmail:actor.email||''},{merge:false});plans=newMap;
+ await syncLeaveControl();renderAll();renderLeaveIntegrity();alert(`Recovered ${recovered} verified dated legacy leave record${recovered===1?'':'s'}.`);
+}
 
 function eligibleVlItems(){
  const month=String($('vlBulkMonth')?.value||'APRIL').toUpperCase();
@@ -1367,6 +1432,8 @@ $('runIntegrityBtn').onclick=async()=>{
  renderLeaveIntegrity();$('duplicateToolMsg').textContent='Scan refreshed.';
 };
 $('removeSafeDuplicatesBtn').onclick=removeSafeExactDuplicates;
+if($('scanRecoverableBtn'))$('scanRecoverableBtn').onclick=renderRecoverableLegacy;
+if($('recoverVerifiedBtn'))$('recoverVerifiedBtn').onclick=recoverVerifiedLegacy;
 if($('loadMoreRecordsBtn'))$('loadMoreRecordsBtn').onclick=()=>{recordRenderLimit+=40;renderRecords()};
 if($('loadAuditBtn'))$('loadAuditBtn').onclick=loadAuditHistory;
 if($('loadDailyHistoryBtn'))$('loadDailyHistoryBtn').onclick=async()=>{

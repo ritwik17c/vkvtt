@@ -22,6 +22,7 @@
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
 <link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head><body>
 <header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Master Timetable Import / Restore · Cloud v66.0</div></div><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a></div></header>
 <main class="wrap"><div id="status" class="box">Checking sign-in…</div><div id="tools" hidden>
@@ -33,10 +34,12 @@
 </div></main>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
-const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);let user=null,masterSeed=null;
+const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});let user=null,masterSeed=null;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function verifyAdmin(u){user=u;try{const p=await getDoc(doc(db,'authorizedUsers',u.uid));if(!p.exists()||p.data().active!==true||p.data().role!=='admin'){throw new Error('Admin access is required.')} $('status').className='box ok';$('status').textContent='Admin verified: '+(u.displayName||u.email);$('tools').hidden=false;}catch(e){$('status').className='box error';$('status').innerHTML='<b>Could not open Master Timetable Import.</b><br>'+esc(e.message||e)}}
 onAuthStateChanged(auth,async u=>{user=u;if(!u){$('status').innerHTML='You are not signed in. <button id="signin">Sign in with Google</button>';$('signin').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());return}await verifyAdmin(u)});
