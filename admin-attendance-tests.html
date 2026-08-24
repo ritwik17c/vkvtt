@@ -8,6 +8,7 @@
 :root{--navy:#123b58;--line:#bfd0da;--bg:#f4f8fa;--blue:#eaf4fa;--amber:#fff5da;--red:#9b2c2c;--green:#eaf7ec}*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px system-ui;color:#18313f}header{background:var(--navy);color:#fff;padding:18px}.wrap{max-width:1100px;margin:auto}main{padding:14px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;margin:12px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}button,input,select{font:inherit;border:1px solid var(--line);border-radius:9px;padding:10px}button{cursor:pointer;font-weight:750;background:var(--blue)}button.danger{background:#fdecec;color:var(--red);border-color:#e5b7b7}.warn{background:var(--amber);border:1px solid #e6c66f;padding:10px;border-radius:10px}.ok{background:var(--green);padding:10px;border-radius:10px}.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:850px}th,td{padding:9px;border-bottom:1px solid #dce6eb;text-align:left;vertical-align:top}.small{font-size:12px;color:#526a76}.badge{display:inline-block;border-radius:999px;padding:3px 8px;background:var(--amber);font-weight:700}.badge.test{background:#fdecec;color:var(--red)}
 </style>
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
 </head>
 <body>
 <header><div class="wrap"><h1 style="margin:0">Test / Mock Attendance Records</h1><div>Principal-only correction and deletion · Version 66.0</div></div></header>
@@ -45,5 +46,6 @@ document.addEventListener('click',e=>{const edit=e.target.closest('[data-edit]')
 $('loadBtn').onclick=()=>load().catch(e=>message(e.message||String(e),'warn'));
 onAuthStateChanged(auth,async u=>{user=u;if(!u){$('gate').textContent='Please return to the timetable and sign in with the Principal/Admin account.';return}const p=await getDoc(doc(db,'authorizedUsers',u.uid));if(!p.exists()||p.data().active!==true||p.data().role!=='admin'){$('gate').textContent='Only the Principal/Admin can manage test or mock attendance records.';return}$('gate').hidden=true;$('app').hidden=false;await load()});
 </script>
+<script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
 </body>
 </html>

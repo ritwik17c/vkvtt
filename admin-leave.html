@@ -28,6 +28,7 @@
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
 </head>
 <body>
 <header><div class="wrap headline"><div><h1>VKV Nalbari · Approved Leave Register</h1><div class="subtitle">Leave · Duty Leave · Cloud v66.2</div></div><div class="actions" style="margin-top:0"><a id="adminBack" class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a><a class="btn" href="index.html?v=66.0">🏠 Timetable Home</a></div></div></header>
@@ -140,5 +141,6 @@ function exportExcel(){if(!window.XLSX){alert('Excel library is still loading.')
 $('exportBtn').onclick=exportExcel;
 $('exportLegacyBtn').onclick=()=>{if(!window.XLSX){alert('Excel library is still loading.');return}const rows=[['Teacher Code','Teacher Name','Month','Leave Category','Units','Reason']];for(const x of legacyAccounting)rows.push([x.teacherCode||'',x.teacherName||'',x.month||'',catLabel(x.category),x.units||'',x.reason||'']);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Legacy_Accounting');XLSX.writeFile(wb,'VKV_Nalbari_Legacy_Leave_Accounting_'+todayKey()+'.xlsx')};$('datePick').value=displayDate(todayKey());
 </script>
+<script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
 </body>
 </html>

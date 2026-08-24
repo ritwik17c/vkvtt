@@ -67,6 +67,7 @@ th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
 </head>
 <body>
 <header>
@@ -487,7 +488,8 @@ $('exportPrint').onclick=()=>{
   <div class="screenOnly"><button onclick="window.print()">Print / Save as PDF</button></div>
   <div class="top"><h1>Vivekananda Kendra Vidyalaya, Nalbari</h1><div>Master Timetable · ${safe(session)} · ${safe(p?.name||'Normal Schedule')}</div></div>
   ${classes.map(printTableForClass).join('')}
-  </body></html>`;
+  <script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
+</body></html>`;
   w.document.open();w.document.write(html);w.document.close();
   showMsg('<b>Print view opened.</b> Use the browser Print dialog and choose “Save as PDF” when required.','ok');
 };

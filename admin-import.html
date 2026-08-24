@@ -21,6 +21,7 @@
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
 </head><body>
 <header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Master Timetable Import / Restore · Cloud v66.0</div></div><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a></div></header>
 <main class="wrap"><div id="status" class="box">Checking sign-in…</div><div id="tools" hidden>
@@ -41,4 +42,5 @@ async function verifyAdmin(u){user=u;try{const p=await getDoc(doc(db,'authorized
 onAuthStateChanged(auth,async u=>{user=u;if(!u){$('status').innerHTML='You are not signed in. <button id="signin">Sign in with Google</button>';$('signin').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());return}await verifyAdmin(u)});
 $('masterFile').onchange=async()=>{masterSeed=null;$('uploadMaster').disabled=true;const f=$('masterFile').files[0];if(!f){$('masterSummary').className='box';$('masterSummary').textContent='No master file selected.';return}if(!f.name.toLowerCase().endsWith('.json')){$('masterSummary').className='box error';$('masterSummary').textContent='Wrong file type. Master Timetable Import accepts JSON only. Use the separate Leave Import page for Excel files.';return}try{const d=JSON.parse(await f.text());for(const k of ['classes','patterns','times','records','teachers'])if(!d[k])throw new Error('Missing '+k);masterSeed=d;$('masterSummary').className='box ok';$('masterSummary').textContent=`Ready: ${d.teachers.length} teachers, ${d.classes.length} classes/sections, ${d.records.length} timetable entries.`;$('uploadMaster').disabled=false}catch(e){$('masterSummary').className='box error';$('masterSummary').textContent='Invalid master seed JSON: '+e.message}};
 $('uploadMaster').onclick=async()=>{if(!user||!masterSeed)return;if(!confirm('Replace the current Master Timetable with this JSON?\n\nThis action affects the permanent master timetable.'))return;$('uploadMaster').disabled=true;$('status').className='box';$('status').textContent='Uploading master timetable…';try{await setDoc(doc(db,'master','current'),{data:masterSeed,session:'2026-27',updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByEmail:user.email||''});$('status').className='box ok';$('status').textContent='Master timetable uploaded successfully.'}catch(e){$('status').className='box error';$('status').textContent='Upload failed: '+e.message}finally{$('uploadMaster').disabled=false}};
-</script></body></html>
+</script><script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
+</body></html>
