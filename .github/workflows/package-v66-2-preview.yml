@@ -2,7 +2,7 @@ name: Package v66.2 Preview
 on:
   push:
     branches: [v66-2-refinement]
-    paths: ['tools/trigger-package-v66-2.txt']
+    paths: ['tools/run-package-v66-2.txt']
 permissions:
   contents: read
 jobs:
