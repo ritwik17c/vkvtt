@@ -1,0 +1,24 @@
+name: v66.2 remaining correction batch
+on:
+  push:
+    branches: [v66-2-refinement]
+    paths: ['tools/run-v66-2-remaining-batch.txt']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python tools/apply_v66_2_remaining_batch.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html admin-dashboard.html admin-leave-editor.html attendance.html admin-attendance.html admin-biometric-import.html admin-leave.html swamiji-clean.svg
+          git diff --cached --quiet || git commit -m "Complete remaining v66.2 correction block"
+          git push
