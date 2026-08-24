@@ -1,0 +1,24 @@
+name: v66.2 admin reference polish
+on:
+  push:
+    branches: [v66-2-refinement]
+    paths: ['tools/run-v66-admin-reference-polish.txt']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python tools/apply_admin_dashboard_reference_polish.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add admin-dashboard.html
+          git diff --cached --quiet || git commit -m "Polish admin dashboard to reference layout"
+          git push
