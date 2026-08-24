@@ -1,6 +1,0 @@
-from pathlib import Path
-p=Path('v66-home-cloud.js'); s=p.read_text(encoding='utf-8')
-needle="""   const items=[...plans.values(),...manual];"""
-insert="""   // Complete-history fallback: personal projections are convenient but older approved dated records\n   // may pre-date projection creation. Merge surviving authoritative dailyRecords for this staff code.\n   try{\n     const ds=await getDocs(collection(db,'dailyRecords'));\n     const seenManual=new Set(manual.map(x=>[x.date,x.type,x.code||code,x.fromPeriod||'',x.toPeriod||'',x.leaveCategory||''].join('|')));\n     ds.forEach(d=>{\n       if(d.id===LEAVE_PLAN_DOC)return;\n       const data=d.data()||{},date=data.date||d.id;\n       (data.statuses||[]).forEach(m=>{\n         if(!m||!PERSONAL_STATUS_TYPES.has(String(m.type||''))||String(m.code||'')!==code)return;\n         const k=[date,m.type,m.code||code,m.fromPeriod||'',m.toPeriod||'',m.leaveCategory||''].join('|');\n         if(seenManual.has(k))return;seenManual.add(k);manual.push({...m,date,kind:'manual',source:m.source||'daily'});\n       });\n     });\n   }catch(e){console.warn('My Leave complete-history fallback:',e)}\n   const items=[...plans.values(),...manual];"""
-assert needle in s, 'My Leave items marker not found';s=s.replace(needle,insert,1)
-p.write_text(s,encoding='utf-8')
