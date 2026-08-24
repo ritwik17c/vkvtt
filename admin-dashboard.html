@@ -27,8 +27,20 @@
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<!-- v66.2 dashboard-width-fix -->
+<style id="v66-2-dashboard-width-fix">
+@media (min-width:1100px){
+ main.wrap{max-width:none!important;width:auto!important;margin:0!important;padding-left:12px!important;padding-right:12px!important}
+ main.wrap>.card{margin-left:0!important;margin-right:0!important}
+}
+</style>
+<link rel="stylesheet" href="v66-visual-alignment-fix.css?v=66.2-align-1">
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-remaining-polish.css?v=66.2-remain-1">
+<link rel="stylesheet" href="v66-admin-reference-polish.css?v=66.2-adminref-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
-<body>
+<body class="adminDashboardPage">
 <header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v66.0</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
 <main class="wrap">
 <div id="gate" class="card"><h2>Administrator Verification</h2><div id="gateMsg" class="status">Checking Admin access…</div><div class="actions"><button id="signInBtn" style="display:none">Sign in with Google</button><button id="retryAdminBtn" style="display:none">Retry Admin Check</button></div></div>
@@ -36,6 +48,7 @@
   <div id="dashboardHome" class="card">
     <h2>Admin Dashboard</h2>
     <div class="help">Choose an administrative area. No section opens automatically.</div>
+    <div class="adminWorkspaceHero"><div class="adminWorkspaceCopy"><div class="eyebrow">Vivekananda Kendra Vidyalaya, Nalbari</div><strong>School Administration Workspace</strong><p>Timetable, classes, staff, attendance and academic records in one organised workspace.</p></div><div class="adminWorkspaceArt" aria-hidden="true"></div></div>
     <div id="activeScheduleStatus" class="status">Active schedule: loading…</div>
     <div class="tiles">
       <div class="tile" data-open="masterEditor"><b>📅 Master Timetable</b><span>Edit a permanent timetable slot without changing the original roster structure.</span></div>
@@ -132,7 +145,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
-setPersistence(auth,browserLocalPersistence).catch(()=>{});
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 const $=id=>document.getElementById(id),safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 let currentUser=null,profile=null,masterDoc=null,master=null,selectedRecordIndex=-1;
@@ -158,8 +172,9 @@ async function verifyAndOpenAdmin(user){
    profile=ps.data();
    $('gate').style.display='none';$('app').style.display='block';$('app').style.opacity='1';$('app').style.pointerEvents='auto';$('app').removeAttribute('aria-busy');
    showDashboard();
-   // Preload master only when the browser is idle. Do not render heavy tables yet.
-   const preload=()=>ensureMasterLoaded(false).catch(()=>{});
+   // Preload master only when the browser is idle. Keep heavy tables lazy,
+   // but update the lightweight dashboard schedule/metrics as soon as data arrives.
+   const preload=()=>ensureMasterLoaded(false).then(renderDashboardSummary).catch(e=>renderDashboardLoadError(e));
    if('requestIdleCallback' in window)requestIdleCallback(preload,{timeout:2500});else setTimeout(preload,1200);
  }catch(e){if(token!==adminCheckToken)return;$('gateMsg').className='status error';$('gateMsg').textContent='Could not open Admin Dashboard: '+(e.message||e);$('retryAdminBtn').style.display='inline-block'}
  finally{clearTimeout(slowTimer)}
@@ -193,9 +208,22 @@ async function loadMaster(){master=null;masterRendered=false;return ensureMaster
 
 function activeSchedule(){const id=master.activeScheduleProfileId||'normal',profiles=master.scheduleProfiles||{};return profiles[id]||profiles.normal||{name:'Normal Schedule'}}
 function activeReplacements(date=todayKey()){return master.temporaryReplacements.filter(r=>r&&r.active!==false&&r.startDate&&r.endDate&&date>=r.startDate&&date<=r.endDate)}
+function renderDashboardSummary(){
+ if(!master||!Array.isArray(master.records))return;
+ const ap=activeSchedule(),status=$('activeScheduleStatus');
+ if(status){status.className='status ok';status.innerHTML='<b>Active Schedule:</b> '+safe(ap.name||'Normal Schedule')}
+ if($('mTeachers'))$('mTeachers').textContent=master.teachers.length;
+ if($('mClasses'))$('mClasses').textContent=master.classes.length;
+ if($('mEntries'))$('mEntries').textContent=master.records.length;
+ if($('mTemp'))$('mTemp').textContent=activeReplacements().length;
+}
+function renderDashboardLoadError(e){
+ const status=$('activeScheduleStatus');if(!status)return;
+ status.className='status error';
+ status.innerHTML='<b>Active schedule unavailable.</b> '+safe((e&&e.message)||e||'Please retry.');
+}
 function renderAll(){
- const ap=activeSchedule();$('activeScheduleStatus').innerHTML='<b>Active Schedule:</b> '+safe(ap.name||'Normal Schedule');
- $('mTeachers').textContent=master.teachers.length;$('mClasses').textContent=master.classes.length;$('mEntries').textContent=master.records.length;$('mTemp').textContent=activeReplacements().length;
+ renderDashboardSummary();
  fill($('editDay'),DAYS.map(x=>({value:x,label:x})));fill($('editClass'),master.classes.map(x=>({value:x,label:x})));fill($('replacementOriginal'),master.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>({value:t.code,label:t.name+' ('+t.code+')'})));
  renderTeacherTable();renderClassTable();renderReplacementList();renderNonTeachingList();renderHistory();renderOverview();
  if(!$('editDay').value)$('editDay').value='Monday';if(!$('editClass').value)$('editClass').value=master.classes[0]||'';updatePeriods();
@@ -288,5 +316,7 @@ $('openLeaveRules').onclick=()=>location.href='admin-leave-rules.html?v=66.1-lea
 $('downloadBackup').onclick=()=>{const blob=new Blob([JSON.stringify(master,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='VKV_Nalbari_Master_Timetable_Backup_'+todayKey()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 </script>
 <script src="v64-dashboard-addon.js?v=66.0-leave-fix-1"></script>
+<script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
+<script src="v66-admin-reference-polish.js?v=66.2-adminref-1" defer></script>
 </body>
 </html>

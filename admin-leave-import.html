@@ -41,6 +41,8 @@ details.reviewGroup>summary{list-style:none;cursor:pointer}.reviewGroup>summary:
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
 <body>
 <header><div class="wrap headline"><div><h1>VKV Nalbari Timetable</h1><div class="subtitle">Admin Dashboard → Approved Leave History Import · Cloud v66.0</div></div><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a></div></header>
@@ -94,11 +96,13 @@ details.reviewGroup>summary{list-style:none;cursor:pointer}.reviewGroup>summary:
 </main>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import{getFirestore,doc,getDoc,getDocs,collection,setDoc,serverTimestamp,writeBatch}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const cfg={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 const $=id=>document.getElementById(id),status=$('status'),tools=$('tools');
 let user=null,master=null,masterWrapped=false,leavePreview=[],existingPlans={},legacyImportNotes=[],legacyAccountingPreview=[],existingLegacyAccounting=[],linkedEmailsByCode={},reviewResolutions={},activeReviewFilter='all',reviewSearchTerm='',halfSelections={},reviewStorageKey='';
 const SESSION_START='2026-04-01',SESSION_END='2027-03-31';
@@ -494,4 +498,5 @@ Proceed with the final import?`))return;
  }catch(e){$('importResult').innerHTML='<div class="box error"><b>Import failed.</b><br>'+esc(e.message||e)+'</div>';$('importHistory').disabled=false}
 };
 </script>
+<script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
 </body></html>

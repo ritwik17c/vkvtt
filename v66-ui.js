@@ -196,3 +196,43 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enhance, { once: true });
   else enhance();
 }());
+\n\n/* v66.2 delayed Swamiji loader */\n(function(){\n  function build(){\n    if(document.getElementById('vkvSwamijiLoader'))return;\n    const box=document.createElement('div');box.id='vkvSwamijiLoader';box.setAttribute('aria-live','polite');box.setAttribute('aria-hidden','true');\n    box.innerHTML='<div class="vkvLoaderCard"><img src="swamiji-loader.svg?v=66.2" alt=""><div class="vkvLoaderText">Loading school workspace…</div></div>';\n    document.body.appendChild(box);\n    if(!document.getElementById('vkvSwamijiLoaderStyle')){const st=document.createElement('style');st.id='vkvSwamijiLoaderStyle';st.textContent='#vkvSwamijiLoader{position:fixed;inset:0;z-index:99999;display:none;place-items:center;background:rgba(246,250,248,.72);backdrop-filter:blur(1.5px);pointer-events:none}#vkvSwamijiLoader.show{display:grid}.vkvLoaderCard{width:min(190px,44vw);padding:14px 14px 12px;border:1px solid #d7c28e;border-radius:22px;background:#fbfaf6;box-shadow:0 12px 34px rgba(14,48,70,.13);text-align:center}.vkvLoaderCard img{display:block;width:100%;height:auto;max-height:150px;object-fit:contain}.vkvLoaderText{margin-top:-4px;font-size:.82rem;font-weight:750;color:#31526a;letter-spacing:.02em}';document.head.appendChild(st)}\n  }\n  let manual=0,busySince=0;\n  const get=()=>document.getElementById('vkvSwamijiLoader');\n  function show(text){build();manual++;const e=get();if(text){const t=e.querySelector('.vkvLoaderText');if(t)t.textContent=text}e.classList.add('show');e.setAttribute('aria-hidden','false')}\n  function hide(force){manual=force?0:Math.max(0,manual-1);if(manual)return;const e=get();if(e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}\n  function visible(el){if(!el||el.hidden)return false;const cs=getComputedStyle(el);return cs.display!=='none'&&cs.visibility!=='hidden'&&cs.opacity!=='0'}\n  function autoBusy(){\n    const candidates=['authMessage','gateMsg','activeScheduleStatus','activeScheduleBanner'].map(id=>document.getElementById(id)).filter(Boolean);\n    return candidates.some(el=>visible(el)&&/(checking|verifying|loading|connecting|opening|please wait)/i.test(String(el.textContent||'')));\n  }\n  function tick(){if(manual)return;const b=autoBusy(),now=Date.now();if(b){if(!busySince)busySince=now;if(now-busySince>650){build();const e=get();e.classList.add('show');e.setAttribute('aria-hidden','false')}}else{busySince=0;const e=get();if(e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}}\n  window.VKVLoader={show,hide:()=>hide(false),forceHide:()=>hide(true)};\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();\n  setInterval(tick,240);\n})();\n
+
+/* v66.2 preview correction batch: navigation, alignment and tool hierarchy */
+(function(){
+  function navBtn(label,href){const a=document.createElement('a');a.className='btn v66-return-btn';a.href=href;a.textContent=label;return a}
+  function addReturnNav(){
+    const file=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+    if(file==='index.html'||file==='')return;
+    const main=document.querySelector('main');if(!main||document.getElementById('v66ReturnNav'))return;
+    const admin=file.startsWith('admin-'),box=document.createElement('div');box.id='v66ReturnNav';box.className='v66-return-nav';
+    const parentMap={
+      'admin-biometric-import.html':['← Attendance Administration','admin-attendance.html?v=66.2'],
+      'admin-attendance-tests.html':['← Attendance Administration','admin-attendance.html?v=66.2'],
+      'admin-leave-editor.html':['← Approved Leave','admin-leave.html?v=66.2'],
+      'admin-leave-import.html':['← Approved Leave','admin-leave.html?v=66.2'],
+      'admin-leave-rules.html':['← Leave Administration','admin-leave.html?v=66.2'],
+      'admin-schedules.html':['← Admin Dashboard','admin-dashboard.html?v=66.2'],
+      'admin-timetable-studio.html':['← Admin Dashboard','admin-dashboard.html?v=66.2']
+    };
+    const p=parentMap[file];if(p)box.appendChild(navBtn(p[0],p[1]));
+    if(admin&&!box.querySelector('[href^="admin-dashboard"]'))box.appendChild(navBtn('⌂ Admin Dashboard','admin-dashboard.html?v=66.2'));
+    box.appendChild(navBtn('▦ Timetable Home','index.html?v=66.2'));
+    main.prepend(box);
+  }
+  function moveIntegrityCard(){
+    if(!/admin-leave-editor\.html$/i.test(location.pathname))return;
+    const cards=[...document.querySelectorAll('#app > section.card, #app > .card')];
+    const recon=cards.find(x=>/Leave Reconciliation Control/i.test(x.textContent||''));
+    const integrity=cards.find(x=>/Leave Integrity Checker\s*&\s*Duplicate Remover/i.test(x.textContent||''));
+    if(recon&&integrity&&recon.nextElementSibling!==integrity)recon.insertAdjacentElement('afterend',integrity);
+  }
+  function style(){if(document.getElementById('v66CorrectionStyle'))return;const st=document.createElement('style');st.id='v66CorrectionStyle';st.textContent=`
+    .v66-return-nav{max-width:1320px;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .v66-return-nav .v66-return-btn{display:inline-flex;align-items:center;text-decoration:none}
+    @media(min-width:1100px){body.v66-school-context main,.v66-school-context .wrap,.v66-school-context .cloudInner{max-width:1320px!important}}
+    @media(max-width:1099px){.v66-return-nav{padding-left:2px;padding-right:2px}}
+  `;document.head.appendChild(st)}
+  function run(){style();addReturnNav();moveIntegrityCard()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+})();

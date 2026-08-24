@@ -42,6 +42,8 @@ td input[type=checkbox]{width:18px;height:18px;cursor:pointer}.rowBtns{display:f
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
 <body>
 <header><div class="wrap head"><div><h1>VKV Nalbari · Administration</h1><div class="sub">🗓 Schedule Profiles</div></div><button id="backAdmin">← Admin Dashboard</button></div></header>
@@ -96,11 +98,13 @@ td input[type=checkbox]{width:18px;height:18px;cursor:pointer}.rowBtns{display:f
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import{getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged,setPersistence,browserLocalPersistence}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 const $=id=>document.getElementById(id);
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const displayDateTime=ms=>{const d=new Date(Number(ms)||0),p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`};
@@ -271,5 +275,6 @@ function renderHistory(){
  $('scheduleHistory').innerHTML=h.length?h.map(x=>`<div class="historyItem"><b>${safe(x.action)}</b> — ${safe(x.profileName||x.profileId)}<br><span class="help">${safe(displayDateTime(x.atMs||0))} · ${safe(x.byName||x.byEmail||'Admin')}</span></div>`).join(''):'<div class="status">No Schedule Profile activity recorded yet.</div>';
 }
 </script>
+<script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
 </body>
 </html>

@@ -4,8 +4,10 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestam
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
+await setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('Auth persistence setup:',e));
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(e=>console.warn('Auth restore:',e));
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),switchAccountBtn=document.getElementById('googleSwitchAccount'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSwitchAccount=document.getElementById('cloudSwitchAccount'),cloudSignOut=document.getElementById('cloudSignOut');
-let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,leavePlanPollTimer=null,schedulePollTimer=null,accessCheckTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false;
+let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,leavePlanPollTimer=null,schedulePollTimer=null,accessCheckTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false,homepageLeaveContextCache=null;
 const statusEditorRoles=new Set(['admin','manager']);
 const proxyRoles=new Set(['admin','manager','proxy_manager']);
 const isAdmin=()=>currentProfile&&currentProfile.role==='admin';
@@ -122,6 +124,28 @@ window.addEventListener('focus',()=>{refreshActiveScheduleFromCloud();if(current
 
 const LEAVE_PLAN_DOC='__leavePlans';
 const PERSONAL_STATUS_TYPES=new Set(['full','half','od','special']);
+
+window.loadHomepageLeaveContext=async function(code,force=false){
+ if(!currentUser||!canEditStatus())throw new Error('Admin or Manager access is required to view staff leave balances.');
+ const now=Date.now();
+ if(!force&&homepageLeaveContextCache&&now-homepageLeaveContextCache.at<30000)return homepageLeaveContextCache.data;
+ const [ruleSnap,dailySnap]=await Promise.all([getDoc(doc(db,'leaveRules','current')),getDocs(collection(db,'dailyRecords'))]);
+ const rd=ruleSnap.exists()?(ruleSnap.data()||{}):{},scheduled=[],manual=[];
+ dailySnap.forEach(d=>{
+   const data=d.data()||{};
+   if(d.id===LEAVE_PLAN_DOC){Object.values(data.plans||{}).forEach(p=>{if(p&&p.active!==false)scheduled.push({...p})});return}
+   const date=data.date||d.id;
+   (data.statuses||[]).forEach(x=>{if(x)manual.push({...x,_date:date})});
+ });
+ let legacy=[],legacyAvailable=false;
+ if(isAdmin()){
+   try{const ls=await getDocs(collection(db,'legacyLeaveAccounting'));ls.forEach(d=>legacy.push({id:d.id,...(d.data()||{})}));legacyAvailable=true}catch(e){console.warn('Homepage legacy leave context:',e)}
+ }
+ const data={categories:Array.isArray(rd.categories)?rd.categories:[],entitlementPeriod:rd.entitlementPeriod||null,staffCategoryOverrides:rd.staffCategoryOverrides||{},staffCategories:Array.isArray(rd.staffCategories)?rd.staffCategories:[],staffConditionalEligibility:rd.staffConditionalEligibility||{},scheduled,manual,legacy,legacyAvailable,loadedAt:now};
+ homepageLeaveContextCache={at:now,data};
+ return data;
+};
+window.invalidateHomepageLeaveContext=()=>{homepageLeaveContextCache=null};
 function normalizedEmail(v){return String(v||'').trim().toLowerCase()}
 function teacherEmailForCode(code){
  code=String(code||'').trim();if(!code)return '';
@@ -333,6 +357,7 @@ async function pushToday(payload){
      try{await syncPersonalManualStatusesForDate(p.date,oldStatuses,p.statuses||[])}catch(e){console.warn('Personal Leave / OD daily sync:',e)}
      try{await syncApprovedManualStatusesForDate(p.date,p.statuses||[])}catch(e){console.warn('Approved Leave daily sync:',e)}
    }
+   homepageLeaveContextCache=null;
    cloudSync.textContent='Synced';
  }finally{
    cloudWriting=false;
@@ -597,13 +622,15 @@ function normalizePersonName(v){
 }
 function resolveMyTeacherCode(user,profile,masterData){
  const teachers=Array.isArray(masterData&&masterData.teachers)?masterData.teachers:[];
+ const nonTeaching=Array.isArray(masterData&&masterData.nonTeachingStaff)?masterData.nonTeachingStaff.filter(x=>x&&x.active!==false):[];
  const reps=Array.isArray(masterData&&masterData.temporaryReplacements)?masterData.temporaryReplacements:[];
- const knownCode=c=>teachers.some(t=>String(t.code)===String(c))||reps.some(r=>String(r&&r.tempCode)===String(c));
+ const personalStaff=[...teachers,...nonTeaching];
+ const knownCode=c=>personalStaff.some(t=>String(t.code)===String(c))||reps.some(r=>String(r&&r.tempCode)===String(c));
  const explicit=String((profile&&(profile.teacherCode||profile.teacher_code||profile.code||profile.teacherId))||'').trim();
  if(explicit&&knownCode(explicit))return explicit;
  const email=String((user&&user.email)||profile&&profile.email||'').trim().toLowerCase();
  if(email){
-   const emailMatches=teachers.filter(t=>{
+   const emailMatches=personalStaff.filter(t=>{
      const vals=[t.email,t.gmail,t.googleEmail,t.google_email].concat(Array.isArray(t.emails)?t.emails:[]);
      return vals.some(v=>String(v||'').trim().toLowerCase()===email);
    });
@@ -614,7 +641,7 @@ function resolveMyTeacherCode(user,profile,masterData){
  }
  const names=[profile&&profile.teacherName,profile&&profile.name,user&&user.displayName].map(normalizePersonName).filter(Boolean);
  for(const n of names){
-   const exact=teachers.filter(t=>normalizePersonName(t.name)===n);
+   const exact=personalStaff.filter(t=>normalizePersonName(t.name)===n);
    if(exact.length===1)return String(exact[0].code);
    const temp=reps.filter(r=>normalizePersonName(r&&r.tempName)===n&&r&&r.tempCode);
    if(temp.length===1)return String(temp[0].tempCode);
@@ -690,6 +717,21 @@ window.loadMyStatusCloud=async function(){
        const id=String(p.id||'');if(id&&!plans.has(id))plans.set(id,{...p,kind:'scheduled'});
      });
    });
+   // Complete-history fallback: personal projections are convenient but older approved dated records
+   // may pre-date projection creation. Merge surviving authoritative dailyRecords for this staff code.
+   try{
+     const ds=await getDocs(collection(db,'dailyRecords'));
+     const seenManual=new Set(manual.map(x=>[x.date,x.type,x.code||code,x.fromPeriod||'',x.toPeriod||'',x.leaveCategory||''].join('|')));
+     ds.forEach(d=>{
+       if(d.id===LEAVE_PLAN_DOC)return;
+       const data=d.data()||{},date=data.date||d.id;
+       (data.statuses||[]).forEach(m=>{
+         if(!m||!PERSONAL_STATUS_TYPES.has(String(m.type||''))||String(m.code||'')!==code)return;
+         const k=[date,m.type,m.code||code,m.fromPeriod||'',m.toPeriod||'',m.leaveCategory||''].join('|');
+         if(seenManual.has(k))return;seenManual.add(k);manual.push({...m,date,kind:'manual',source:m.source||'daily'});
+       });
+     });
+   }catch(e){console.warn('My Leave complete-history fallback:',e)}
    const items=[...plans.values(),...manual];
    const today=todayKey();
    const stateOf=x=>{
@@ -704,13 +746,13 @@ window.loadMyStatusCloud=async function(){
      const a=x.startDate||x.date||'',b=x.endDate||a;return a===b?displayDate(a):(displayDate(a)+' → '+displayDate(b));
    };
    const labelOf=x=>window.statusLabel?window.statusLabel(x):(x.type||'Status');
-   const groups={current:[],upcoming:[],past:[]};items.forEach(x=>groups[stateOf(x)].push(x));
-   groups.current.sort((a,b)=>dateSortKey(a).localeCompare(dateSortKey(b)));groups.upcoming.sort((a,b)=>dateSortKey(a).localeCompare(dateSortKey(b)));groups.past.sort((a,b)=>dateSortKey(b).localeCompare(dateSortKey(a)));
-   const section=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.map(x=>'<tr><td>'+safe(labelOf(x))+'</td><td>'+safe(x.leaveCategory?leaveCategoryLabel(x.leaveCategory):'—')+'</td><td>'+safe((x.type==='full'||x.type==='half')?(x.leaveUnits||'—'):'—')+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
+   const leaveItems=items.filter(x=>['full','half'].includes(String(x.type||''))),dutyItems=items.filter(x=>['od','special'].includes(String(x.type||'')));
+   const stateLabel=x=>{const s=stateOf(x);return s==='current'?'Current':s==='upcoming'?'Upcoming':'Past'};
+   const categorySection=(title,arr,empty)=>'<h3 style="margin:16px 0 7px">'+title+'</h3>'+(arr.length?'<div class="table"><table><tr><th>State</th><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr>'+arr.sort((a,b)=>dateSortKey(b).localeCompare(dateSortKey(a))).map(x=>'<tr><td>'+safe(stateLabel(x))+'</td><td>'+safe(labelOf(x))+'</td><td>'+safe(x.leaveCategory?leaveCategoryLabel(x.leaveCategory):'—')+'</td><td>'+safe((x.type==='full'||x.type==='half')?(x.leaveUnits||'—'):'—')+'</td><td>'+safe(dateText(x))+'</td><td>'+safe(x.note||'—')+'</td></tr>').join('')+'</table></div>':'<div class="small">'+empty+'</div>');
    if(!items.length){
-     out.innerHTML='<div class="slotComplete">No approved Leave / OD / Special Assignment record is available for you yet.</div><div class="small">If an older approved record is missing, the Admin can run “Sync My Area Records” once from User Access & Roles.</div>';
+     out.innerHTML='<div class="slotComplete">No approved Leave or Duty Leave record is available for you yet.</div><div class="small">If an older approved record is missing, the Admin can run “Sync My Area Records” once from User Access & Roles.</div>';
    }else{
-     out.innerHTML='<div class="slotComplete"><b>'+items.length+' approved record'+(items.length===1?'':'s')+' available.</b></div>'+section('Current',groups.current,'No current Leave / OD / Special Assignment.')+section('Upcoming',groups.upcoming,'No upcoming approved record.')+section('Past',groups.past,'No past approved record in the synced history.');
+     out.innerHTML='<div class="slotComplete"><b>'+items.length+' approved record'+(items.length===1?'':'s')+' available.</b> Leave and Duty Leave are shown separately.</div>'+categorySection('Leave History',leaveItems,'No approved Leave history.')+categorySection('Duty Leave History',dutyItems,'No approved Duty Leave history.');
    }
    if(msg)msg.textContent='Updated';
  }catch(e){
@@ -859,3 +901,33 @@ onAuthStateChanged(auth,async user=>{
    setMessage('<b>Startup stopped.</b><br>'+safe(e&&e.message?e.message:String(e))+'<br><br>Please send a screenshot of this exact message.','error');
  }
 });
+
+
+/* v66.2 authoritative personal leave history override */
+window.loadMyStatusCloud=async function(){
+ const out=document.getElementById('myStatusResult'),msg=document.getElementById('myStatusMsg');
+ const code=String(window.__vkvMyTeacherCode||'').trim();
+ if(!code){if(out)out.innerHTML=window.myLinkMissingHtml?window.myLinkMissingHtml():'Staff link unavailable.';if(msg)msg.textContent='';return}
+ if(msg)msg.textContent='Loading complete approved history…';
+ const TYPES=new Set(['full','half','od','special']);
+ const today=(()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`})();
+ const fmt=k=>{const m=String(k||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(k||'')};
+ const dateObj=k=>{const a=String(k||'').split('-').map(Number);return new Date(a[0]||1970,(a[1]||1)-1,a[2]||1)};
+ const dateKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ const planDates=p=>{if(!p)return[];if(p.mode==='multiple')return[...new Set((p.dates||[]).filter(Boolean))].sort();const a=String(p.startDate||p.date||''),b=String(p.endDate||a);if(!a)return[];const z=[];for(let d=dateObj(a),e=dateObj(b);d<=e;d.setDate(d.getDate()+1))z.push(dateKey(d));return z};
+ const state=d=>d>today?'Upcoming':d===today?'Current':'Past';
+ const label=x=>x.type==='full'?'Full Leave':x.type==='half'?'Half Leave':x.type==='od'?'On Duty (OD)':x.type==='special'?'Special Assignment':String(x.type||'');
+ const cat=x=>String(x.leaveCategory||x.category||'—');
+ const units=x=>x.leaveUnits!=null?x.leaveUnits:(x.type==='half'?0.5:(x.type==='full'?1:'—'));
+ const remarks=x=>String(x.note||x.remarks||x.reason||'—');
+ try{
+   const source=await getDocs(collection(db,'dailyRecords')),rows=[],seen=new Set();
+   const add=(x,date,sourceName)=>{if(!x||!TYPES.has(String(x.type||''))||String(x.code||'')!==code||!date)return;const key=[date,x.type,cat(x),remarks(x),String(x.id||''),sourceName].join('|');if(seen.has(key))return;seen.add(key);rows.push({...x,date,_source:sourceName})};
+   source.forEach(d=>{const x=d.data()||{};if(d.id==='__leavePlans'){Object.values(x.plans||{}).forEach(p=>{if(!p||p.active===false||!TYPES.has(String(p.type||''))||String(p.code||'')!==code)return;planDates(p).forEach(date=>add(p,date,'Scheduled / Imported'))});return}const date=x.date||d.id;(x.statuses||[]).forEach(r=>add(r,date,'Daily'))});
+   rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(a.type).localeCompare(String(b.type)));
+   const leave=rows.filter(x=>['full','half'].includes(String(x.type))),duty=rows.filter(x=>['od','special'].includes(String(x.type)));
+   const table=(title,arr)=>{if(!arr.length)return '<h3>'+title+'</h3><div class="small">No approved '+(title.startsWith('Duty')?'Duty Leave':'Leave')+' history.</div>';return '<h3>'+title+'</h3><div class="table"><table><thead><tr><th>State</th><th>Status</th><th>Category</th><th>Leave Days</th><th>Date(s)</th><th>Remarks</th></tr></thead><tbody>'+arr.map(x=>'<tr><td>'+safe(state(x.date))+'</td><td>'+safe(label(x))+'</td><td>'+safe(['full','half'].includes(String(x.type))?cat(x):'—')+'</td><td>'+safe(['full','half'].includes(String(x.type))?units(x):'—')+'</td><td>'+safe(fmt(x.date))+'</td><td>'+safe(remarks(x))+'</td></tr>').join('')+'</tbody></table></div>'};
+   if(out)out.innerHTML='<div class="status ok"><b>'+rows.length+' approved dated record'+(rows.length===1?'':'s')+' available.</b> Leave and Duty Leave are shown separately.</div>'+table('Leave History',leave)+table('Duty Leave History',duty);
+   if(msg)msg.textContent='Updated';
+ }catch(e){if(out)out.innerHTML='<div class="warn"><b>Could not load complete approved history.</b><br>'+safe(e&&e.message?e.message:String(e))+'</div>';if(msg)msg.textContent=''}
+};

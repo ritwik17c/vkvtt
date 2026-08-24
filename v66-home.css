@@ -4,27 +4,6 @@ main{padding:16px 12px 45px}.nav{display:grid;grid-template-columns:repeat(3,1fr
 .view{display:none;background:white;border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 4px 16px #17324d10}.view.active{display:block}h2{margin:0 0 12px;color:var(--ink)}.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}label{font-size:.82rem;color:#687887}select,input{width:100%;padding:12px;border:1px solid #c8d6df;border-radius:10px;background:#fbfefd;font-size:1rem}.result{margin-top:14px;padding:14px;background:#eef7fb;border-radius:12px;min-height:55px}.table{overflow:auto;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{padding:8px;border:1px solid #e1e9ee;text-align:left}th{background:#edf5f9}.tag{display:inline-block;padding:4px 8px;margin:3px;background:#e9f3f7;border-radius:999px;font-size:.78rem}
 .leaveBtns,.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.proxycard{margin-top:12px;padding:12px;border:1px solid #d6e3e9;border-radius:12px;background:#fff}.proxyhead{font-weight:800;color:var(--ink);margin-bottom:8px}.small{font-size:.8rem;color:#6b7c89}.copymsg{font-size:.8rem;margin-left:6px;color:#456}.teacherpick{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px;margin:7px 0;border:1px solid #d5e2e8;border-radius:11px;background:#fbfefd}.teacherpick button{padding:7px 10px}.load{font-size:.82rem;color:#637785}.assigned{background:#d9ecf7!important;border-color:#75a8c6!important}@media(max-width:700px){.nav{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}}
 
-/* Selected-state accessibility fix */
-button.active,
-.nav button.active,
-.quick button.active,
-.opsGrid button.active,
-.myGrid button.active,
-.actions button.active,
-.leaveBtns button.active {
-  background:#236d99 !important;
-  color:#ffffff !important;
-  border-color:#236d99 !important;
-}
-button.active * { color:#ffffff !important; }
-
-
-.leaveBtns button[data-leave-type].active{
- background:#236d99 !important;
- color:#fff !important;
- border-color:#236d99 !important;
-}
-
 .homebar{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0 14px}.homebar button{background:#e9eef8}
 .myAreaTitle{font-weight:800;color:var(--ink);margin:2px 0 8px}
 .myGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
@@ -35,7 +14,7 @@ button.active * { color:#ffffff !important; }
 .myBadge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;margin-left:5px;border-radius:999px;background:#236d99;color:#fff;font-size:.72rem;font-weight:800;vertical-align:middle}
 .myIdentity{font-size:.86rem;color:#627885;margin:-4px 0 10px}
 .myModeBtns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
-.myModeBtns button.active{background:#236d99!important;color:#fff!important;border-color:#236d99!important}
+
 @media(max-width:700px){.myGrid{grid-template-columns:1fr}}
 
 .proxyTop{display:grid;grid-template-columns:auto 1fr auto;align-items:center;text-align:center;gap:10px;margin:8px 0 12px}
@@ -51,14 +30,14 @@ button.active * { color:#ffffff !important; }
 }
 @media print{header,.nav,.myAreaTitle,.myGrid,.opsTitle,.opsGrid,.homebar,.actions,.proxyTop,#allot .controls{display:none!important}.view{display:none!important}#allot.view{display:block!important;border:0;box-shadow:none}.candidate{display:none}}
 
-.durationBtns button.active{background:#236d99!important;color:#fff!important;border-color:#236d99!important}
+
 .disabledBox{opacity:.62}.disabledBox select:disabled{background:#e5e8eb!important;color:#8a949b!important;cursor:not-allowed}
 .dangerBtn{background:#fbe8e8!important;color:#8c2525!important;border-color:#e5b7b7!important}.dangerBtn:hover{background:#f5d4d4!important}
 .recordActions{margin-top:12px}
 
 /* v52 Calendar-based scheduled leave */
 .leaveDateModes{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
-.leaveDateModes button.active{background:#236d99!important;color:#fff!important;border-color:#236d99!important}
+
 .leaveCalendarCard{background:#f9fcfd}
 .calendarShell{max-width:720px}
 .calendarHead{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin:8px 0}
@@ -134,7 +113,7 @@ button.active * { color:#ffffff !important; }
 #cloudBar{display:none;background:#f8fbfd;border-bottom:1px solid #cbdce5;padding:8px 12px;color:#294b60;font-size:.85rem}#cloudBar.show{display:block}.cloudInner{max-width:1250px;margin:auto;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}.cloudBadge{display:inline-block;padding:3px 8px;border-radius:999px;background:#e7f6ea;color:#246a35;font-weight:700}.cloudSync{color:#627885}.cloudBtn{padding:6px 9px;border-radius:9px;font-size:.82rem}
 body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:first-child{opacity:.55}.readonlyNote{background:#fff4d9;border:1px solid #e4c873;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.86rem}
 #publishedProxyBtn{background:#e7f6ea!important;border-color:#a8d1b1!important}
-#publishedProxyBtn.active{background:#2d7d46!important;color:#fff!important;border-color:#2d7d46!important}
+
 .publishedMeta{background:#e7f6ea;border:1px solid #a8d1b1;color:#245c34;border-radius:12px;padding:10px 12px;margin-bottom:12px}
 .draftNote{background:#fff8e8;border:1px solid #e4c873;color:#6b5618;border-radius:10px;padding:8px 10px;margin:10px 0;font-size:.86rem}
 .adminOnlyLink,.leaveRegisterLink{display:none}
@@ -161,3 +140,34 @@ body.readOnly .recordActions .dangerBtn,body.readOnly .recordActions button:firs
 .activeScheduleBanner{margin:0 0 12px;padding:10px 13px;border:1px solid #c9dce6;border-radius:12px;background:#eef7fb;color:#294b60;font-size:.88rem}
 .activeScheduleBanner.custom{background:#fff4d9;border-color:#e4c873;color:#6b5618}
 .activeScheduleBanner .scheduleHint{font-weight:500;opacity:.88}
+
+/* v66.2 unified selected-state: retain each button's own colour and content. */
+@keyframes vkvSelectedNudge{0%,100%{transform:translateX(0)}32%{transform:translateX(-1.5px)}68%{transform:translateX(1.5px)}}
+button.active,
+.nav button.active,
+.quick button.active,
+.opsGrid button.active,
+.myGrid button.active,
+.myModeBtns button.active,
+.leaveBtns button.active,
+.leaveDateModes button.active,
+.durationBtns button.active{
+  outline:2px solid #c88a18 !important;
+  outline-offset:2px;
+  border-color:#d6a23b !important;
+  box-shadow:0 0 0 3px rgba(200,138,24,.14),0 6px 18px rgba(11,43,66,.08) !important;
+  color:var(--ink) !important;
+  animation:vkvSelectedNudge .20s ease;
+}
+button.active *{color:inherit !important}
+/* marker: vkv-selected-gold-outline */
+
+/* v66.2 Swamiji identity motif — exact supplied portrait, gold line treatment. */
+.head{position:relative;overflow:hidden}
+.homeTitleBlock{min-width:0;position:relative;z-index:2}
+.swamijiHomePortrait{margin-left:auto;width:clamp(92px,12vw,150px);height:auto;max-height:118px;object-fit:contain;opacity:.78;align-self:center;pointer-events:none;filter:drop-shadow(0 3px 8px rgba(91,61,8,.07))}
+@media(max-width:620px){.swamijiHomePortrait{width:86px;max-height:88px;opacity:.68}.head{gap:10px}.homeTitleBlock h1{font-size:1.15rem}}
+
+/* v66.2 header alignment correction */
+@media(min-width:900px){header .head{max-width:1250px;justify-content:flex-start}.homeTitleBlock{margin-right:auto}.swamijiHomePortrait{margin-left:auto}}
+@media(max-width:899px){header .head{justify-content:flex-start}.homeTitleBlock{margin-right:auto}}

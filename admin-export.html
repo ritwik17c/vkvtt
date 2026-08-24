@@ -67,6 +67,8 @@ th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
 <body>
 <header>
@@ -131,7 +133,7 @@ th{background:#edf5f9;color:var(--ink);position:sticky;top:0}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import{getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged,setPersistence,browserLocalPersistence}from"https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js";
 
 const firebaseConfig={
@@ -143,6 +145,8 @@ const firebaseConfig={
   appId:"1:791432856951:web:61324065a54bef30f98d72"
 };
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 
 const $=id=>document.getElementById(id);
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -487,7 +491,8 @@ $('exportPrint').onclick=()=>{
   <div class="screenOnly"><button onclick="window.print()">Print / Save as PDF</button></div>
   <div class="top"><h1>Vivekananda Kendra Vidyalaya, Nalbari</h1><div>Master Timetable · ${safe(session)} · ${safe(p?.name||'Normal Schedule')}</div></div>
   ${classes.map(printTableForClass).join('')}
-  </body></html>`;
+  <script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
+</body></html>`;
   w.document.open();w.document.write(html);w.document.close();
   showMsg('<b>Print view opened.</b> Use the browser Print dialog and choose “Save as PDF” when required.','ok');
 };

@@ -219,12 +219,17 @@ html.v66-ui .btn[aria-disabled="true"] { cursor: not-allowed; opacity: .55; box-
 
 html.v66-ui .primary,
 html.v66-ui button.primary,
-html.v66-ui .btn.primary,
-html.v66-ui button.active,
-html.v66-ui [aria-pressed="true"] {
+html.v66-ui .btn.primary {
   border-color: var(--vkv-navy-800) !important;
   background: var(--vkv-navy-800) !important;
   color: #fff !important;
+}
+html.v66-ui button.active,
+html.v66-ui [aria-pressed="true"] {
+  outline: 2px solid var(--vkv-gold-500) !important;
+  outline-offset: 2px;
+  border-color: #d8a640 !important;
+  box-shadow: 0 0 0 3px rgba(200,138,24,.13), var(--vkv-shadow-sm) !important;
 }
 html.v66-ui .green,
 html.v66-ui .okBtn { border-color: #9bcbb0; background: var(--vkv-success-bg); color: #1c603a; }

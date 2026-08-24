@@ -20,6 +20,8 @@
 </script>
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
+<link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-premium-unified.css?v=66.2-premium-1">
 </head>
 <body><header><div class="wrap top"><div><h1>VKV Nalbari · Timetable Integrity Checker</h1><div class="subtitle">Read-only master sanitation & cross-view duty verification · Cloud v66.0</div></div><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a></div></header>
 <main class="wrap">
@@ -55,4 +57,5 @@ function run(){if(!master)return;const rs=records(),san=rs.map((r,i)=>({...r,_ro
  $('combined').innerHTML=table(['Teacher','Day','Period','Classes','Assignments'],combined.map(d=>{const t=teacher(d.code);return[`${safe(t?.name||d.code)} (${safe(d.code)})`,safe(d.day),`P${safe(d.period)}`,safe(d.classes.join(' + ')),safe(d.entries.join(' / '))]}));
  $('suppressed').innerHTML=table(['Master row','Day','Period','Class','Entry','Resolved teacher(s)'],suppressed.map(r=>[String(r._row),safe(r.day),`P${safe(r.period)}`,safe(r.class),safe(r.entry),safe(r._codes.join(', ')||'—')]));
 }
-</script></body></html>
+</script><script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
+</body></html>
