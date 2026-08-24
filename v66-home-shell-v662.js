@@ -15,8 +15,8 @@
       }
       p.style.setProperty('position','absolute','important');
       p.style.setProperty('right','0','important');
-      p.style.setProperty('top',isMobile?'18px':'50%','important');
-      p.style.setProperty('transform',isMobile?'none':'translateY(-50%)','important');
+      p.style.setProperty('top','50%','important');
+      p.style.setProperty('transform','translateY(-50%)','important');
       p.style.setProperty('margin','0','important');
       p.style.setProperty('width',isMobile?'68px':'108px','important');
       p.style.setProperty('height',isMobile?'68px':'108px','important');
