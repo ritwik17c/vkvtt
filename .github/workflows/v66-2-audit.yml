@@ -1,4 +1,4 @@
-name: v66.2 audit diagnostic
+name: v66.2 apply diagnostic
 on:
   push:
     branches: [v66-2-refinement]
@@ -17,13 +17,13 @@ jobs:
           python-version: '3.x'
       - run: |
           set +e
-          python -m py_compile tools/apply_v66_2_final_pass.py tools/verify_v66_2_final_pass.py > V66_2_COMPILE.txt 2>&1
+          python tools/apply_v66_2_final_pass.py > V66_2_APPLY.txt 2>&1
           code=$?
-          echo "EXIT=$code" >> V66_2_COMPILE.txt
+          echo "EXIT=$code" >> V66_2_APPLY.txt
           exit 0
       - run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add V66_2_COMPILE.txt
-          git diff --cached --quiet || git commit -m "Diagnose v66.2 correction scripts"
+          git add V66_2_APPLY.txt
+          git diff --cached --quiet || git commit -m "Diagnose v66.2 patch application"
           git push
