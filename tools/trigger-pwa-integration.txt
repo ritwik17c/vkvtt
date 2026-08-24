@@ -1,0 +1,1 @@
+Integrate corrected VKVTT PWA package using exact approved icons already present on main.
