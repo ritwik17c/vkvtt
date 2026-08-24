@@ -1,0 +1,30 @@
+name: Package v66.2 Preview
+on:
+  push:
+    branches: [v66-2-refinement]
+    paths: ['tools/trigger-package-v66-2.txt']
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+      - name: Build upload package
+        run: |
+          mkdir -p package
+          cp period-notifications.js package/
+          cp v66-home.js package/
+          cp v66-home-cloud.js package/
+          cp v66-home.css package/
+          cp v66-ui.js package/
+          cp attendance.html package/
+          cp admin-biometric-import.html package/
+          printf '%s\n' 'VKVTT v66.2 preview correction package' 'Replace these files in vkvtt-preview root.' 'Source branch: v66-2-refinement' > package/README-PREVIEW-PACKAGE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VKVTT-v66-2-PREVIEW-CORRECTIONS
+          path: package/
+          retention-days: 7
