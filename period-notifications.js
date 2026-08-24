@@ -16,8 +16,8 @@ function todayKey(d=new Date()){const p=n=>String(n).padStart(2,'0');return `${d
 function fired(){try{return JSON.parse(sessionStorage.getItem(FIRED)||'{}')}catch(_){return {}}}
 function mark(id){const x=fired();x[id]=Date.now();sessionStorage.setItem(FIRED,JSON.stringify(x))}
 function already(id){return !!fired()[id]}
-function activeProfile(){const D=window.DATA;if(!D)return null;const id=D.activeScheduleProfileId;if(!id)return null;const p=D.scheduleProfiles&&D.scheduleProfiles[id];return p&&p.times?p:null}
-function activeTime(period){const p=activeProfile();if(!p)return '';return String(p.times?.[String(Number(period))]??p.times?.[Number(period)]??'')}
+function activeProfile(){if(typeof window.activeScheduleProfile==='function'){try{return window.activeScheduleProfile()}catch(_){}}const D=window.DATA;if(!D)return null;const id=D.activeScheduleProfileId||'normal',profiles=D.scheduleProfiles||{};return profiles[id]||profiles.normal||null}
+function activeTime(period){if(typeof window.scheduleTime==='function'){try{return String(window.scheduleTime(period)||'')}catch(_){}}const p=activeProfile();if(!p)return '';return String(p.times?.[String(Number(period))]??p.times?.[Number(period)]??'')}
 function classActive(cls,period){const p=activeProfile();if(!p)return false;if(p.classPeriods&&Array.isArray(p.classPeriods[cls]))return p.classPeriods[cls].map(Number).includes(Number(period));return true}
 function myCode(){return String(window.__vkvMyTeacherCode||'').trim()}
 function codeInRecord(r,code){if(Array.isArray(r.codes)&&r.codes.map(String).includes(code))return true;if(Array.isArray(r.teacherCodes)&&r.teacherCodes.map(String).includes(code))return true;return String(r.teacherCode||r.code||'')===code}

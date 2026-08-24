@@ -167,3 +167,7 @@ button.active *{color:inherit !important}
 .homeTitleBlock{min-width:0;position:relative;z-index:2}
 .swamijiHomePortrait{margin-left:auto;width:clamp(92px,12vw,150px);height:auto;max-height:118px;object-fit:contain;opacity:.78;align-self:center;pointer-events:none;filter:drop-shadow(0 3px 8px rgba(91,61,8,.07))}
 @media(max-width:620px){.swamijiHomePortrait{width:86px;max-height:88px;opacity:.68}.head{gap:10px}.homeTitleBlock h1{font-size:1.15rem}}
+
+/* v66.2 header alignment correction */
+@media(min-width:900px){header .head{max-width:1250px;justify-content:flex-start}.homeTitleBlock{margin-right:auto}.swamijiHomePortrait{margin-left:auto}}
+@media(max-width:899px){header .head{justify-content:flex-start}.homeTitleBlock{margin-right:auto}}
