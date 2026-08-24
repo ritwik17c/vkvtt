@@ -151,6 +151,7 @@ body.quick-mode .wrap{max-width:none}
 
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script>
 <link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-remaining-polish.css?v=66.2-remain-1">
 </head>
 <body>
 <header><div class="wrap headline"><div><h1>VKV Nalbari · Leave Master Editor</h1><div class="subtitle">Principal-only leave management, clean row-based entry, reconciliation & audit · Cloud v66.0</div></div><div class="actions" style="margin-top:0"><a class="btn" href="admin-dashboard.html?v=66.0">← Admin Dashboard</a><a class="btn" href="admin-leave.html?v=66.0">🗂 Approved Leave</a></div></div></header>
@@ -208,12 +209,24 @@ body.quick-mode .wrap{max-width:none}
 
 <section class="card quick-hide">
   <div class="sectionTitle"><div><h2>🛠 Leave Editor Master Template</h2><div class="help">Edit approved Leave / OD / Special records across past, present or future dates.</div></div><button id="newBtn" class="green">＋ New Approved Record</button></div>
+  <div class="leaveFilterPanel">
   <div class="grid4">
-    <div><label>Teacher</label><select id="filterTeacher"><option value="">All teachers</option></select></div>
-    <div><label>Category / status</label><select id="filterType"><option value="">All</option><option value="od">Duty Leave · OD</option><option value="special">Duty Leave · Special Assignment</option></select></div>
-    <div><label>From date (DD/MM/YYYY)</label><input id="filterFrom" class="dateInput" placeholder="DD/MM/YYYY" inputmode="numeric"></div>
-    <div><label>Search</label><input id="filterSearch" placeholder="Teacher, remarks, source…"></div>
+    <div><label>Staff</label><select id="filterTeacher"><option value="">All staff</option></select></div>
+    <div><label>Leave category / status</label><select id="filterType"><option value="">All</option><option value="od">Duty Leave · OD</option><option value="special">Duty Leave · Special Assignment</option></select></div>
+    <div><label>Date filter</label><select id="filterDateMode"><option value="all">All dates</option><option value="single">Single date</option><option value="range">From–To range</option><option value="month">Month wise</option><option value="recent">Recent / current / upcoming</option></select></div>
+    <div><label>Record source</label><select id="filterSource"><option value="">All sources</option><option value="scheduled">Scheduled / approved</option><option value="daily">Daily approved status</option><option value="imported">Imported</option></select></div>
   </div>
+  <div class="grid4 leaveDateFilters">
+    <div><label>Single date (DD/MM/YYYY)</label><input id="filterSingle" class="dateInput" placeholder="DD/MM/YYYY" inputmode="numeric"></div>
+    <div><label>From date (DD/MM/YYYY)</label><input id="filterFrom" class="dateInput" placeholder="DD/MM/YYYY" inputmode="numeric"></div>
+    <div><label>To date (DD/MM/YYYY)</label><input id="filterTo" class="dateInput" placeholder="DD/MM/YYYY" inputmode="numeric"></div>
+    <div><label>Month</label><input id="filterMonth" type="month"></div>
+  </div>
+  <div class="grid2">
+    <div><label>Search</label><input id="filterSearch" placeholder="Staff, remarks, source…"></div>
+    <div><label>Quick filters</label><div class="actions leaveFilterActions" style="margin-top:0"><button type="button" id="filterCurrentMonth">Current Month</button><button type="button" id="filterRecent">Recent</button><button type="button" id="filterShowAll">Show All</button><button type="button" id="filterReset">Reset</button></div></div>
+  </div>
+</div>
   <div class="actions" style="margin-top:8px">
   <button id="loadDailyHistoryBtn">Load Daily Approved Status History</button>
   <span id="dailyHistoryLoadMsg" class="small">Scheduled/approved plans are available immediately. Daily-status history is loaded only when needed.</span>
@@ -744,11 +757,20 @@ function renderFinalAccounting(){
 function recordSystemLabel(p){const t=String(p&&p.type||'');return(t==='od'||t==='special')?'Duty Leave':(t==='full'||t==='half')?'Leave':'Operational Status'}
 function filteredRecords(){
  let arr=[...activePlans().map(p=>({...p,_kind:'plan'})),...manualRecords.map(m=>({...m}))],
- tc=$('filterTeacher').value,ft=$('filterType').value,from=dateToIso($('filterFrom').value),q=String($('filterSearch').value||'').trim().toLowerCase();
+ tc=$('filterTeacher').value,ft=$('filterType').value,q=String($('filterSearch').value||'').trim().toLowerCase(),mode=String($('filterDateMode')?.value||'all'),single=dateToIso($('filterSingle')?.value||''),from=dateToIso($('filterFrom').value),to=dateToIso($('filterTo')?.value||''),month=String($('filterMonth')?.value||''),source=String($('filterSource')?.value||'');
+ const dates=p=>(p._kind==='manual'?[p._date]:planDates(p)).filter(Boolean);
  if(tc)arr=arr.filter(p=>String(p.code)===tc);
  if(ft)arr=arr.filter(p=>(ft==='od'||ft==='special')?String(p.type||'')===ft:String(p.leaveCategory||'').toUpperCase()===ft);
- if(from)arr=arr.filter(p=>(p._kind==='manual'?[p._date]:planDates(p)).some(d=>d>=from));
- if(q)arr=arr.filter(p=>{const tt=teacherByCode(p.code);return[tt&&tt.name,p.code,p.note,p.source,p.leaveCategory,p._kind].some(v=>String(v||'').toLowerCase().includes(q))});
+ if(source)arr=arr.filter(p=>{const src=String(p._kind==='manual'?'daily':(p.source||'scheduled')).toLowerCase();return source==='daily'?p._kind==='manual':source==='imported'?src.includes('import'):p._kind!=='manual'&&!src.includes('import')});
+ if(mode==='single'&&single)arr=arr.filter(p=>dates(p).includes(single));
+ if(mode==='range'&&(from||to))arr=arr.filter(p=>dates(p).some(d=>(!from||d>=from)&&(!to||d<=to)));
+ if(mode==='month'&&month)arr=arr.filter(p=>dates(p).some(d=>String(d).slice(0,7)===month));
+ if(mode==='recent'){
+   const now=new Date(),a=new Date(now);a.setDate(a.getDate()-60);const pad=n=>String(n).padStart(2,'0'),min=`${a.getFullYear()}-${pad(a.getMonth()+1)}-${pad(a.getDate())}`;
+   arr=arr.filter(p=>dates(p).some(d=>d>=min));
+ }
+ if(mode==='all'&&from)arr=arr.filter(p=>dates(p).some(d=>d>=from));
+ if(q)arr=arr.filter(p=>{const tt=teacherByCode(p.code);return[tt&&tt.name,p.code,p.note,p.remarks,p.source,p.leaveCategory,p._kind].some(v=>String(v||'').toLowerCase().includes(q))});
  return arr.sort((a,b)=>String((b._kind==='manual'?b._date:planDates(b)[0])||'').localeCompare(String((a._kind==='manual'?a._date:planDates(a)[0])||''))||String(a.code).localeCompare(String(b.code)));
 }
 function manualKey(m){return `${m._docId}|${m._index}|${m._date}|${m.code||''}`}
@@ -1374,6 +1396,18 @@ onAuthStateChanged(auth,async u=>{
 });
 $('filterType')?.addEventListener('focus',refreshCategoryStatusFilter);
 </script>
-<script src="v66-final-sixpoint.js?v=66.2-final-1" defer></script>
+<script src="v66-final-sixpoint.js?v=66.2-final-1" defer>
+function wireExtendedLeaveFilters(){
+ const rerender=()=>{recordRenderLimit=60;renderRecords()};
+ ['filterTeacher','filterType','filterDateMode','filterSource','filterSingle','filterFrom','filterTo','filterMonth','filterSearch'].forEach(id=>{const el=$(id);if(!el||el.dataset.v66FilterWired)return;el.dataset.v66FilterWired='1';el.addEventListener(el.tagName==='SELECT'||el.type==='month'?'change':'input',rerender)});
+ const setMode=(mode)=>{if($('filterDateMode'))$('filterDateMode').value=mode;rerender()};
+ if($('filterCurrentMonth'))$('filterCurrentMonth').onclick=()=>{const d=new Date(),v=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;$('filterMonth').value=v;setMode('month')};
+ if($('filterRecent'))$('filterRecent').onclick=()=>setMode('recent');
+ if($('filterShowAll'))$('filterShowAll').onclick=()=>setMode('all');
+ if($('filterReset'))$('filterReset').onclick=()=>{['filterTeacher','filterType','filterSource','filterSingle','filterFrom','filterTo','filterMonth','filterSearch'].forEach(id=>{const el=$(id);if(el)el.value=''});if($('filterDateMode'))$('filterDateMode').value='all';rerender()};
+}
+setTimeout(wireExtendedLeaveFilters,0);
+
+</script>
 </body>
 </html>

@@ -36,6 +36,7 @@
 </style>
 <link rel="stylesheet" href="v66-visual-alignment-fix.css?v=66.2-align-1">
 <link rel="stylesheet" href="v66-final-sixpoint.css?v=66.2-final-1">
+<link rel="stylesheet" href="v66-remaining-polish.css?v=66.2-remain-1">
 </head>
 <body class="adminDashboardPage">
 <header><div class="wrap headline"><div><h1>VKV Nalbari · Admin Dashboard</h1><div class="subtitle">Administration and timetable management · Cloud v66.0</div></div><button id="homeBtn">🏠 Timetable Home</button></div></header>
@@ -141,7 +142,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();
-setPersistence(auth,browserLocalPersistence).catch(()=>{});
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
 const $=id=>document.getElementById(id),safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 let currentUser=null,profile=null,masterDoc=null,master=null,selectedRecordIndex=-1;
