@@ -31,3 +31,10 @@ body.adminDashboardPage #dashboardHome{border-top:4px solid #1f668c!important}
 .teacherHistoryLine{grid-template-columns:minmax(130px,.65fr) minmax(190px,1fr) 1.25fr auto!important;align-items:center}.historyEditBtn{padding:6px 9px!important;font-size:.76rem!important;white-space:nowrap}
 .recoveryCard{border:1px solid #d7e3e9;border-left:5px solid #c88a18;border-radius:14px;padding:13px;margin:9px 0;background:#fffdf8}.recoveryCard.ok{border-left-color:#247548;background:#f8fcf9}.recoveryCard.warn{border-left-color:#c88a18;background:#fffaf0}
 @media(max-width:800px){.adminWorkspaceHero{grid-template-columns:1fr}.adminWorkspaceArt{height:110px}.teacherHistoryLine{grid-template-columns:1fr!important}#periodReminderControl{grid-template-columns:1fr!important}}
+
+/* Phase-1 admin motif restraint */
+body.adminDashboardPage .adminWorkspaceHero{min-height:126px!important}body.adminDashboardPage .adminWorkspaceArt{height:126px!important;max-width:360px!important;justify-self:end;opacity:.72!important;background-size:contain!important}body.adminDashboardPage #dashboardHome>.adminWorkspaceHero~.adminWorkspaceHero{display:none!important}
+@media(max-width:800px){body.adminDashboardPage .adminWorkspaceArt{height:92px!important;opacity:.55!important}}
+
+/* Phase-1 crest badge refinement */
+body:not(.adminDashboardPage) header .logo{width:78px!important;height:88px!important;flex-basis:78px!important;padding:5px!important;border-radius:46% 46% 49% 49%/42% 42% 50% 50%!important;background:#fff!important;box-shadow:0 2px 8px rgba(0,0,0,.10)!important}

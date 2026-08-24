@@ -4,6 +4,8 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestam
 
 const firebaseConfig={apiKey:"AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4",authDomain:"vkv-nalbari-timetable.firebaseapp.com",projectId:"vkv-nalbari-timetable",storageBucket:"vkv-nalbari-timetable.firebasestorage.app",messagingSenderId:"791432856951",appId:"1:791432856951:web:61324065a54bef30f98d72"};
 const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),provider=new GoogleAuthProvider();
+await setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('Auth persistence setup:',e));
+if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(e=>console.warn('Auth restore:',e));
 const gate=document.getElementById('authGate'),msg=document.getElementById('authMessage'),loginBtn=document.getElementById('googleSignIn'),switchAccountBtn=document.getElementById('googleSwitchAccount'),copyUidBtn=document.getElementById('copySetupUid'),signOutBtn=document.getElementById('authSignOut'),cloudBar=document.getElementById('cloudBar'),cloudUser=document.getElementById('cloudUser'),cloudSync=document.getElementById('cloudSync'),cloudSwitchAccount=document.getElementById('cloudSwitchAccount'),cloudSignOut=document.getElementById('cloudSignOut');
 let currentUser=null,currentProfile=null,todayPollTimer=null,publishedPollTimer=null,leavePlanPollTimer=null,schedulePollTimer=null,accessCheckTimer=null,cloudHydrating=false,cloudWriting=false,syncTimer=null,coreWrapped=false,homepageLeaveContextCache=null;
 const statusEditorRoles=new Set(['admin','manager']);
