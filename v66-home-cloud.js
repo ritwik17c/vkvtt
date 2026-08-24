@@ -715,6 +715,21 @@ window.loadMyStatusCloud=async function(){
        const id=String(p.id||'');if(id&&!plans.has(id))plans.set(id,{...p,kind:'scheduled'});
      });
    });
+   // Complete-history fallback: personal projections are convenient but older approved dated records
+   // may pre-date projection creation. Merge surviving authoritative dailyRecords for this staff code.
+   try{
+     const ds=await getDocs(collection(db,'dailyRecords'));
+     const seenManual=new Set(manual.map(x=>[x.date,x.type,x.code||code,x.fromPeriod||'',x.toPeriod||'',x.leaveCategory||''].join('|')));
+     ds.forEach(d=>{
+       if(d.id===LEAVE_PLAN_DOC)return;
+       const data=d.data()||{},date=data.date||d.id;
+       (data.statuses||[]).forEach(m=>{
+         if(!m||!PERSONAL_STATUS_TYPES.has(String(m.type||''))||String(m.code||'')!==code)return;
+         const k=[date,m.type,m.code||code,m.fromPeriod||'',m.toPeriod||'',m.leaveCategory||''].join('|');
+         if(seenManual.has(k))return;seenManual.add(k);manual.push({...m,date,kind:'manual',source:m.source||'daily'});
+       });
+     });
+   }catch(e){console.warn('My Leave complete-history fallback:',e)}
    const items=[...plans.values(),...manual];
    const today=todayKey();
    const stateOf=x=>{
