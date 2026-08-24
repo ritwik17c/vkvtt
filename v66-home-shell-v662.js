@@ -8,14 +8,17 @@
       p.src=portraitUrl;
       p.removeAttribute('srcset');
       const host=p.closest('.head')||p.parentElement;
-      if(host){host.style.position='relative';}
+      if(host){
+        host.style.position='relative';
+        host.style.setProperty('padding-right',window.matchMedia('(max-width:700px)').matches?'78px':'124px','important');
+      }
       p.style.setProperty('position','absolute','important');
-      p.style.setProperty('right','22px','important');
+      p.style.setProperty('right','0','important');
       p.style.setProperty('top','50%','important');
       p.style.setProperty('transform','translateY(-50%)','important');
       p.style.setProperty('margin','0','important');
-      p.style.setProperty('width',window.matchMedia('(max-width:700px)').matches?'78px':'116px','important');
-      p.style.setProperty('height',window.matchMedia('(max-width:700px)').matches?'78px':'116px','important');
+      p.style.setProperty('width',window.matchMedia('(max-width:700px)').matches?'68px':'112px','important');
+      p.style.setProperty('height',window.matchMedia('(max-width:700px)').matches?'68px':'112px','important');
       p.style.setProperty('object-fit','contain','important');
     }
     const lp=document.querySelector('#vkvSlowLoader .vkvLoaderPortrait img');
