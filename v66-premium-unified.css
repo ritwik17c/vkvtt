@@ -33,3 +33,15 @@ body.adminDashboardPage #dashboardHome>.adminWorkspaceHero~.adminWorkspaceHero{d
 .teacherHistoryLine{grid-template-columns:minmax(130px,.65fr) minmax(190px,1fr) 1.25fr auto!important;align-items:center}.historyEditBtn{padding:6px 9px!important;font-size:.76rem!important;white-space:nowrap}
 .recoveryCard{border:1px solid #d7e3e9;border-left:5px solid #c88a18;border-radius:14px;padding:13px;margin:9px 0;background:#fffdf8}.recoveryCard.ok{border-left-color:#247548;background:#f8fcf9}.recoveryCard.warn{border-left-color:#c88a18;background:#fffaf0}
 @media(max-width:800px){.adminWorkspaceHero{grid-template-columns:1fr!important}.adminWorkspaceArt{height:84px!important;max-width:260px!important;opacity:.48!important}.teacherHistoryLine{grid-template-columns:1fr!important}#periodReminderControl{grid-template-columns:1fr!important}}
+
+/* Mobile header: anchor Swamiji to the same right visual edge as dashboard cards. */
+@media(max-width:700px){
+  body:not(.adminDashboardPage) header .head{position:relative!important;padding-right:74px!important}
+  body:not(.adminDashboardPage) header .swamijiHomePortrait{
+    position:absolute!important;
+    right:-4px!important;
+    top:50%!important;
+    transform:translateY(-50%)!important;
+    margin-left:0!important;
+  }
+}
