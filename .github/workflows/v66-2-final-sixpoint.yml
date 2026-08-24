@@ -1,0 +1,24 @@
+name: v66.2 final six point
+on:
+  push:
+    branches: [v66-2-refinement]
+    paths: ['tools/run-v66-2-final-sixpoint.txt']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v66-2-refinement
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python tools/apply_v66_2_final_sixpoint.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add '*.html'
+          git diff --cached --quiet || git commit -m "Apply final six-point runtime and visual corrections"
+          git push
