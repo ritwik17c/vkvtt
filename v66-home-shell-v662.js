@@ -14,8 +14,8 @@
       p.style.setProperty('top','50%','important');
       p.style.setProperty('transform','translateY(-50%)','important');
       p.style.setProperty('margin','0','important');
-      p.style.setProperty('width',window.matchMedia('(max-width:700px)').matches?'88px':'142px','important');
-      p.style.setProperty('height',window.matchMedia('(max-width:700px)').matches?'88px':'142px','important');
+      p.style.setProperty('width',window.matchMedia('(max-width:700px)').matches?'78px':'116px','important');
+      p.style.setProperty('height',window.matchMedia('(max-width:700px)').matches?'78px':'116px','important');
       p.style.setProperty('object-fit','contain','important');
     }
     const lp=document.querySelector('#vkvSlowLoader .vkvLoaderPortrait img');
