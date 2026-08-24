@@ -1,0 +1,93 @@
+/* VKVTT v66.2 final six-point visual corrections */
+/* Keep the school crest's natural tall oval instead of a white rectangle. */
+html.v66-ui header .logo{
+  object-fit:cover!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  padding:2px!important;
+  overflow:hidden!important;
+}
+
+/* Homepage operational tiles: retain the approved v66.0 grid-paper corner motif. */
+html.v66-ui .myGrid>button,
+html.v66-ui .nav>button,
+html.v66-ui .opsGrid>button,
+html.v66-ui .homebar>button{
+  position:relative;
+  overflow:hidden;
+  background:#fff!important;
+  color:#103a56!important;
+}
+html.v66-ui .myGrid>button::after,
+html.v66-ui .nav>button::after,
+html.v66-ui .opsGrid>button::after,
+html.v66-ui .homebar>button::after{
+  content:"";
+  position:absolute;
+  right:-9px;
+  bottom:-19px;
+  width:82px;
+  height:82px;
+  opacity:.72;
+  background-image:linear-gradient(#dbe7ed 1px,transparent 1px),linear-gradient(90deg,#dbe7ed 1px,transparent 1px);
+  background-size:14px 14px;
+  transform:rotate(10deg);
+  pointer-events:none;
+}
+html.v66-ui .myGrid>button.active,
+html.v66-ui .nav>button.active,
+html.v66-ui .opsGrid>button.active,
+html.v66-ui .homebar>button.active,
+html.v66-ui .myGrid>button[aria-pressed="true"],
+html.v66-ui .nav>button[aria-pressed="true"],
+html.v66-ui .opsGrid>button[aria-pressed="true"]{
+  border:2px solid #c88a18!important;
+  border-left:4px solid #c88a18!important;
+  background:#fffaf0!important;
+  color:#103a56!important;
+  box-shadow:0 0 0 2px rgba(200,138,24,.12),0 8px 22px rgba(11,43,66,.07)!important;
+}
+
+/* Restore subtle motif treatment on Admin Dashboard tiles too. */
+html.v66-ui body.adminDashboardPage .tile{
+  position:relative;
+  overflow:hidden;
+  min-height:108px;
+  border-left:4px solid #1f668c;
+  box-shadow:0 5px 18px rgba(11,43,66,.045);
+}
+html.v66-ui body.adminDashboardPage .tile:nth-child(3n+2){border-left-color:#247548}
+html.v66-ui body.adminDashboardPage .tile:nth-child(3n){border-left-color:#c88a18}
+html.v66-ui body.adminDashboardPage .tile::after{
+  content:"";
+  position:absolute;
+  right:-12px;
+  bottom:-24px;
+  width:92px;
+  height:92px;
+  opacity:.62;
+  background-image:linear-gradient(#dce8ed 1px,transparent 1px),linear-gradient(90deg,#dce8ed 1px,transparent 1px);
+  background-size:15px 15px;
+  transform:rotate(10deg);
+  pointer-events:none;
+}
+
+/* Wide, but not edge-to-edge: preserve visual breathing room on desktop. */
+@media (min-width:1100px){
+  html.v66-ui body.adminDashboardPage header .wrap,
+  html.v66-ui body.adminDashboardPage main.wrap{
+    width:min(1480px,calc(100% - 64px))!important;
+    max-width:1480px!important;
+    margin-inline:auto!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+  html.v66-ui body.adminDashboardPage main.wrap>.card{
+    margin-left:0!important;
+    margin-right:0!important;
+  }
+}
+@media (max-width:1099px){
+  html.v66-ui body.adminDashboardPage header .wrap,
+  html.v66-ui body.adminDashboardPage main.wrap{width:calc(100% - 32px)!important;margin-inline:auto!important}
+}
