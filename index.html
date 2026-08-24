@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>VKV Nalbari Timetable</title><link rel="stylesheet" href="v66-home.css?v=66.0-home-fix-1"><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
+<title>VKV Nalbari Timetable</title><link rel="stylesheet" href="v66-home.css?v=66.2-sync-1"><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script>
 (function(){
   const CURRENT_APP_VERSION = '66.0';
   try{
@@ -22,7 +22,7 @@
 })();
 </script>
 
-<link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1"><script src="v66-ui.js?v=66.0-school-identity-1" defer></script><script src="period-notifications.js?v=66.2" defer></script>
+<link rel="stylesheet" href="v66-design-system.css?v=66.2-sync-1"><script src="v66-ui.js?v=66.2-sync-1" defer></script><script src="period-notifications.js?v=66.2-sync-1" defer></script>
 <!-- v66.2 visible-fixes -->
 <style id="v66-2-visible-fixes">
 @media (min-width:701px){
@@ -41,13 +41,15 @@
 }
 </style>
 <link rel="stylesheet" href="v66-visual-alignment-fix.css?v=66.2-align-1">
+<link rel="stylesheet" href="v66-home-shell-v662.css?v=66.2-sync-1">
+<script src="v66-home-shell-v662.js?v=66.2-sync-1" defer></script>
 </head><body><div id="authGate"><div class="authCard">
 <h2>VKV Nalbari Timetable</h2><p id="authLead">Authorised staff sign-in · Cloud v66.0</p>
 <div id="authMessage" class="authInfo">Checking sign-in status…</div>
 <div class="authActions"><button id="googleSignIn">Sign in with Google</button><button id="googleSwitchAccount">Use another Google account</button><button id="copySetupUid" style="display:none">Copy UID</button><button id="authSignOut" style="display:none">Sign out</button></div>
 </div></div>
 <div id="cloudBar"><div class="cloudInner"><div class="cloudTechnical" aria-hidden="true"><span class="cloudBadge">Firebase Cloud</span> <span id="cloudUser"></span><span id="cloudSync" class="cloudSync">Connecting…</span></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button id="cloudSwitchAccount" class="cloudBtn">Use another Google account</button><button id="cloudSignOut" class="cloudBtn">Sign out</button></div></div></div>
-<header><div class="wrap head"><img class="logo" src="school-logo.jpg?v=66.0-home-fix-1" alt="Vivekananda Kendra Vidyalaya, Nalbari logo" width="50" height="70"><div class="homeTitleBlock"><h1>VKV Nalbari Timetable</h1><small>Session 2026–27</small></div><img class="swamijiHomePortrait" src="swamiji-portrait.jpg?v=66.2-face-fix-1" alt="Swami Vivekananda line portrait"></div></header>
+<header><div class="wrap head"><img class="logo" src="school-logo.jpg?v=66.0-home-fix-1" alt="Vivekananda Kendra Vidyalaya, Nalbari logo" width="50" height="70"><div class="homeTitleBlock"><h1>VKV Nalbari Timetable</h1><small>Session 2026–27</small></div><img class="swamijiHomePortrait" src="swamiji-portrait.jpg?v=66.2-sync-1" alt="Swami Vivekananda line portrait"></div></header>
 <main class="wrap"><div id="activeScheduleBanner" class="activeScheduleBanner">🗓 Active Schedule: loading…</div>
 <div id="myAreaTitle" class="myAreaTitle">My Area</div>
 <div id="myAreaGrid" class="myGrid">
@@ -234,7 +236,7 @@
 <div class="actions"><button onclick="copyHistory()">📋 Copy</button><button onclick="shareHistory()">↗ Share</button><button class="dangerBtn" onclick="deleteAllHistory()">🗑 Delete All History</button><span id="historyResultMsg" class="copymsg"></span></div>
 <div id="historyResult" class="result">Select a date.</div></section>
 </main>
-<script src="v66-home.js?v=66.0-home-fix-1"></script><script type="module" src="v66-home-cloud.js?v=66.0-home-fix-1"></script>
+<script src="v66-home.js?v=66.2-sync-1"></script><script type="module" src="v66-home-cloud.js?v=66.2-sync-1"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

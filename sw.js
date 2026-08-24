@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vkvtt-shell-v66-2';
+const CACHE_NAME = 'vkvtt-shell-v66-2-sync-1';
 const APP_SHELL = [
   '/vkvtt/',
   '/vkvtt/index.html',
@@ -11,6 +11,9 @@ const APP_SHELL = [
   '/vkvtt/v66-home-cloud.js',
   '/vkvtt/v66-ui.js',
   '/vkvtt/period-notifications.js'
+  './v66-home-shell-v662.css',
+  './v66-home-shell-v662.js',
+  './swamiji-portrait.jpg',
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
