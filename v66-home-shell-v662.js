@@ -33,8 +33,21 @@
     const lp=document.querySelector('#vkvSlowLoader .vkvLoaderPortrait img');
     if(lp){lp.src=portraitUrl;lp.removeAttribute('srcset');}
   }
+  function installStudentGrowthTile(){
+    if(document.getElementById('studentGrowthBtn'))return;
+    const grid=document.querySelector('.opsGrid');
+    if(!grid)return;
+    const b=document.createElement('button');
+    b.id='studentGrowthBtn';
+    b.type='button';
+    b.innerHTML='🌱 Student Growth <span style="opacity:.72;font-size:.82em">· Skolens</span>';
+    b.setAttribute('aria-label','Open Student Growth / Skolens');
+    b.addEventListener('click',()=>{location.href='student-growth.html?v=1.0'});
+    grid.appendChild(b);
+  }
   function tileHost(el){return el&&el.closest&&el.closest('.myGrid>button,.nav>button,.opsGrid>button')}
   document.addEventListener('click',e=>{const b=tileHost(e.target);if(!b)return;b.classList.remove('v662-click-nudge');void b.offsetWidth;b.classList.add('v662-click-nudge');setTimeout(()=>b.classList.remove('v662-click-nudge'),220)},true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPortrait);else applyPortrait();
+  function init(){applyPortrait();installStudentGrowthTile()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   window.addEventListener('resize',applyPortrait);
 })();
