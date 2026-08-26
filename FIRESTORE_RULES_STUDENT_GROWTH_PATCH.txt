@@ -1,0 +1,46 @@
+// VKVTT Student Growth / Skolens rules patch
+// Add these match blocks INSIDE: service cloud.firestore { match /databases/{database}/documents { ... } }
+// They reuse the existing VKVTT helper functions: signedIn(), canReadSchool(), isAdmin().
+
+    // Student master. All authorised VKVTT staff may read it.
+    // Principal/Admin owns import and master-data correction.
+    match /students/{studentId} {
+      allow read: if canReadSchool();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Factual Student Growth observations.
+    // Any authorised VKVTT user can create an observation only in their own identity.
+    // Principal/Admin can correct/archive any observation; the original author may edit their own.
+    match /studentGrowthObservations/{observationId} {
+      allow read: if canReadSchool();
+      allow create: if canReadSchool()
+                    && request.resource.data.createdByUid == request.auth.uid
+                    && request.resource.data.createdByEmail == authEmail();
+      allow update: if isAdmin()
+                    || (canReadSchool()
+                        && resource.data.createdByUid == request.auth.uid
+                        && request.resource.data.createdByUid == resource.data.createdByUid
+                        && request.resource.data.createdByEmail == resource.data.createdByEmail);
+      allow delete: if isAdmin();
+    }
+
+    // Follow-ups created from Student Growth observations.
+    // Teachers manage their own follow-ups; Principal/Admin can manage all.
+    match /studentGrowthFollowups/{followupId} {
+      allow read: if canReadSchool();
+      allow create: if canReadSchool()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.ownerEmail == authEmail();
+      allow update: if isAdmin()
+                    || (canReadSchool()
+                        && resource.data.ownerUid == request.auth.uid
+                        && request.resource.data.ownerUid == resource.data.ownerUid
+                        && request.resource.data.ownerEmail == resource.data.ownerEmail);
+      allow delete: if isAdmin();
+    }
+
+// IMPORTANT
+// 1. Do not weaken the existing timetable / leave / attendance rules.
+// 2. Publish only after reviewing the merged full rules file in Firebase Rules editor.
+// 3. Test on the feature/preview branch before production.
