@@ -3,7 +3,7 @@ import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.1
 import{getAuth}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import{getFirestore,collection,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
-const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id),safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c])),mail=v=>String(v||'').trim().toLowerCase();
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id),safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),mail=v=>String(v||'').trim().toLowerCase();
 let bank=[],loaded=false;
 function builder(){return window.__vkvQbPaperBuilder||null}
 function state(){try{return builder()?.getState?.()||{sections:[]}}catch(_){return{sections:[]}}}
