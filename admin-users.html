@@ -61,12 +61,12 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 
   <div class="card">
     <h2>Privileged Accounts</h2>
-    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer accounts and for individual Timetable Studio delegation. These require the person’s Firebase UID. A delegated Studio permission is independent of the person’s normal operational role. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
+    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer / Leave Editor accounts and for individual Timetable Studio delegation. These require the person’s Firebase UID. A delegated Studio permission is independent of the person’s normal operational role. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
     <div class="grid">
       <div><label>Firebase UID</label><input id="privUid" placeholder="Paste Firebase UID"></div>
       <div><label>Name</label><input id="privName" placeholder="Teacher name"></div>
       <div><label>Google email</label><input id="privEmail" type="email" placeholder="Enter authorised Google email"></div>
-      <div><label>Role</label><select id="privRole"><option value="staff">Staff · Delegated Tools Only</option><option value="proxy_manager">Proxy Manager</option><option value="attendance_manager">Attendance Manager</option><option value="manager">Manager</option><option value="leave_viewer">Approved Leave Viewer</option><option value="admin">Admin</option></select></div>
+      <div><label>Role</label><select id="privRole"><option value="staff">Staff · Delegated Tools Only</option><option value="proxy_manager">Proxy Manager</option><option value="attendance_manager">Attendance Manager</option><option value="leave_editor">Leave Editor · Provisional Leave</option><option value="manager">Manager</option><option value="leave_viewer">Approved Leave Viewer</option><option value="admin">Admin</option></select></div>
       <div class="permissionBox"><label><input id="privTimetableStudio" type="checkbox"> <span><b>Delegate Timetable Studio</b><br><small>May configure, generate, edit and save timetable versions. Only the Principal/Admin can activate or delete them.</small></span></label></div>
     </div>
     <div class="actions"><button class="green" id="savePriv">Add / Update Privileged Account</button><button id="refreshPriv">Refresh List</button></div>
@@ -250,7 +250,7 @@ $('syncPersonal').onclick=async()=>{
 };
 
 function roleOptions(selected=''){
- const opts=[['staff','Staff · Delegated Tools Only'],['proxy_manager','Proxy Manager'],['attendance_manager','Attendance Manager'],['manager','Manager'],['leave_viewer','Approved Leave Viewer'],['admin','Admin']];
+ const opts=[['staff','Staff · Delegated Tools Only'],['proxy_manager','Proxy Manager'],['attendance_manager','Attendance Manager'],['leave_editor','Leave Editor · Provisional Leave'],['manager','Manager'],['leave_viewer','Approved Leave Viewer'],['admin','Admin']];
  return opts.map(([v,l])=>'<option value="'+v+'" '+(String(selected)===v?'selected':'')+'>'+l+'</option>').join('');
 }
 async function loadPrivileged(){
@@ -313,7 +313,7 @@ document.addEventListener('click',async e=>{
  const sr=e.target.closest('[data-save-role]');
  if(sr){
    const uid=sr.dataset.saveRole,sel=$(sr.dataset.roleSelect),role=sel?sel.value:'';
-   if(!['staff','proxy_manager','attendance_manager','manager','leave_viewer','admin'].includes(role)){showMsg('privMsg','Choose a valid role.','warn');return}
+   if(!['staff','proxy_manager','attendance_manager','leave_editor','manager','leave_viewer','admin'].includes(role)){showMsg('privMsg','Choose a valid role.','warn');return}
    try{await setDoc(doc(db,'authorizedUsers',uid),{role},{merge:true});await loadPrivileged();showMsg('privMsg','Role updated successfully.','ok')}
    catch(err){showMsg('privMsg','Could not update role: '+(err.message||err),'warn')}
    return;

@@ -48,7 +48,7 @@
     const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(cfg);
     const db=fs.getFirestore(app);
 
-    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
     const toIso=v=>{const m=String(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?`${m[3]}-${m[2]}-${m[1]}`:''};
     const covers=(p,date)=>{
       if(!p||p.active===false||p.archived===true||p.deleted===true)return false;
