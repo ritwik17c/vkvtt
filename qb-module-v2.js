@@ -1,5 +1,5 @@
 import './qb-module-v3.js?v=20260830-principal-teacher-1';
-import './vkv-qb-dictation.js?v=20260830-1';
+import './vkv-qb-dictation.js?v=20260830-correction-preview-2';
 import './vkv-qb-history-enhancement.js?v=20260830-unverified-2';
 import './vkv-qb-imported-history-bridge.js?v=20260830-imported-history-2';
 import './vkv-qb-coordinator-ui.js?v=20260830-coordinator-2';
