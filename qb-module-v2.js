@@ -5,4 +5,5 @@ import './vkv-qb-imported-history-bridge.js?v=20260830-imported-history-2';
 import './vkv-qb-coordinator-ui.js?v=20260830-coordinator-2';
 import './vkv-qb-paper-builder-shell.js?v=20260830-e2';
 import './vkv-qb-paper-preview.js?v=20260830-e3';
+import './vkv-qb-paper-structure.js?v=20260830-e4';
 import './vkv-qb-callouts-sound.js?v=20260830-1';
