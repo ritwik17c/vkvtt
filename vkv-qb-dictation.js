@@ -1,6 +1,6 @@
 /* VKVTT Question Bank dictation + quick submission helper. */
 (()=>{'use strict';
-const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function install(){
  const ta=$('qText'); if(!ta||document.getElementById('qbDictationBar')) return !!ta;
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
