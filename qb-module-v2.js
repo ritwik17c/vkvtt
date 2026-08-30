@@ -7,6 +7,6 @@ import './vkv-qb-submission-readiness.js?v=20260831-readiness-1';
 import './vkv-qb-paper-builder-shell.js?v=20260830-e2-3';
 import './vkv-qb-verified-bank-picker.js?v=20260831-e5-myverified-1';
 import './vkv-qb-paper-preview.js?v=20260830-e3';
-import './vkv-qb-paper-structure.js?v=20260830-e4-1';
+import './vkv-qb-paper-structure.js?v=20260831-e4-2';
 import './vkv-qb-callouts-sound.js?v=20260830-1';
 import './vkv-qb-smart-defaults.js?v=20260831-quickdefaults-1';
