@@ -1,5 +1,5 @@
 import './vkv-qb-admin-pending-age.js?v=20260830-1';
-import './vkv-qb-admin-coordinator-report.js?v=20260831-1';
+import './vkv-qb-admin-coordinator-report.js?v=20260831-pending-bands-2';
 import './vkv-qb-admin-verified-contribution.js?v=20260831-principal-context-2';
 import{getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
 import{getFirestore,collection,query,where,getCountFromServer}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
