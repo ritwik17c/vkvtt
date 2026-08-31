@@ -16,8 +16,16 @@
       const refresh=()=>{
         const ps=parts(t),k=key(t),vals=Array.isArray(data[k])?data[k]:[];
         if(!ps.length){host.innerHTML='';return}
-        host.innerHTML=' · Part marks: '+ps.map((_,i)=>`<label style="display:inline-flex;align-items:center;gap:2px;margin:0 3px">(${String.fromCharCode(97+i)}) <input data-pm="${i}" type="number" min="0" step="0.5" value="${Number(vals[i])||''}" style="width:58px;padding:4px 6px"></label>`).join('')+' <b data-pmt></b>';
-        const total=()=>{const xs=[...host.querySelectorAll('[data-pm]')].map(e=>Number(e.value)||0);host.querySelector('[data-pmt]').textContent=xs.some(Boolean)?`= ${xs.reduce((a,b)=>a+b,0)} marks`:'';data[k]=xs;save()};
+        host.innerHTML=' · Part marks: '+ps.map((_,i)=>`<label style="display:inline-flex;align-items:center;gap:2px;margin:0 3px">(${String.fromCharCode(97+i)}) <input data-pm="${i}" type="number" min="0" step="0.5" value="${Number(vals[i])||''}" style="width:58px;padding:4px 6px"></label>`).join('')+' <b data-pmt></b><span data-pmcheck style="margin-left:6px"></span>';
+        const total=()=>{
+          const inputs=[...host.querySelectorAll('[data-pm]')],xs=inputs.map(e=>Number(e.value)||0),sum=xs.reduce((a,b)=>a+b,0),allEntered=inputs.length>0&&inputs.every(e=>e.value!==''),anyEntered=inputs.some(e=>e.value!=='');
+          host.querySelector('[data-pmt]').textContent=anyEntered?`= ${sum} marks`:'';data[k]=xs;save();
+          const check=host.querySelector('[data-pmcheck]'),markInput=panel.querySelector(`[data-m="${t.dataset.q}"]`),parent=Number(markInput?.value)||0;
+          if(!allEntered||!markInput){check.innerHTML='';return}
+          if(Math.abs(parent-sum)<0.001){check.innerHTML='<span style="color:#2f6b3b;font-weight:700">✓ matches question marks</span>';return}
+          check.innerHTML=`<span style="color:#8a5b13;font-weight:700">⚠ Part total ${sum} ≠ question ${parent}</span> <button type="button" data-use-part-total style="padding:3px 7px;margin-left:4px">Use ${sum}</button>`;
+          const use=check.querySelector('[data-use-part-total]');if(use)use.onclick=()=>{markInput.value=String(sum);markInput.dispatchEvent(new Event('input',{bubbles:true}))};
+        };
         host.querySelectorAll('[data-pm]').forEach(e=>e.oninput=total);total();
       };
       if(t.dataset.subqMarksEnhanced!=='1'){t.dataset.subqMarksEnhanced='1';t.addEventListener('input',refresh)}
