@@ -3,8 +3,15 @@
 // Do not publish this patch by itself.
 
 // Add beside the existing role helpers:
+function emailLeaveEditor() {
+  return verifiedEmail()
+         && exists(/databases/$(database)/documents/viewerEmails/$(authEmail()))
+         && get(/databases/$(database)/documents/viewerEmails/$(authEmail())).data.active == true
+         && get(/databases/$(database)/documents/viewerEmails/$(authEmail())).data.role == 'leave_editor';
+}
+
 function isLeaveEditor() {
-  return uidActive() && uidRole() == 'leave_editor';
+  return (uidActive() && uidRole() == 'leave_editor') || emailLeaveEditor();
 }
 
 function canPrepareLeave() {
@@ -19,17 +26,17 @@ match /provisionalLeavePlans/{planId} {
   allow read: if isAdmin() || isLeaveEditor() || isProxyManager() || isStatusEditor();
 
   allow create: if canPrepareLeave()
-                && request.resource.data.status == 'provisional'
+                && request.resource.data.approvalStatus == 'provisional'
                 && request.resource.data.createdByUid == request.auth.uid
-                && request.resource.data.lastEditedByUid == request.auth.uid;
+                && request.resource.data.createdByEmail == authEmail();
 
   allow update: if isAdmin()
                 || (isLeaveEditor()
                     && resource.data.createdByUid == request.auth.uid
-                    && resource.data.status in ['provisional', 'returned']
-                    && request.resource.data.status == 'provisional'
+                    && resource.data.approvalStatus in ['provisional', 'returned']
+                    && request.resource.data.approvalStatus == 'provisional'
                     && request.resource.data.createdByUid == resource.data.createdByUid
-                    && request.resource.data.lastEditedByUid == request.auth.uid
+                    && request.resource.data.createdByEmail == authEmail()
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
                       'approvedByUid','approvedByEmail','approvedAt',
                       'approvalDecision','officialPostedAt'
