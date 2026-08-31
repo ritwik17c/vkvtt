@@ -1,1 +1,62 @@
-<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><title>VKVTT · Question Bank Safe Mode</title><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#edf6f1;font-family:system-ui,Segoe UI,Arial;color:#263d4e}header{background:#1d638e;color:#fff;padding:16px}.wrap{max-width:1100px;margin:auto;padding:0 14px}.actions,.tabs{display:flex;gap:8px;flex-wrap:wrap}.btn,button{font:inherit;font-weight:750;border:1px solid #b9ced9;border-radius:11px;padding:9px 12px;background:#e7f2f7;color:#17364f;text-decoration:none}.primary{background:#236d99;color:#fff}.card{background:#fff;border:1px solid #cbdce5;border-radius:16px;padding:16px;margin:14px 0}.small{font-size:.84rem;color:#617685}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.metric{background:#f6fafc;border:1px solid #dbe7ed;border-radius:12px;padding:10px}.num{font-size:1.35rem;font-weight:850}.panel{display:none}.panel.active{display:block}.tabs button.active{background:#236d99;color:#fff}.grid2,.grid3{display:grid;gap:9px}.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,1fr)}label{display:block;font-size:.8rem;color:#617685;margin:7px 0 4px}input,select,textarea{width:100%;padding:9px;border:1px solid #c6d7e0;border-radius:9px;font:inherit}textarea{min-height:90px}.qcard{border:1px solid #dbe6eb;border-radius:12px;padding:12px;margin:8px 0}.badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#eaf3f7;font-size:.74rem;margin:3px}.warning{background:#fff7df;border:1px solid #e5cd8c;border-radius:10px;padding:9px}.tip{background:#eef7fb;border:1px solid #bfdae7;border-radius:10px;padding:9px}.empty{padding:16px;color:#617685}@media(max-width:650px){.metrics,.grid2,.grid3{grid-template-columns:1fr 1fr}}@media(max-width:460px){.metrics,.grid2,.grid3{grid-template-columns:1fr}}</style></head><body><header><div class="wrap"><h1 style="margin:0">📚 Question Bank & Paper Builder</h1><div>Safe Core Workspace</div><div class="actions" style="margin-top:10px"><a class="btn" href="./">← Home</a><a class="btn" href="QB_TEACHER_GUIDE.html">❓ Guidance</a></div></div></header><main class="wrap"><div id="gate" class="card"><b id="gateTitle">Checking teacher access…</b><div id="gateMsg" class="small">Restoring your VKVTT sign-in…</div><div class="actions" style="margin-top:10px"><button id="signInBtn" class="primary" style="display:none">Sign in with Google</button><a class="btn" href="./">Return Home</a></div></div><div id="app" style="display:none"><section class="card"><h2 id="welcome">My Question Bank</h2><div class="tip">Safe mode is active while optional QB enhancements are isolated. Core submission, history, verified bank and coordinator review remain available.</div></section><section class="metrics"><div class="metric"><div class="num" id="mTotal">0</div><div class="small">My Questions</div></div><div class="metric"><div class="num" id="mVerified">0</div><div class="small">Verified</div></div><div class="metric"><div class="num" id="mPending">0</div><div class="small">Pending</div></div><div class="metric"><div class="num" id="mReturned">0</div><div class="small">Returned</div></div></section><div class="card tabs"><button class="active" data-panel="add">Add Question</button><button data-panel="history">My History</button><button data-panel="bank">Verified Bank</button><button id="reviewTab" data-panel="review" style="display:none">Review Questions</button><button data-panel="io">Import / Export</button></div><section id="add" class="card panel active"><div class="grid3"><div><label>Class</label><select id="qClass"></select></div><div><label>Section / Stream</label><input id="qSection"></div><div><label>Subject</label><select id="qSubject"></select></div></div><div class="grid2"><div><label>Chapter / Unit</label><input id="qChapter"></div><div><label>Topic</label><input id="qTopic"></div></div><label>Learning Outcome</label><input id="qOutcome"><div class="grid3"><div><label>Marks</label><input id="qMarks" type="number" value="1" min="0" step="0.5"></div><div><label>Difficulty</label><select id="qDifficulty"><option>Easy</option><option selected>Moderate</option><option>Difficult</option></select></div><div><label>Question Type</label><select id="qType"><option>Very Short Answer</option><option selected>Short Answer</option><option>Long Answer</option><option>MCQ</option><option>Numerical</option><option>Case-based</option><option>Competency-based</option></select></div></div><label>Question</label><textarea id="qText"></textarea><div class="grid2"><div><label>Answer</label><textarea id="qAnswer"></textarea></div><div><label>Marking Scheme / Notes</label><textarea id="qMarking"></textarea></div></div><div id="editorMsg"></div><div class="actions" style="margin-top:10px"><button id="saveDraft">Save Draft</button><button id="submitQ" class="primary">Submit to Subject Coordinator</button></div></section><section id="history" class="card panel"><h2>My Submission History</h2><div id="historyList"></div></section><section id="bank" class="card panel"><h2>Verified Question Bank</h2><div id="bankList"></div></section><section id="review" class="card panel"><h2>Subject Coordinator Review Queue</h2><div id="reviewList"></div></section><section id="io" class="card panel"><h2>Import / Export</h2><div class="actions"><button id="downloadTemplate">Download Excel Template</button><button id="exportMine">Export My Questions</button></div></section></div></main><script type="module" src="qb-module-v3.js?v=20260831-safe-core-2"></script></body></html>
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>VKVTT · QB Recovery</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#edf6f1;color:#17364f;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}header{background:#1d638e;color:#fff;padding:18px}.wrap{max-width:760px;margin:auto;padding:0 16px}.card{background:#fff;border:1px solid #cbdce5;border-radius:18px;padding:20px;margin:22px 0;box-shadow:0 4px 18px #17324d0d}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn,button{display:inline-block;font:inherit;font-weight:800;border:1px solid #b9ced9;border-radius:11px;padding:10px 14px;background:#e7f2f7;color:#17364f;text-decoration:none;cursor:pointer}.primary{background:#236d99;color:#fff}.ok{background:#e8f7ec;border:1px solid #b8ddc1;border-radius:12px;padding:12px;color:#245c34}.warn{background:#fff7df;border:1px solid #e5cd8c;border-radius:12px;padding:12px;color:#745917}.small{font-size:.86rem;color:#617685}#details{white-space:pre-wrap;word-break:break-word}</style>
+</head>
+<body>
+<header><div class="wrap"><h1 style="margin:0">📚 Question Bank Recovery</h1><div>Lightweight access check · no question history is loaded</div></div></header>
+<main class="wrap">
+<section class="card">
+<h2 id="title">Checking your VKVTT sign-in…</h2>
+<div id="msg" class="small">This page does not load Question Bank records while starting.</div>
+<div id="details" style="margin-top:14px"></div>
+<div class="actions" style="margin-top:16px">
+<button id="checkBtn" class="primary">Check my QB access</button>
+<a class="btn" href="./">← Home</a>
+</div>
+</section>
+</main>
+<script type="module">
+import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import{getAuth,setPersistence,browserLocalPersistence}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
+const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+await setPersistence(auth,browserLocalPersistence).catch(()=>{});
+const $=id=>document.getElementById(id),mail=v=>String(v||'').trim().toLowerCase();
+async function run(){
+ const u=auth.currentUser;
+ if(!u){$('title').textContent='VKVTT sign-in not restored';$('msg').innerHTML='<div class="warn">Return Home, sign in to VKVTT, then open this page again.</div>';return}
+ $('title').textContent='Checking authorised account…';$('msg').textContent=u.email||'';
+ const email=mail(u.email);
+ const [a,v,m]=await Promise.all([
+   getDoc(doc(db,'authorizedUsers',u.uid)).catch(()=>null),
+   email?getDoc(doc(db,'viewerEmails',email)).catch(()=>null):null,
+   getDoc(doc(db,'master','current')).catch(()=>null)
+ ]);
+ let p=null;if(a?.exists()&&a.data().active!==false)p=a.data();else if(v?.exists()&&v.data().active!==false)p={role:'teacher',...v.data()};
+ if(!p){$('title').textContent='QB access not authorised';$('msg').innerHTML='<div class="warn">This signed-in Google account is not currently authorised in VKVTT.</div>';return}
+ const raw=m?.exists()?m.data()||{}:{},data=raw.data&&typeof raw.data==='object'?raw.data:{},master={...raw,...data};
+ const emails=x=>[x?.email,x?.gmail,x?.googleEmail,x?.google_email,x?.officialEmail,x?.loginEmail,...(Array.isArray(x?.emails)?x.emails:[])].map(mail).filter(Boolean);
+ const teachers=(master.teachers||[]).filter(Boolean);
+ const tc=String(p.teacherCode||p.teacherShortCode||p.timetableCode||p.staffCode||p.code||'').trim();
+ let teacher=teachers.find(t=>[t.code,t.shortCode,t.teacherShortCode,t.timetableCode].map(x=>String(x||'').trim()).includes(tc));
+ if(!teacher)teacher=teachers.find(t=>emails(t).includes(email));
+ if(!teacher){for(const[c,e]of Object.entries(master.teacherEmailMap||{})){if(mail(e)===email){teacher=teachers.find(t=>[t.code,t.shortCode,t.teacherShortCode,t.timetableCode].map(x=>String(x||'').trim()).includes(String(c).trim()));if(teacher)break}}}
+ const isAdmin=String(p.role||'').toLowerCase()==='admin'||String(p.role||'').toLowerCase()==='principal';
+ if(!teacher){$('title').textContent='Account authorised, teacher identity missing';$('msg').innerHTML='<div class="warn">VKVTT recognises this account, but the Question Bank cannot find its teaching identity.</div>';$('details').textContent='Role: '+(p.role||'staff')+'\nEmail: '+(u.email||'');return}
+ $('title').textContent='QB access check passed';$('msg').innerHTML='<div class="ok">Your VKVTT account and teaching identity are both recognised. No Question Bank records were loaded during this test.</div>';
+ $('details').textContent='Teacher: '+(teacher.name||u.displayName||'Teacher')+'\nRole: '+(isAdmin?'Principal/Admin + Teacher':(p.role||'Teacher'))+'\nEmail: '+(u.email||'');
+}
+$('checkBtn').onclick=run;
+setTimeout(()=>{if(auth.currentUser)run();else{$('title').textContent='Ready to check QB access';$('msg').textContent='Press “Check my QB access”.'}},500);
+</script>
+</body>
+</html>
