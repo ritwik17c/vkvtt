@@ -2,7 +2,7 @@ import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.1
 import{getAuth,GoogleAuthProvider,signInWithPopup,setPersistence,browserLocalPersistence,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,updateDoc,collection,getDocs,query,where,serverTimestamp,limit}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
-const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();await setPersistence(auth,browserLocalPersistence).catch(()=>{});if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();await setPersistence(auth,browserLocalPersistence).catch(()=>{});
 const $=id=>document.getElementById(id),safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),mail=v=>String(v||'').trim().toLowerCase();
 let user,profile,master={},teacher=null,conf={},myQs=[],approvedQs=[],coordSubjects=[],reviewQs=[],bankLoaded=false,reviewLoaded=false;
 const classes=['B1','B2','B3','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
