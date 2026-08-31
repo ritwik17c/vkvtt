@@ -1,4 +1,4 @@
-// Read-only UI enhancement for the Subject Coordinator review queue.
+// Read-only UI enhancement for the Subject Coordinator review queue, plus local feedback composer.
 (function(){
   'use strict';
   let selected='all';
@@ -21,7 +21,7 @@
     if(!document.getElementById('qbReviewTools')){
       const box=document.createElement('div');
       box.id='qbReviewTools';box.className='tip';box.style.margin='10px 0';
-      box.innerHTML='<b>Coordinator Inbox</b><div class="small" style="margin-top:4px">Check correctness, wording, marks, difficulty, learning outcome and answer or marking scheme before accepting. Age filters help older pending questions receive attention first.</div><div class="actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" data-rf="all" class="primary">All Pending</button><button type="button" data-rf="today">Today</button><button type="button" data-rf="0-2">0–2 days</button><button type="button" data-rf="3-7">3–7 days</button><button type="button" data-rf="8plus">&gt;7 days</button><input id="qbReviewSearch" placeholder="Search question, class, subject or teacher" style="max-width:390px"><span id="qbReviewCount" class="badge"></span></div><div id="qbReviewAgeSummary" class="small" style="margin-top:7px"></div>';
+      box.innerHTML='<b>Coordinator Inbox</b><div class="small" style="margin-top:4px">Check correctness, wording, marks, difficulty, learning outcome and answer or marking scheme before accepting. Age filters help older pending questions receive attention first. When returning a question, use the guided feedback composer so the teacher receives a clear correction request.</div><div class="actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" data-rf="all" class="primary">All Pending</button><button type="button" data-rf="today">Today</button><button type="button" data-rf="0-2">0–2 days</button><button type="button" data-rf="3-7">3–7 days</button><button type="button" data-rf="8plus">&gt;7 days</button><input id="qbReviewSearch" placeholder="Search question, class, subject or teacher" style="max-width:390px"><span id="qbReviewCount" class="badge"></span></div><div id="qbReviewAgeSummary" class="small" style="margin-top:7px"></div>';
       panel.querySelector('h2')?.insertAdjacentElement('afterend',box);
       box.querySelector('#qbReviewSearch')?.addEventListener('input',filter);
       box.addEventListener('click',e=>{const b=e.target.closest('[data-rf]');if(!b)return;selected=b.dataset.rf;box.querySelectorAll('[data-rf]').forEach(x=>x.classList.toggle('primary',x===b));filter()});
@@ -43,6 +43,26 @@
     const count=document.getElementById('qbReviewCount');if(count)count.textContent=shown+' of '+total+' pending';
     const summary=document.getElementById('qbReviewAgeSummary');if(summary)summary.textContent=`Ageing: ${counts.today} today · ${counts['0-2']} within 2 days · ${counts['3-7']} 3–7 days · ${counts['8plus']} over 7 days${counts.unknown?` · ${counts.unknown} date unavailable`:''}`;
   }
+  const feedbackTemplates=[
+    ['Wording / clarity','Please revise the wording for greater clarity and precision.'],
+    ['Answer / marking scheme','Please review the expected answer or marking scheme and make it complete and consistent with the marks allotted.'],
+    ['Marks / difficulty','Please review the marks or difficulty level so that they match the demand of the question.'],
+    ['Learning outcome','Please review the stated learning outcome or competency so that it matches what the question actually assesses.'],
+    ['Academic accuracy','Please recheck the academic accuracy of the question and answer before resubmitting.']
+  ];
+  window.qbGetCoordinatorReturnNote=function(){return new Promise(resolve=>{
+    document.getElementById('qbFeedbackComposer')?.remove();
+    const shade=document.createElement('div');shade.id='qbFeedbackComposer';shade.style.cssText='position:fixed;inset:0;background:#17364f66;z-index:9999;display:grid;place-items:center;padding:16px';
+    const box=document.createElement('div');box.style.cssText='width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 18px 60px #17364f44';
+    box.innerHTML='<h3 style="margin:0 0 5px">Return for correction</h3><div class="small">Choose a common reason to start the note, then edit it so the teacher knows exactly what to correct. No return is recorded until you confirm.</div><div id="qbFeedbackTemplates" class="actions" style="margin-top:12px"></div><label style="margin-top:12px">Correction note to teacher</label><textarea id="qbFeedbackText" style="min-height:120px" placeholder="State the specific correction required…"></textarea><div class="actions" style="margin-top:12px"><button id="qbFeedbackCancel" type="button">Cancel</button><button id="qbFeedbackConfirm" type="button" class="primary">Return with this note</button></div><div id="qbFeedbackMsg" class="small" style="margin-top:7px"></div>';
+    shade.appendChild(box);document.body.appendChild(shade);
+    const area=box.querySelector('#qbFeedbackText'),templates=box.querySelector('#qbFeedbackTemplates');
+    feedbackTemplates.forEach(([label,text])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{area.value=(area.value.trim()?area.value.trim()+' ':'')+text;area.focus()};templates.appendChild(b)});
+    const done=v=>{shade.remove();resolve(v)};
+    box.querySelector('#qbFeedbackCancel').onclick=()=>done('');shade.onclick=e=>{if(e.target===shade)done('')};
+    box.querySelector('#qbFeedbackConfirm').onclick=()=>{const note=area.value.trim();if(note.length<8){box.querySelector('#qbFeedbackMsg').textContent='Please give a specific correction note before returning the question.';area.focus();return}done(note)};
+    area.focus();
+  })};
   function start(){const list=document.getElementById('reviewList');if(list)new MutationObserver(enhance).observe(list,{childList:true,subtree:true});enhance()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
