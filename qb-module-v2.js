@@ -11,6 +11,6 @@ import './vkv-qb-paper-preview.js?v=20260830-e3';
 import './vkv-qb-paper-structure.js?v=20260831-e4-3';
 import './vkv-qb-paper-question-counts.js?v=20260831-e4-4';
 import './vkv-qb-paper-health.js?v=20260831-e4-5';
-import './vkv-qb-paper-checkpoint.js?v=20260831-e4-6';
+import './vkv-qb-paper-checkpoint.js?v=20260831-e4-7';
 import './vkv-qb-callouts-sound.js?v=20260830-1';
 import './vkv-qb-smart-defaults.js?v=20260831-quickdefaults-1';
