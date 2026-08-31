@@ -1,0 +1,47 @@
+// VKVTT Question Bank — teacher self-edit / withdrawal patch
+// MERGE into the ACTIVE Firestore ruleset; do not publish this fragment by itself.
+// Purpose: allow a teacher to correct or withdraw only their own unverified/returned question.
+// Verified questions remain locked to teacher edits.
+
+function ownsQuestion(data) {
+  return signedIn()
+         && (data.teacherUid == request.auth.uid
+             || (verifiedEmail()
+                 && data.teacherEmail is string
+                 && data.teacherEmail == authEmail()));
+}
+
+function teacherEditableQuestion(data) {
+  return ownsQuestion(data)
+         && data.status in ['draft', 'submitted', 'returned'];
+}
+
+match /qbQuestions/{questionId} {
+  // Keep your existing read/create/coordinator/admin permissions here.
+
+  // Teacher may update only their own editable question, and may not turn it
+  // into an approved/verified record. Withdrawal is allowed as an audited state.
+  allow update: if isAdmin()
+                || (
+                  teacherEditableQuestion(resource.data)
+                  && ownsQuestion(request.resource.data)
+                  && request.resource.data.teacherUid == resource.data.teacherUid
+                  && request.resource.data.teacherEmail == resource.data.teacherEmail
+                  && request.resource.data.teacherCode == resource.data.teacherCode
+                  && (
+                    request.resource.data.status == resource.data.status
+                    || request.resource.data.status == 'withdrawn'
+                  )
+                  && request.resource.data.status != 'approved'
+                  && request.resource.data.status != 'verified'
+                );
+
+  // Do not hard-delete teacher submissions. Use status='withdrawn' instead.
+  allow delete: if isAdmin();
+}
+
+// Recommended application behaviour:
+// - draft/submitted/returned => teacher may edit own question.
+// - submitted/returned => teacher may withdraw own question with a reason.
+// - approved/verified => teacher cannot edit or withdraw directly.
+// - Principal/Admin may withdraw with audit trail.
