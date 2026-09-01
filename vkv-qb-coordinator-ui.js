@@ -2,6 +2,8 @@
 (function(){
   'use strict';
   let selected='all';
+  let sortMode='queue';
+  let nextOriginalOrder=0;
   const DAY=86400000;
   function startOfDay(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
   function parseDate(card){
@@ -14,6 +16,23 @@
   }
   function ageDays(card){const d=parseDate(card);if(!d)return null;return Math.max(0,Math.floor((startOfDay(new Date())-startOfDay(d))/DAY))}
   function bucket(card){const a=ageDays(card);if(a==null)return'unknown';if(a===0)return'today';if(a<=2)return'0-2';if(a<=7)return'3-7';return'8plus'}
+  function sortCards(mode){
+    sortMode=mode||'queue';
+    const list=document.getElementById('reviewList');if(!list)return;
+    const cards=[...list.querySelectorAll('.qcard')];
+    cards.sort((a,b)=>{
+      if(sortMode==='queue')return Number(a.dataset.qbOriginalOrder||0)-Number(b.dataset.qbOriginalOrder||0);
+      const ad=parseDate(a),bd=parseDate(b),at=ad?ad.getTime():null,bt=bd?bd.getTime():null;
+      if(at==null&&bt==null)return Number(a.dataset.qbOriginalOrder||0)-Number(b.dataset.qbOriginalOrder||0);
+      if(at==null)return 1;if(bt==null)return-1;
+      const diff=sortMode==='oldest'?at-bt:bt-at;
+      return diff||Number(a.dataset.qbOriginalOrder||0)-Number(b.dataset.qbOriginalOrder||0);
+    });
+    cards.forEach(card=>list.appendChild(card));
+    const box=document.getElementById('qbReviewTools');
+    box?.querySelectorAll('[data-rsort]').forEach(x=>x.classList.toggle('primary',x.dataset.rsort===sortMode));
+    filter();
+  }
   function enhance(){
     const panel=document.getElementById('review');
     const list=document.getElementById('reviewList');
@@ -21,12 +40,13 @@
     if(!document.getElementById('qbReviewTools')){
       const box=document.createElement('div');
       box.id='qbReviewTools';box.className='tip';box.style.margin='10px 0';
-      box.innerHTML='<b>Coordinator Inbox</b><div class="small" style="margin-top:4px">Check correctness, wording, marks, difficulty, learning outcome and answer or marking scheme before accepting. Age filters help older pending questions receive attention first. When returning a question, use the guided feedback composer so the teacher receives a clear correction request.</div><div class="actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" data-rf="all" class="primary">All Pending</button><button type="button" data-rf="today">Today</button><button type="button" data-rf="0-2">0–2 days</button><button type="button" data-rf="3-7">3–7 days</button><button type="button" data-rf="8plus">&gt;7 days</button><input id="qbReviewSearch" placeholder="Search question, class, subject or teacher" style="max-width:390px"><span id="qbReviewCount" class="badge"></span></div><div id="qbReviewAgeSummary" class="small" style="margin-top:7px"></div>';
+      box.innerHTML='<b>Coordinator Inbox</b><div class="small" style="margin-top:4px">Check correctness, wording, marks, difficulty, learning outcome and answer or marking scheme before accepting. Age filters help older pending questions receive attention first. When returning a question, use the guided feedback composer so the teacher receives a clear correction request.</div><div class="actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" data-rf="all" class="primary">All Pending</button><button type="button" data-rf="today">Today</button><button type="button" data-rf="0-2">0–2 days</button><button type="button" data-rf="3-7">3–7 days</button><button type="button" data-rf="8plus">&gt;7 days</button><input id="qbReviewSearch" placeholder="Search question, class, subject or teacher" style="max-width:390px"><span id="qbReviewCount" class="badge"></span></div><div class="actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="small"><b>Sort:</b></span><button type="button" data-rsort="queue" class="primary">Queue order</button><button type="button" data-rsort="oldest">Oldest first</button><button type="button" data-rsort="newest">Newest first</button></div><div id="qbReviewAgeSummary" class="small" style="margin-top:7px"></div>';
       panel.querySelector('h2')?.insertAdjacentElement('afterend',box);
       box.querySelector('#qbReviewSearch')?.addEventListener('input',filter);
-      box.addEventListener('click',e=>{const b=e.target.closest('[data-rf]');if(!b)return;selected=b.dataset.rf;box.querySelectorAll('[data-rf]').forEach(x=>x.classList.toggle('primary',x===b));filter()});
+      box.addEventListener('click',e=>{const f=e.target.closest('[data-rf]');if(f){selected=f.dataset.rf;box.querySelectorAll('[data-rf]').forEach(x=>x.classList.toggle('primary',x===f));filter();return}const s=e.target.closest('[data-rsort]');if(s)sortCards(s.dataset.rsort)});
     }
     list.querySelectorAll('.qcard').forEach(card=>{
+      if(card.dataset.qbOriginalOrder==null)card.dataset.qbOriginalOrder=String(nextOriginalOrder++);
       card.querySelectorAll('.badge').forEach(b=>{if((b.textContent||'').trim()==='submitted')b.textContent='Unverified · Awaiting Verification'});
       card.dataset.qbAgeBucket=bucket(card);
       const actions=card.querySelector('.actions');
