@@ -5,7 +5,7 @@ import './vkv-qb-admin-revision-followup.js?v=20260902-1';
 import{getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
 import{getFirestore,doc,getDoc,collection,query,where,getCountFromServer}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 const wait=ms=>new Promise(r=>setTimeout(r,ms)),norm=s=>String(s||'').trim().toLowerCase(),txt=s=>String(s||'').trim();
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function syncFilters(){const s=document.getElementById('sLSubject'),c=document.getElementById('sLClass'),sourceS=document.getElementById('lSubject'),sourceC=document.getElementById('lClass');if(s&&sourceS){const old=s.value;s.innerHTML=sourceS.innerHTML;if([...s.options].some(o=>o.value===old))s.value=old}if(c&&sourceC){const old=c.value;c.innerHTML=sourceC.innerHTML;if([...c.options].some(o=>o.value===old))c.value=old}}
 function canonical(code,aliases){const seen=new Set();code=txt(code);while(code&&aliases?.[code]&&!seen.has(code)){seen.add(code);code=txt(aliases[code])}return code}
 function aliasSet(code,aliases){const can=canonical(code,aliases),set=new Set([can,txt(code)].filter(Boolean));let changed=true;while(changed){changed=false;for(const[old,neu]of Object.entries(aliases||{})){if(set.has(canonical(neu,aliases))||set.has(txt(neu))){if(!set.has(txt(old))){set.add(txt(old));changed=true}}}}return[...set].filter(Boolean)}
