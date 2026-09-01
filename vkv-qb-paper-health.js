@@ -27,6 +27,7 @@
     const zero=questions.filter(x=>(Number(x.q.marks)||0)<=0).length;
     const duplicates=duplicateCount(questions);
     const untitled=sections.filter(sec=>!String(sec.name||'').trim()).length;
+    const emptySections=sections.filter(sec=>!Array.isArray(sec.questions)||sec.questions.length===0).length;
     const verified=questions.filter(x=>String(x.q.source||'')==='verified_bank'||String(x.q.sourceQuestionId||'').trim()).length;
     const paperSubject=normaliseMeta(s.subject),paperClass=normaliseMeta(s.className);
     const sourceSubjectMismatch=paperSubject?questions.filter(x=>String(x.q.sourceQuestionId||'').trim()&&normaliseMeta(x.q.sourceSubject)&&normaliseMeta(x.q.sourceSubject)!==paperSubject).length:0;
@@ -39,6 +40,7 @@
     const missingMeta=[['Class',s.className],['Subject',s.subject],['Examination',s.exam],['Duration',s.duration]].filter(x=>!String(x[1]||'').trim()).map(x=>x[0]);
     const issues=[...score.problems];
     if(!sections.length)issues.push('No section has been added yet.');
+    if(emptySections)issues.push(emptySections+' section '+(emptySections===1?'is':'are')+' empty. Add a question or remove the unused section before finalising.');
     if(blank)issues.push(blank+' blank question '+(blank===1?'row remains':'rows remain')+'.');
     if(zero)issues.push(zero+' question '+(zero===1?'has':'have')+' zero marks.');
     if(duplicates)issues.push(duplicates+' question '+(duplicates===1?'appears':'appear')+' to duplicate another question in this paper. Please review before finalising.');
@@ -56,7 +58,7 @@
     if(attemptGroups)notes.push(attemptGroups+' Answer Any group'+(attemptGroups===1?'':'s'));
     if(partStatus.length&&!incompleteParts&&!mismatchedParts)notes.push(partStatus.length+' subquestion mark set'+(partStatus.length===1?'':'s')+' reconciled');
     let level='good',title='Ready for review';
-    if(issues.length){level=blank||zero||duplicates||sourceSubjectMismatch||sourceClassMismatch||!sections.length||incompleteParts||mismatchedParts||!score.valid?'warn':'check';title=level==='warn'?'Needs attention':'Check before finalising'}
+    if(issues.length){level=blank||zero||duplicates||emptySections||sourceSubjectMismatch||sourceClassMismatch||!sections.length||incompleteParts||mismatchedParts||!score.valid?'warn':'check';title=level==='warn'?'Needs attention':'Check before finalising'}
     return{issues,notes,level,title,questions:questions.length,used,target,score};
   }
   function ensureBox(){
