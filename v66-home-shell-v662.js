@@ -30,7 +30,7 @@
       tile=document.createElement('button');tile.id='myQuestionBankBtn';tile.type='button';
       tile.innerHTML='📚 Question Bank &amp; Paper Builder <span id="myQbBadge" class="myBadge" style="display:none"></span>';
       tile.title='Add questions, see submission history, use the verified Question Bank and build question papers.';
-      tile.addEventListener('click',()=>location.href='qb-module-v2.html?v=preview2-qb-2');
+      tile.addEventListener('click',()=>location.href='qb-module-v2.html?v=exam-attempt-any-1');
       grid.appendChild(tile);
     }
     tile.style.display=isLinkedTeachingStaff()?'':'none';
