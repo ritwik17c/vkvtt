@@ -6,6 +6,7 @@
   function getSubmarks(){try{return JSON.parse(localStorage.getItem(SUBMARKS)||'{}')||{}}catch(_){return {}}}
   function partCount(text){return String(text||'').split('\n').filter(x=>/^\s*\([a-z]\)\s+/i.test(x)).length}
   function normaliseText(text){return String(text||'').toLocaleLowerCase().replace(/\s+/g,' ').trim()}
+  function normaliseMeta(text){return String(text||'').toLocaleLowerCase().replace(/[.\-_]/g,' ').replace(/\s+/g,' ').trim()}
   function duplicateCount(questions){
     const seenSources=new Set(),seenTexts=new Set(),dupes=new Set();
     questions.forEach((x,i)=>{
@@ -27,6 +28,9 @@
     const duplicates=duplicateCount(questions);
     const untitled=sections.filter(sec=>!String(sec.name||'').trim()).length;
     const verified=questions.filter(x=>String(x.q.source||'')==='verified_bank'||String(x.q.sourceQuestionId||'').trim()).length;
+    const paperSubject=normaliseMeta(s.subject),paperClass=normaliseMeta(s.className);
+    const sourceSubjectMismatch=paperSubject?questions.filter(x=>String(x.q.sourceQuestionId||'').trim()&&normaliseMeta(x.q.sourceSubject)&&normaliseMeta(x.q.sourceSubject)!==paperSubject).length:0;
+    const sourceClassMismatch=paperClass?questions.filter(x=>String(x.q.sourceQuestionId||'').trim()&&normaliseMeta(x.q.sourceClass)&&normaliseMeta(x.q.sourceClass)!==paperClass).length:0;
     const choice=questions.filter(x=>String(x.q.choice||'').trim()).length;
     const attemptGroups=score.sections.filter(x=>x.attemptAny>0).length;
     const sectionMismatch=score.sections.filter((x,i)=>{const t=Number(sections[i]?.targetMarks)||0;return t&&x.valid&&Math.abs(t-x.countedMarks)>0.001}).length;
@@ -38,6 +42,8 @@
     if(blank)issues.push(blank+' blank question '+(blank===1?'row remains':'rows remain')+'.');
     if(zero)issues.push(zero+' question '+(zero===1?'has':'have')+' zero marks.');
     if(duplicates)issues.push(duplicates+' question '+(duplicates===1?'appears':'appear')+' to duplicate another question in this paper. Please review before finalising.');
+    if(sourceSubjectMismatch)issues.push(sourceSubjectMismatch+' Verified Bank question '+(sourceSubjectMismatch===1?'has':'have')+' a source subject different from this paper. Please confirm the selection.');
+    if(sourceClassMismatch)issues.push(sourceClassMismatch+' Verified Bank question '+(sourceClassMismatch===1?'has':'have')+' a source class different from this paper. Please confirm the selection.');
     if(incompleteParts)issues.push(incompleteParts+' question '+(incompleteParts===1?'has':'have')+' incomplete subquestion marks.');
     if(mismatchedParts)issues.push(mismatchedParts+' question '+(mismatchedParts===1?'has':'have')+' subquestion marks that do not match the parent question total.');
     if(score.valid&&target&&Math.abs(target-used)>0.001)issues.push('Paper total is '+used+' marks against the '+target+'-mark target.');
@@ -50,7 +56,7 @@
     if(attemptGroups)notes.push(attemptGroups+' Answer Any group'+(attemptGroups===1?'':'s'));
     if(partStatus.length&&!incompleteParts&&!mismatchedParts)notes.push(partStatus.length+' subquestion mark set'+(partStatus.length===1?'':'s')+' reconciled');
     let level='good',title='Ready for review';
-    if(issues.length){level=blank||zero||duplicates||!sections.length||incompleteParts||mismatchedParts||!score.valid?'warn':'check';title=level==='warn'?'Needs attention':'Check before finalising'}
+    if(issues.length){level=blank||zero||duplicates||sourceSubjectMismatch||sourceClassMismatch||!sections.length||incompleteParts||mismatchedParts||!score.valid?'warn':'check';title=level==='warn'?'Needs attention':'Check before finalising'}
     return{issues,notes,level,title,questions:questions.length,used,target,score};
   }
   function ensureBox(){
