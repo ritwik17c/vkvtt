@@ -61,17 +61,18 @@ button,.btn{display:inline-block;font:inherit;font-weight:750;border:1px solid #
 
   <div class="card">
     <h2>Privileged Accounts</h2>
-    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer / Leave Editor accounts and for individual Timetable Studio delegation. These require the person’s Firebase UID. A delegated Studio permission is independent of the person’s normal operational role. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
+    <div class="help">Use this for Admin / Proxy Manager / Manager / Approved Leave Viewer / Leave Editor accounts and for individual Timetable Studio or Examination Department delegation. These require the person’s Firebase UID. Delegated permissions are independent of the person’s normal operational role. Privileged accounts can also be temporarily disabled and later enabled without recreating the UID record.</div>
     <div class="grid">
       <div><label>Firebase UID</label><input id="privUid" placeholder="Paste Firebase UID"></div>
       <div><label>Name</label><input id="privName" placeholder="Teacher name"></div>
       <div><label>Google email</label><input id="privEmail" type="email" placeholder="Enter authorised Google email"></div>
       <div><label>Role</label><select id="privRole"><option value="staff">Staff · Delegated Tools Only</option><option value="proxy_manager">Proxy Manager</option><option value="attendance_manager">Attendance Manager</option><option value="leave_editor">Leave Editor · Provisional Leave</option><option value="manager">Manager</option><option value="leave_viewer">Approved Leave Viewer</option><option value="admin">Admin</option></select></div>
       <div class="permissionBox"><label><input id="privTimetableStudio" type="checkbox"> <span><b>Delegate Timetable Studio</b><br><small>May configure, generate, edit and save timetable versions. Only the Principal/Admin can activate or delete them.</small></span></label></div>
+      <div class="permissionBox"><label><input id="privExamDepartment" type="checkbox"> <span><b>Delegate Examination Department</b><br><small>May prepare exam timetables, invigilator allocations and reliever duty lists from the active master timetable.</small></span></label></div>
     </div>
     <div class="actions"><button class="green" id="savePriv">Add / Update Privileged Account</button><button id="refreshPriv">Refresh List</button></div>
     <div id="privMsg" class="status" style="display:none"></div>
-    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Timetable Studio</th><th>Status</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="7">Loading…</td></tr></tbody></table></div>
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Timetable Studio</th><th>Examination Department</th><th>Status</th><th>UID</th><th>Action</th></tr></thead><tbody id="privRows"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
   </div>
 </div>
 </main>
@@ -254,25 +255,28 @@ function roleOptions(selected=''){
  return opts.map(([v,l])=>'<option value="'+v+'" '+(String(selected)===v?'selected':'')+'>'+l+'</option>').join('');
 }
 async function loadPrivileged(){
- const body=$('privRows');body.innerHTML='<tr><td colspan="7">Loading…</td></tr>';
+ const body=$('privRows');body.innerHTML='<tr><td colspan="8">Loading…</td></tr>';
  try{
    const qs=await getDocs(collection(db,'authorizedUsers'));
    const rows=[];qs.forEach(d=>rows.push({id:d.id,...d.data()}));rows.sort((a,b)=>(a.name||a.email||a.id).localeCompare(b.name||b.email||b.id));
    body.innerHTML=rows.length?rows.map(x=>{
      const self=x.id===currentUser.uid;
      const studio=x.role==='admin'||x.permissions?.timetableStudio===true;
-     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td>${self?'<span class="pill">Admin · protected</span>':`<select id="role_${safe(x.id)}" style="min-width:175px">${roleOptions(x.role||'proxy_manager')}</select> <button data-save-role="${safe(x.id)}" data-role-select="role_${safe(x.id)}">Update Role</button>`}</td><td>${self?'<span class="pill">Full Admin access</span>':`<span class="pill">${studio?'Delegated':'Not delegated'}</span> <button data-toggle-studio="${safe(x.id)}" data-next-studio="${studio?'false':'true'}">${studio?'Remove Studio Access':'Delegate Studio'}</button>`}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
-   }).join(''):'<tr><td colspan="7">No privileged accounts found.</td></tr>';
- }catch(e){body.innerHTML='<tr><td colspan="7">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
+     const exam=x.role==='admin'||x.permissions?.examDepartment===true;
+     return `<tr><td>${safe(x.name||'')}</td><td>${safe(x.email||'')}</td><td>${self?'<span class="pill">Admin · protected</span>':`<select id="role_${safe(x.id)}" style="min-width:175px">${roleOptions(x.role||'proxy_manager')}</select> <button data-save-role="${safe(x.id)}" data-role-select="role_${safe(x.id)}">Update Role</button>`}</td><td>${self||x.role==='admin'?'<span class="pill">Full Admin access</span>':`<span class="pill">${studio?'Delegated':'Not delegated'}</span> <button data-toggle-studio="${safe(x.id)}" data-next-studio="${studio?'false':'true'}">${studio?'Remove Studio Access':'Delegate Studio'}</button>`}</td><td>${self||x.role==='admin'?'<span class="pill">Full Admin access</span>':`<span class="pill">${exam?'Delegated':'Not delegated'}</span> <button data-toggle-exam="${safe(x.id)}" data-next-exam="${exam?'false':'true'}">${exam?'Remove Exam Access':'Delegate Exam Department'}</button>`}</td><td><span class="pill">${x.active===false?'Temporarily Disabled':'Active'}</span></td><td class="code">${safe(x.id)}</td><td>${self?'<span class="pill">Current Admin · protected</span>':`<button data-toggle-priv="${safe(x.id)}" data-next-active="${x.active===false?'true':'false'}">${x.active===false?'Enable':'Temporarily Disable'}</button> <button class="danger" data-remove-priv="${safe(x.id)}">Remove</button>`}</td></tr>`;
+   }).join(''):'<tr><td colspan="8">No privileged accounts found.</td></tr>';
+ }catch(e){body.innerHTML='<tr><td colspan="8">Could not load privileged accounts: '+safe(e.message||e)+'</td></tr>'}
 }
 $('savePriv').onclick=async()=>{
- const uid=$('privUid').value.trim(),name=$('privName').value.trim(),email=$('privEmail').value.trim().toLowerCase(),role=$('privRole').value,timetableStudio=$('privTimetableStudio').checked;
+ const uid=$('privUid').value.trim(),name=$('privName').value.trim(),email=$('privEmail').value.trim().toLowerCase(),role=$('privRole').value,timetableStudio=$('privTimetableStudio').checked,examDepartment=$('privExamDepartment').checked;
  if(!uid||!email||!name){showMsg('privMsg','UID, name and email are required.','warn');return}
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('privMsg','Please enter a valid email address.','warn');return}
  try{
-   await setDoc(doc(db,'authorizedUsers',uid),{active:true,email,name,role,permissions:{timetableStudio}},{merge:true});
+   const ref=doc(db,'authorizedUsers',uid);
+   await setDoc(ref,{active:true,email,name,role},{merge:true});
+   await updateDoc(ref,{'permissions.timetableStudio':timetableStudio,'permissions.examDepartment':examDepartment});
    showMsg('privMsg','Privileged account saved successfully.','ok');
-   $('privUid').value='';$('privName').value='';$('privEmail').value='';$('privRole').value='staff';$('privTimetableStudio').checked=false;
+   $('privUid').value='';$('privName').value='';$('privEmail').value='';$('privRole').value='staff';$('privTimetableStudio').checked=false;$('privExamDepartment').checked=false;
    await loadPrivileged();
  }catch(e){showMsg('privMsg','Could not save account: '+(e.message||e),'warn')}
 };
@@ -331,8 +335,15 @@ document.addEventListener('click',async e=>{
  const ts=e.target.closest('[data-toggle-studio]');
  if(ts){
    const uid=ts.dataset.toggleStudio,timetableStudio=ts.dataset.nextStudio==='true';
-   try{await setDoc(doc(db,'authorizedUsers',uid),{permissions:{timetableStudio}},{merge:true});await loadPrivileged();showMsg('privMsg',timetableStudio?'Timetable Studio access delegated.':'Timetable Studio delegation removed.','ok')}
+   try{await updateDoc(doc(db,'authorizedUsers',uid),{'permissions.timetableStudio':timetableStudio});await loadPrivileged();showMsg('privMsg',timetableStudio?'Timetable Studio access delegated.':'Timetable Studio delegation removed.','ok')}
    catch(err){showMsg('privMsg','Could not change Timetable Studio access: '+(err.message||err),'warn')}
+   return;
+ }
+ const ex=e.target.closest('[data-toggle-exam]');
+ if(ex){
+   const uid=ex.dataset.toggleExam,examDepartment=ex.dataset.nextExam==='true';
+   try{await updateDoc(doc(db,'authorizedUsers',uid),{'permissions.examDepartment':examDepartment});await loadPrivileged();showMsg('privMsg',examDepartment?'Examination Department access delegated.':'Examination Department delegation removed.','ok')}
+   catch(err){showMsg('privMsg','Could not change Examination Department access: '+(err.message||err),'warn')}
    return;
  }
  const vb=e.target.closest('[data-remove-viewer]');
