@@ -7,6 +7,8 @@ function teachersFromPage(){const e=document.getElementById('aTeacher');if(!e)re
 function syncFilters(){const ss=document.getElementById('lSubject'),sc=document.getElementById('lClass'),vs=document.getElementById('vCSubject'),vc=document.getElementById('vCClass');if(ss&&vs){const old=vs.value;vs.innerHTML=ss.innerHTML;if([...vs.options].some(o=>o.value===old))vs.value=old}if(sc&&vc){const old=vc.value;vc.innerHTML=sc.innerHTML;if([...vc.options].some(o=>o.value===old))vc.value=old}}
 function ranked(rows,mode){const copy=[...rows];if(mode==='rate')copy.sort((a,b)=>(a.smallSample?1:0)-(b.smallSample?1:0)||b.rate-a.rate||b.ok-a.ok||a.name.localeCompare(b.name));else copy.sort((a,b)=>b.ok-a.ok||b.rate-a.rate||a.name.localeCompare(b.name));return copy}
 function rankLabel(i,x,mode){if(mode==='rate'&&x.smallSample)return'—';return i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}
+function plainRank(i,x,mode){return mode==='rate'&&x.smallSample?'Unranked':String(i)}
+function copyText(text){if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text);const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok?Promise.resolve():Promise.reject(Error('Clipboard unavailable'))}
 async function init(){
   for(let i=0;i<40&&!document.getElementById('app');i++)await wait(100);
   const app=document.getElementById('app');if(!app)return;
@@ -19,7 +21,7 @@ async function init(){
   <div class="tip">Academic workflow view: ranks teachers by verified questions and also shows verification and return-for-revision rates. These are workflow indicators only and are <b>not</b> academic quality scores. Rate ranking requires at least 5 submitted questions; smaller samples stay visible but unranked. Firestore aggregate counts are used; question documents are not downloaded.</div>
   <div class="grid2" style="margin-top:10px"><div><label>Subject</label><select id="vCSubject"><option value="">All</option></select></div><div><label>Class</label><select id="vCClass"><option value="">All</option></select></div></div>
   <div style="margin-top:10px;max-width:360px"><label>Rank by</label><select id="vCRankMode"><option value="verified">Verified question count</option><option value="rate">Verification rate (minimum 5 submitted)</option></select></div>
-  <div class="actions"><button id="loadVerifiedContribution" class="primary">Calculate Verified Contribution</button><button id="exportVerifiedContribution">Export CSV</button></div>
+  <div class="actions"><button id="loadVerifiedContribution" class="primary">Calculate Verified Contribution</button><button id="exportVerifiedContribution">Export CSV</button><button id="copyVerifiedContribution">Copy Summary</button></div>
   <div id="verifiedContributionSummary" style="display:none;margin:12px 0"></div>
   <div id="verifiedContributionList"><div class="empty">Click “Calculate Verified Contribution”. Nothing is counted on page startup.</div></div>`;
   document.querySelector('main .wrap #app')?.appendChild(sec);syncFilters();
@@ -51,6 +53,10 @@ async function init(){
       summary.innerHTML=`<div class="grid2"><div class="tip"><b>${rows.length}</b> contributing teacher${rows.length===1?'':'s'}<br><span class="small">for the current Subject/Class filter</span></div><div class="tip"><b>${totals.submitted}</b> submitted · <b>${totals.verified}</b> verified (${pct(totals.verified,totals.submitted)}%) · <b>${totals.returned}</b> currently returned (${pct(totals.returned,totals.submitted)}%)</div></div>`;
       render();
     }else out.innerHTML='<div class="empty">No submitted questions for this selection.</div>';}catch(e){out.innerHTML='<div class="empty">Could not calculate verified contribution: '+esc(e.message||e)+'</div>'}finally{button.disabled=false;button.textContent=old}
+  };
+  document.getElementById('copyVerifiedContribution').onclick=async()=>{
+    if(!lastRows.length)return alert('Calculate the Verified Contribution view first.');
+    const subject=document.getElementById('vCSubject').value||'All subjects',cls=document.getElementById('vCClass').value||'All classes',mode=document.getElementById('vCRankMode').value,sorted=ranked(lastRows,mode),totals=lastRows.reduce((a,x)=>({submitted:a.submitted+x.total,verified:a.verified+x.ok,returned:a.returned+x.returned}),{submitted:0,verified:0,returned:0}),lines=['VKV Nalbari · Question Bank Verified Contribution','Subject: '+subject+' · Class: '+cls,'Ranking: '+(mode==='rate'?'Verification rate (minimum 5 submitted)':'Verified question count'),'Contributors: '+lastRows.length+' · Submitted: '+totals.submitted+' · Verified: '+totals.verified+' ('+pct(totals.verified,totals.submitted)+'%) · Returned: '+totals.returned+' ('+pct(totals.returned,totals.submitted)+'%)',''];let rank=0;for(const x of sorted){const eligible=!(mode==='rate'&&x.smallSample);if(eligible)rank++;lines.push(plainRank(rank,x,mode)+'. '+x.name+' ('+x.code+') — Verified '+x.ok+'/'+x.total+' · '+x.rate+'% verified · Returned '+x.returned+' ('+x.returnRate+'%)'+(!eligible?' · small sample; unranked':''))}lines.push('','Note: These are workflow contribution indicators, not academic quality scores.');try{await copyText(lines.join('\n'));const b=document.getElementById('copyVerifiedContribution'),old=b.textContent;b.textContent='✓ Summary Copied';setTimeout(()=>b.textContent=old,1800)}catch(e){alert('Could not copy the summary on this browser. Please use Export CSV instead.')}
   };
   document.getElementById('exportVerifiedContribution').onclick=()=>{
     if(!lastRows.length)return alert('Calculate the Verified Contribution view first.');
