@@ -41,6 +41,7 @@
     const issues=[...score.problems];
     if(!sections.length)issues.push('No section has been added yet.');
     if(emptySections)issues.push(emptySections+' section '+(emptySections===1?'is':'are')+' empty. Add a question or remove the unused section before finalising.');
+    if(untitled)issues.push(untitled+' section '+(untitled===1?'has':'have')+' no title. Name each section before review so the paper structure is clear.');
     if(blank)issues.push(blank+' blank question '+(blank===1?'row remains':'rows remain')+'.');
     if(zero)issues.push(zero+' question '+(zero===1?'has':'have')+' zero marks.');
     if(duplicates)issues.push(duplicates+' question '+(duplicates===1?'appears':'appear')+' to duplicate another question in this paper. Please review before finalising.');
@@ -52,7 +53,6 @@
     if(sectionMismatch)issues.push(sectionMismatch+' section '+(sectionMismatch===1?'does':'do')+' not match its section target.');
     if(missingMeta.length)issues.push('Missing paper details: '+missingMeta.join(', ')+'.');
     const notes=[];
-    if(untitled)notes.push(untitled+' untitled section'+(untitled===1?'':'s'));
     if(verified)notes.push(verified+' verified-bank question'+(verified===1?'':'s'));
     if(choice)notes.push(choice+' internal choice'+(choice===1?'':'s'));
     if(attemptGroups)notes.push(attemptGroups+' Answer Any group'+(attemptGroups===1?'':'s'));
