@@ -29,6 +29,7 @@
     const untitled=sections.filter(sec=>!String(sec.name||'').trim()).length;
     const emptySections=sections.filter(sec=>!Array.isArray(sec.questions)||sec.questions.length===0).length;
     const verified=questions.filter(x=>String(x.q.source||'')==='verified_bank'||String(x.q.sourceQuestionId||'').trim()).length;
+    const unverified=Math.max(0,questions.length-verified),verifiedPercent=questions.length?Math.round((verified/questions.length)*100):0;
     const paperSubject=normaliseMeta(s.subject),paperClass=normaliseMeta(s.className);
     const sourceSubjectMismatch=paperSubject?questions.filter(x=>String(x.q.sourceQuestionId||'').trim()&&normaliseMeta(x.q.sourceSubject)&&normaliseMeta(x.q.sourceSubject)!==paperSubject).length:0;
     const sourceClassMismatch=paperClass?questions.filter(x=>String(x.q.sourceQuestionId||'').trim()&&normaliseMeta(x.q.sourceClass)&&normaliseMeta(x.q.sourceClass)!==paperClass).length:0;
@@ -53,7 +54,8 @@
     if(sectionMismatch)issues.push(sectionMismatch+' section '+(sectionMismatch===1?'does':'do')+' not match its section target.');
     if(missingMeta.length)issues.push('Missing paper details: '+missingMeta.join(', ')+'.');
     const notes=[];
-    if(verified)notes.push(verified+' verified-bank question'+(verified===1?'':'s'));
+    if(questions.length)notes.push('Verified share '+verifiedPercent+'% ('+verified+'/'+questions.length+')');
+    if(unverified)notes.push(unverified+' unverified/manual question'+(unverified===1?'':'s')+' in this private draft; review before finalising');
     if(choice)notes.push(choice+' internal choice'+(choice===1?'':'s'));
     if(attemptGroups)notes.push(attemptGroups+' Answer Any group'+(attemptGroups===1?'':'s'));
     if(partStatus.length&&!incompleteParts&&!mismatchedParts)notes.push(partStatus.length+' subquestion mark set'+(partStatus.length===1?'':'s')+' reconciled');
