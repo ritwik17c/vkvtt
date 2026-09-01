@@ -19,14 +19,14 @@ function install(){
  const attention=document.createElement('div');attention.id='qbTextAttention';attention.className='tip';attention.style.cssText='display:none;margin-top:7px';preview.insertAdjacentElement('afterend',attention);
  const undoCorrection=$('qbUndoCorrection');let proposed='',undoValue='',appliedValue='';
  const clearEnglishQuestion=s=>/^(who|what|when|where|why|how|which|whose|whom|is|are|am|was|were|do|does|did|can|could|will|would|shall|should|may|might|has|have|had)\b/i.test(String(s||'').trim());
- let repeatedWordRe;try{repeatedWordRe=new RegExp('(?:^|[\\s([{"\\\'“‘])([\\p{L}\\p{M}][\\p{L}\\p{M}\\\'’\\-]{1,})\\s+\\1(?=$|[\\s)\\]}"\\\'”’.,!?;:।])','iu')}catch(_){repeatedWordRe=/\b([A-Za-z][A-Za-z'-]{1,})\s+\1\b/i}
+ let repeatedWordRe;try{repeatedWordRe=new RegExp('(?:^|\\s)([\\p{L}\\p{M}][\\p{L}\\p{M}\'’\\-]*)\\s+\\1(?=$|\\s|[.,!?;:।])','iu')}catch(_){repeatedWordRe=/\b([A-Za-z][A-Za-z'-]{1,})\s+\1\b/i}
  function suggest(kind){let v=ta.value;if(kind==='trim')v=v.replace(/[ \t]+/g,' ').replace(/\s+([,.?!:;])/g,'$1').trim();if(kind==='capital'){v=v.trim();if(v)v=v[0].toUpperCase()+v.slice(1)}if(kind==='punct'||kind==='all'){v=v.replace(/[ \t]+/g,' ').replace(/\s+([,.?!:;])/g,'$1').trim();if(v)v=v[0].toUpperCase()+v.slice(1);if(v&&!/[.?!]$/.test(v))v+=clearEnglishQuestion(v)?'?':'.'}return v}
  function closePreview(){preview.style.display='none';preview.innerHTML='';proposed=''}
  function scanAttention(){
   const text=String(ta.value||''),notes=[];
   const dup=text.match(repeatedWordRe);
   const punct=text.match(/(?:\?\?|!!|,,|;;|::)/);
-  if(dup){const word=dup[1]||dup[2];if(word)notes.push('Possible repeated word: “'+word+' '+word+'”')}
+  if(dup){const word=dup[1];if(word)notes.push('Possible repeated word: “'+word+' '+word+'”')}
   if(punct)notes.push('Repeated punctuation found: “'+punct[0]+'”');
   if(!notes.length){attention.style.display='none';attention.innerHTML='';return}
   attention.style.display='block';attention.innerHTML='<b>👀 Please review before submission</b><div class="small" style="margin-top:4px">'+notes.map(esc).join(' · ')+'</div><div class="small" style="margin-top:3px">These are warning-only checks. Nothing is changed automatically.</div>';
