@@ -5,12 +5,22 @@
   function getState(){try{return window.__vkvQbPaperBuilder?.getState?.()||null}catch(_){return null}}
   function getSubmarks(){try{return JSON.parse(localStorage.getItem(SUBMARKS)||'{}')||{}}catch(_){return {}}}
   function partCount(text){return String(text||'').split('\n').filter(x=>/^\s*\([a-z]\)\s+/i.test(x)).length}
+  function normaliseText(text){return String(text||'').toLocaleLowerCase().replace(/\s+/g,' ').trim()}
+  function duplicateCount(questions){
+    const seenSources=new Set(),seenTexts=new Set(),dupes=new Set();
+    questions.forEach((x,i)=>{
+      const source=String(x.q.sourceQuestionId||'').trim(),text=normaliseText(x.q.text);
+      if(source){if(seenSources.has(source))dupes.add(i);else seenSources.add(source)}
+      if(text){if(seenTexts.has(text))dupes.add(i);else seenTexts.add(text)}
+    });
+    return dupes.size;
+  }
   function analyse(s){
     if(!s)return null;
     const sections=Array.isArray(s.sections)?s.sections:[],submarks=getSubmarks();
     const questions=sections.flatMap((sec,si)=>(sec.questions||[]).map((q,qi)=>({q,si,qi})));
     const used=questions.reduce((a,x)=>a+(Number(x.q.marks)||0),0),target=Number(s.target)||0;
-    const blank=questions.filter(x=>!String(x.q.text||'').trim()).length,zero=questions.filter(x=>(Number(x.q.marks)||0)<=0).length;
+    const blank=questions.filter(x=>!String(x.q.text||'').trim()).length,zero=questions.filter(x=>(Number(x.q.marks)||0)<=0).length,duplicates=duplicateCount(questions);
     const untitled=sections.filter(sec=>!String(sec.name||'').trim()).length;
     const verified=questions.filter(x=>String(x.q.source||'')==='verified_bank'||String(x.q.sourceQuestionId||'').trim()).length;
     const choice=questions.filter(x=>String(x.q.choice||'').trim()).length;
@@ -22,6 +32,7 @@
     if(!sections.length)issues.push('No section has been added yet.');
     if(blank)issues.push(blank+' blank question '+(blank===1?'row remains':'rows remain')+'.');
     if(zero)issues.push(zero+' question '+(zero===1?'has':'have')+' zero marks.');
+    if(duplicates)issues.push(duplicates+' question '+(duplicates===1?'appears':'appear')+' to duplicate another question in this paper. Please review before finalising.');
     if(incompleteParts)issues.push(incompleteParts+' question '+(incompleteParts===1?'has':'have')+' incomplete subquestion marks.');
     if(mismatchedParts)issues.push(mismatchedParts+' question '+(mismatchedParts===1?'has':'have')+' subquestion marks that do not match the parent question total.');
     if(target&&Math.abs(target-used)>0.001)issues.push('Paper total is '+used+' marks against the '+target+'-mark target.');
@@ -33,7 +44,7 @@
     if(choice)notes.push(choice+' internal choice'+(choice===1?'':'s'));
     if(partStatus.length&&!incompleteParts&&!mismatchedParts)notes.push(partStatus.length+' subquestion mark set'+(partStatus.length===1?'':'s')+' reconciled');
     let level='good',title='Ready for review';
-    if(issues.length){level=blank||zero||!sections.length||incompleteParts||mismatchedParts?'warn':'check';title=level==='warn'?'Needs attention':'Check before finalising'}
+    if(issues.length){level=blank||zero||duplicates||!sections.length||incompleteParts||mismatchedParts?'warn':'check';title=level==='warn'?'Needs attention':'Check before finalising'}
     return{issues,notes,level,title,questions:questions.length,used,target};
   }
   function ensureBox(){const panel=$('paperBuilder');if(!panel)return null;let box=$('pbHealth');if(box)return box;box=document.createElement('div');box.id='pbHealth';box.className='tip';box.style.marginTop='10px';box.setAttribute('aria-live','polite');const anchor=$('pbBalance');if(anchor)anchor.insertAdjacentElement('afterend',box);else panel.prepend(box);return box}
