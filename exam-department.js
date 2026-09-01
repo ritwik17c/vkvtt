@@ -38,7 +38,7 @@ async function verifyAccess(user){
     state.profile=profile;
     const masterSnap=await getDoc(doc(db,'master','current'));if(!masterSnap.exists())throw new Error('The active master timetable was not found.');
     state.master=masterSnap.data();state.workspace=createWorkspaceFromMaster(state.master);
-    $('authGate').hidden=true;$('examApp').hidden=false;renderAll();renderDraftList();setSaveState('New unsaved draft',true);state.dirty=true;
+    $('authGate').hidden=true;$('examApp').hidden=false;$('saveDraft').hidden=false;renderAll();renderDraftList();setSaveState('New unsaved draft',true);state.dirty=true;
   }catch(error){$('gateMessage').textContent='Could not open the Examination Department: '+(error.message||error)}
 }
 
