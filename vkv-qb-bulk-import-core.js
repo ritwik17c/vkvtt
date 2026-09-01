@@ -94,26 +94,58 @@ function extractTrailingMarks(question,defaultMarks){
   return {question:question.slice(0,match.index).trim(),marks:Number(match[1])};
 }
 
-export function parseWordQuestionText(rawText='',defaults={}){
-  const paragraphs=String(rawText || '').replace(/\r/g,'').replace(/\u00a0/g,' ')
-    .split(/\n+/).map(line=>line.trim()).filter(Boolean);
-  const items=[];
-  let current=null;
-  const push=()=>{
-    if(!current || !current.text.trim()) return;
-    const parsed=extractTrailingMarks(current.text,defaults.marks);
-    items.push(normaliseQuestionRow({}, {...defaults,questionText:parsed.question,marks:parsed.marks,sourceRow:current.no || items.length+1}));
-  };
-  for(const line of paragraphs){
-    const match=line.match(/^\s*(?:q(?:uestion)?\s*)?(\d{1,4})\s*[.):-]\s*(.+)$/i);
-    if(match){
-      push();
-      current={no:Number(match[1]),text:match[2].trim()};
-    }else if(current){
-      current.text += '\n'+line;
-    }
+function splitWordAnswer(value){
+  const source=String(value || '').trim(),matches=[...source.matchAll(/(?:answer|ans(?:wer)?)\s*[:\-]\s*/gi)];
+  const marker=matches.at(-1);
+  if(!marker)return{question:source,answer:''};
+  const answer=source.slice(marker.index+marker[0].length).trim();
+  if(!answer)return{question:source,answer:''};
+  return{question:source.slice(0,marker.index).trim(),answer};
+}
+
+function isLineStart(source,index){
+  const start=source.lastIndexOf('\n',index-1)+1;
+  return !source.slice(start,index).trim();
+}
+
+function numberedQuestionBlocks(rawText=''){
+  const source=String(rawText || '').replace(/\r/g,'').replace(/\u00a0/g,' ');
+  const marker=/(?:q(?:uestion)?\s*[.:#\-]?\s*)?(\d{1,4})\s*[.):-]\s*/gi,matches=[];
+  let found;
+  while((found=marker.exec(source))){
+    const after=source.slice(marker.lastIndex).trimStart();
+    if(!after || /^[\d.,;%)}\]]/.test(after))continue;
+    matches.push({no:Number(found[1]),index:found.index,end:marker.lastIndex,lineStart:isLineStart(source,found.index)});
   }
-  push();
+  if(!matches.length)return[];
+  let first=matches.findIndex(item=>item.no===1&&item.lineStart);
+  if(first<0)first=matches.findIndex(item=>item.lineStart);
+  if(first<0)return[];
+  const accepted=[matches[first]];
+  for(let i=first+1;i<matches.length;i++){
+    const candidate=matches[i],previous=accepted.at(-1),expected=previous.no+1;
+    if(candidate.no<expected)continue;
+    const currentText=source.slice(previous.end,candidate.index);
+    const followsAnswer=/(?:answer|ans(?:wer)?)\s*[:\-]/i.test(currentText);
+    // Word may remove the paragraph boundary between an answer and the next
+    // number (for example "Answer: C. Water2. What ..."). In that case the
+    // consecutive number is still a safe question boundary.
+    if(candidate.no===expected&&(candidate.lineStart||followsAnswer))accepted.push(candidate);
+    else if(candidate.no>expected&&candidate.lineStart)accepted.push(candidate);
+  }
+  return accepted.map((item,index)=>({
+    no:item.no,
+    text:source.slice(item.end,accepted[index+1]?.index ?? source.length).trim()
+  })).filter(item=>item.text);
+}
+
+function wordQuestionItem(block,defaults={}){
+  const separated=splitWordAnswer(block.text),parsed=extractTrailingMarks(separated.question,defaults.marks);
+  return normaliseQuestionRow({}, {...defaults,questionText:parsed.question,answer:separated.answer||defaults.answer,marks:parsed.marks,sourceRow:block.no});
+}
+
+export function parseWordQuestionText(rawText='',defaults={}){
+  const items=numberedQuestionBlocks(rawText).map(block=>wordQuestionItem(block,defaults));
   if(!items.length){
     // A labelled Word template may use one QUESTION: block separated by ---.
     for(const block of String(rawText || '').split(/\n\s*-{3,}\s*\n/g)){
@@ -127,6 +159,34 @@ export function parseWordQuestionText(rawText='',defaults={}){
     }
   }
   return items;
+}
+
+function elementText(element){
+  const copy=element.cloneNode(true),doc=copy.ownerDocument;
+  copy.querySelectorAll('br').forEach(node=>node.replaceWith(doc.createTextNode('\n')));
+  copy.querySelectorAll('p,div,tr,li').forEach(node=>node.append(doc.createTextNode('\n')));
+  return String(copy.textContent || '').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+export function parseWordQuestionHtml(rawHtml='',defaults={}){
+  if(typeof DOMParser==='undefined'||!String(rawHtml || '').trim())return[];
+  const doc=new DOMParser().parseFromString(String(rawHtml),'text/html'),blocks=[];
+  for(const list of doc.querySelectorAll('ol')){
+    if(list.parentElement?.closest('ol'))continue;
+    const entries=[...list.children].filter(child=>child.tagName==='LI');
+    if(entries.length<2)continue;
+    const texts=entries.map(elementText),questionLike=texts.filter(value=>/[?？]/.test(value)||/(?:answer|ans(?:wer)?)\s*[:\-]/i.test(value)||value.length>=50).length;
+    if(entries.length<5&&questionLike<Math.ceil(entries.length/2))continue;
+    const start=Math.max(1,Number(list.getAttribute('start'))||1);
+    texts.forEach((value,index)=>blocks.push({no:start+index,text:value}));
+  }
+  return blocks.map(block=>wordQuestionItem(block,defaults));
+}
+
+export function parseWordQuestionDocument(source={},defaults={}){
+  const fromText=parseWordQuestionText(source.text||'',defaults);
+  const fromStructure=parseWordQuestionHtml(source.html||'',defaults);
+  return fromStructure.length>fromText.length?fromStructure:fromText;
 }
 
 export function importFingerprint(item,teacherKey=''){

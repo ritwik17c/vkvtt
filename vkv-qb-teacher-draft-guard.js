@@ -16,7 +16,7 @@
     let doc;try{doc=frame.contentDocument}catch(_){return}
     if(!doc||!doc.getElementById('qt'))return;
     if(!doc.getElementById('qbBulkImportEnhancement')){
-      const enhancement=doc.createElement('script');enhancement.id='qbBulkImportEnhancement';enhancement.type='module';enhancement.src='vkv-qb-teacher-bulk-import.js?v=20260901-1';doc.body.appendChild(enhancement);
+      const enhancement=doc.createElement('script');enhancement.id='qbBulkImportEnhancement';enhancement.type='module';enhancement.src='vkv-qb-teacher-bulk-import.js?v=20260901-2';doc.body.appendChild(enhancement);
     }
     if(doc.getElementById('qbDraftGuardStatus'))return;
     const qt=doc.getElementById('qt');

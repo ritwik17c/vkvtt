@@ -2,7 +2,7 @@ import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.1
 import{getAuth,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 import{activeQBSubjects}from'./vkv-qb-subject-catalog.js?v=20260901-1';
-import{QB_IMPORT_COLUMNS,QB_QUESTION_TYPES,QB_DIFFICULTIES,parseExcelQuestionRows,parseWordQuestionText,validateQuestionImports,importFingerprint}from'./vkv-qb-bulk-import-core.js?v=20260901-1';
+import{QB_IMPORT_COLUMNS,QB_QUESTION_TYPES,QB_DIFFICULTIES,parseExcelQuestionRows,parseWordQuestionDocument,validateQuestionImports,importFingerprint}from'./vkv-qb-bulk-import-core.js?v=20260901-2';
 
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
@@ -101,7 +101,7 @@ async function analyse(){
     if(extension==='xlsx'||extension==='xls'){
       const XLSX=await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','XLSX'),workbook=XLSX.read(await file.arrayBuffer(),{type:'array'}),sheet=workbook.Sheets[workbook.SheetNames[0]],rows=XLSX.utils.sheet_to_json(sheet,{defval:'',raw:false});items=parseExcelQuestionRows(rows,defaults);sourceType='excel';
     }else if(extension==='docx'){
-      const mammoth=await loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.12.2/mammoth.browser.min.js','mammoth'),result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});items=parseWordQuestionText(result.value,defaults);sourceType='word';
+      const mammoth=await loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.12.2/mammoth.browser.min.js','mammoth'),buffer=await file.arrayBuffer(),[plain,structured]=await Promise.all([mammoth.extractRawText({arrayBuffer:buffer.slice(0)}),mammoth.convertToHtml({arrayBuffer:buffer})]);items=parseWordQuestionDocument({text:plain.value,html:structured.value},defaults);sourceType='word';
     }else throw Error('Only .xlsx, .xls and .docx files are supported. Old .doc files should first be saved as .docx in Word.');
     if(!items.length)throw Error(sourceType==='word'?'No numbered questions were detected. Number each Word question as 1., 2., 3. and try again.':'No question rows were found in the first worksheet.');
     renderPreview();const invalid=items.filter(item=>item.errors?.length).length;setMessage(`File analysed: ${items.length} question(s) found${invalid?`; ${invalid} need correction`:''}. Review the preview before saving.`,invalid?'warning':'ok');
