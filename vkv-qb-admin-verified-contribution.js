@@ -5,6 +5,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const pct=(n,d)=>d?Math.round(n*1000/d)/10:0;
 function teachersFromPage(){const e=document.getElementById('aTeacher');if(!e)return[];return[...e.options].map(o=>{const code=String(o.value||'').trim(),text=String(o.textContent||'').trim(),m=text.match(/^(.*?)\s*\(([^()]*)\)\s*$/);return{code,name:(m?.[1]||text||code).trim()}}).filter(x=>x.code)}
 function syncFilters(){const ss=document.getElementById('lSubject'),sc=document.getElementById('lClass'),vs=document.getElementById('vCSubject'),vc=document.getElementById('vCClass');if(ss&&vs){const old=vs.value;vs.innerHTML=ss.innerHTML;if([...vs.options].some(o=>o.value===old))vs.value=old}if(sc&&vc){const old=vc.value;vc.innerHTML=sc.innerHTML;if([...vc.options].some(o=>o.value===old))vc.value=old}}
+function ranked(rows,mode){const copy=[...rows];if(mode==='rate')copy.sort((a,b)=>(a.smallSample?1:0)-(b.smallSample?1:0)||b.rate-a.rate||b.ok-a.ok||a.name.localeCompare(b.name));else copy.sort((a,b)=>b.ok-a.ok||b.rate-a.rate||a.name.localeCompare(b.name));return copy}
+function rankLabel(i,x,mode){if(mode==='rate'&&x.smallSample)return'—';return i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}
 async function init(){
   for(let i=0;i<40&&!document.getElementById('app');i++)await wait(100);
   const app=document.getElementById('app');if(!app)return;
@@ -14,14 +16,17 @@ async function init(){
   const btn=document.createElement('button');btn.dataset.panel='verifiedContribution';btn.textContent='🏅 Verified Contribution';tabs.insertBefore(btn,tabs.querySelector('[data-panel="questions"]'));
   const sec=document.createElement('section');sec.id='verifiedContribution';sec.className='card panel';
   sec.innerHTML=`<h2>🏅 Verified Contribution & Revision Context</h2>
-  <div class="tip">Academic workflow view: ranks teachers by verified questions and also shows verification and return-for-revision rates. These are workflow indicators only and are <b>not</b> academic quality scores. Rates based on fewer than 5 submitted questions are marked as a small sample. Firestore aggregate counts are used; question documents are not downloaded.</div>
+  <div class="tip">Academic workflow view: ranks teachers by verified questions and also shows verification and return-for-revision rates. These are workflow indicators only and are <b>not</b> academic quality scores. Rate ranking requires at least 5 submitted questions; smaller samples stay visible but unranked. Firestore aggregate counts are used; question documents are not downloaded.</div>
   <div class="grid2" style="margin-top:10px"><div><label>Subject</label><select id="vCSubject"><option value="">All</option></select></div><div><label>Class</label><select id="vCClass"><option value="">All</option></select></div></div>
+  <div style="margin-top:10px;max-width:360px"><label>Rank by</label><select id="vCRankMode"><option value="verified">Verified question count</option><option value="rate">Verification rate (minimum 5 submitted)</option></select></div>
   <div class="actions"><button id="loadVerifiedContribution" class="primary">Calculate Verified Contribution</button><button id="exportVerifiedContribution">Export CSV</button></div>
   <div id="verifiedContributionSummary" style="display:none;margin:12px 0"></div>
   <div id="verifiedContributionList"><div class="empty">Click “Calculate Verified Contribution”. Nothing is counted on page startup.</div></div>`;
   document.querySelector('main .wrap #app')?.appendChild(sec);syncFilters();
   btn.onclick=()=>{syncFilters();document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x===sec))};
   let lastRows=[];
+  function render(){const out=document.getElementById('verifiedContributionList'),mode=document.getElementById('vCRankMode').value,rows=ranked(lastRows,mode);if(!rows.length){out.innerHTML='<div class="empty">No submitted questions for this selection.</div>';return}let eligibleIndex=0;out.innerHTML=rows.map(x=>{const displayIndex=mode==='rate'&&x.smallSample?-1:eligibleIndex++,rank=displayIndex<0?'—':rankLabel(displayIndex,x,mode);return`<div class="leader"><div class="rank">${rank}</div><div class="grow"><b>${esc(x.name)}</b>${x.smallSample?' <span class="pill">Small sample</span>':''}<div class="small">${esc(x.code)} · Verified: <b>${x.ok}</b> of ${x.total} submitted · Verification rate: <b>${x.rate}%</b> · Returned for revision: <b>${x.returned}</b> (${x.returnRate}%)${mode==='rate'&&x.smallSample?' · unranked until 5 submissions':''}</div></div></div>`}).join('')}
+  document.getElementById('vCRankMode').addEventListener('change',()=>{if(lastRows.length)render()});
   document.getElementById('loadVerifiedContribution').onclick=async()=>{
     const button=document.getElementById('loadVerifiedContribution'),out=document.getElementById('verifiedContributionList'),summary=document.getElementById('verifiedContributionSummary'),sub=document.getElementById('vCSubject').value,cls=document.getElementById('vCClass').value,teachers=teachersFromPage();
     summary.style.display='none';summary.innerHTML='';if(!teachers.length){out.innerHTML='<div class="empty">Teacher list is not ready yet. Reopen this tab after the Admin page finishes loading.</div>';return}button.disabled=true;const old=button.textContent;button.textContent='Calculating…';out.innerHTML='<div class="empty">Calculating quota-safe aggregate counts…</div>';
@@ -39,17 +44,17 @@ async function init(){
         if(total)rows.push({name:t.name||t.code,code:t.code,total,ok,returned:ret,rate:pct(ok,total),returnRate:pct(ret,total),smallSample:total<5});
       }catch(e){console.warn('Verified contribution count',t.code,e)}
     }
-    rows.sort((a,b)=>b.ok-a.ok||b.rate-a.rate||a.name.localeCompare(b.name));lastRows=rows;
+    lastRows=rows;
     if(rows.length){
       const totals=rows.reduce((a,x)=>({submitted:a.submitted+x.total,verified:a.verified+x.ok,returned:a.returned+x.returned}),{submitted:0,verified:0,returned:0});
       summary.style.display='block';
       summary.innerHTML=`<div class="grid2"><div class="tip"><b>${rows.length}</b> contributing teacher${rows.length===1?'':'s'}<br><span class="small">for the current Subject/Class filter</span></div><div class="tip"><b>${totals.submitted}</b> submitted · <b>${totals.verified}</b> verified (${pct(totals.verified,totals.submitted)}%) · <b>${totals.returned}</b> currently returned (${pct(totals.returned,totals.submitted)}%)</div></div>`;
-      out.innerHTML=rows.map((x,i)=>`<div class="leader"><div class="rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div><div class="grow"><b>${esc(x.name)}</b>${x.smallSample?' <span class="pill">Small sample</span>':''}<div class="small">${esc(x.code)} · Verified: <b>${x.ok}</b> of ${x.total} submitted · Verification rate: <b>${x.rate}%</b> · Returned for revision: <b>${x.returned}</b> (${x.returnRate}%)</div></div></div>`).join('');
+      render();
     }else out.innerHTML='<div class="empty">No submitted questions for this selection.</div>';}catch(e){out.innerHTML='<div class="empty">Could not calculate verified contribution: '+esc(e.message||e)+'</div>'}finally{button.disabled=false;button.textContent=old}
   };
   document.getElementById('exportVerifiedContribution').onclick=()=>{
     if(!lastRows.length)return alert('Calculate the Verified Contribution view first.');
-    const subject=document.getElementById('vCSubject').value||'All',cls=document.getElementById('vCClass').value||'All',rows=[['Rank','Teacher','Code','Submitted','Verified','Verification Rate %','Returned for Revision','Return Rate %','Sample Context','Subject','Class'],...lastRows.map((x,i)=>[i+1,x.name,x.code,x.total,x.ok,x.rate,x.returned,x.returnRate,x.smallSample?'Small sample (<5 submitted)':'5+ submitted',subject,cls])],csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='VKV_QB_Verified_Contribution.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
+    const subject=document.getElementById('vCSubject').value||'All',cls=document.getElementById('vCClass').value||'All',mode=document.getElementById('vCRankMode').value,sorted=ranked(lastRows,mode);let eligibleRank=0;const rows=[['Rank','Teacher','Code','Submitted','Verified','Verification Rate %','Returned for Revision','Return Rate %','Sample Context','Ranking Mode','Subject','Class'],...sorted.map(x=>{const rank=mode==='rate'&&x.smallSample?'Unranked':++eligibleRank;return[rank,x.name,x.code,x.total,x.ok,x.rate,x.returned,x.returnRate,x.smallSample?'Small sample (<5 submitted)':'5+ submitted',mode==='rate'?'Verification rate (min 5)':'Verified count',subject,cls]})],csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='VKV_QB_Verified_Contribution.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
   };
 }
 init();
