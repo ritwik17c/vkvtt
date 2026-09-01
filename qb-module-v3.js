@@ -1,6 +1,7 @@
 import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,setPersistence,browserLocalPersistence,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,updateDoc,collection,getDocs,query,where,serverTimestamp,limit}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+import{activeQBSubjects}from'./vkv-qb-subject-catalog.js?v=20260901-1';
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();await setPersistence(auth,browserLocalPersistence).catch(()=>{});
 const $=id=>document.getElementById(id),safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),mail=v=>String(v||'').trim().toLowerCase();
@@ -10,7 +11,7 @@ const fallbackSubjects=['English','Assamese','Hindi','Sanskrit','Mathematics','E
 function canonical(c){const a=master.teacherCodeAliases||{},seen=new Set();c=String(c||'').trim();while(c&&a[c]&&!seen.has(c)){seen.add(c);c=String(a[c]).trim()}return c}
 function addSubject(set,v){v=String(v||'').trim();if(v&&v.length<80)set.add(v)}
 function timetableSubjects(){const out=new Set();(master.subjects||[]).forEach(x=>addSubject(out,typeof x==='string'?x:(x.name||x.subject||x.subjectName)));(master.records||[]).forEach(r=>{addSubject(out,r?.subject);addSubject(out,r?.subjectName)});(master.assignmentCards||[]).forEach(r=>{addSubject(out,r?.subject);addSubject(out,r?.subjectName)});return out}
-function subjects(){const out=timetableSubjects();(conf.extraSubjects||[]).forEach(x=>addSubject(out,x));fallbackSubjects.forEach(x=>addSubject(out,x));return[...out].sort((a,b)=>a.localeCompare(b))}
+function subjects(){return activeQBSubjects(master,conf)}
 function fill(id,arr){const e=$(id);if(e)e.innerHTML=arr.map(x=>`<option>${safe(x)}</option>`).join('')}
 function teacherByCode(c){c=canonical(c);return(master.teachers||[]).find(x=>canonical(x.code||x.shortCode||x.teacherShortCode||x.timetableCode)===c)||null}
 function staffEmails(x){return[x?.email,x?.gmail,x?.googleEmail,x?.google_email,x?.officialEmail,x?.loginEmail,...(Array.isArray(x?.emails)?x.emails:[])].map(mail).filter(Boolean)}
