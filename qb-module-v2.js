@@ -1,7 +1,7 @@
 import './qb-module-v3.js?v=20260831-authstall-fixed-1';
 import './vkv-qb-dictation.js?v=20260902-language-safe-review-1';
 import './vkv-qb-history-enhancement.js?v=20260830-unverified-2';
-import './vkv-qb-imported-history-bridge.js?v=20260830-imported-history-2';
+import './vkv-qb-imported-history-bridge.js?v=20260902-complete-legacy-history-1';
 import './vkv-qb-coordinator-ui.js?v=20260901-age-sort-1';
 import './vkv-qb-coordinator-feedback-bridge.js?v=20260831-feedback-1';
 import './vkv-qb-submission-readiness.js?v=20260902-presubmit-live-review-1';
