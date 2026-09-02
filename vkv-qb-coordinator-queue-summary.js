@@ -47,6 +47,14 @@
     };
   }
 
+  function priorityText(s){
+    const b=s.buckets;
+    if(b.over7)return `Review priority: ${b.over7} question${b.over7===1?'':'s'} waiting over 7 days first${b.three7?`, then ${b.three7} waiting 3–7 days`:''}.`;
+    if(b.three7)return `Review priority: ${b.three7} question${b.three7===1?'':'s'} waiting 3–7 days first.`;
+    if(b.unknown)return 'Review priority: no older known-age queue; check age-unavailable records when practical.';
+    return 'Review priority: no older waiting questions in the current view.';
+  }
+
   function summaryText(){
     const s=snapshot(),b=s.buckets;
     return [
@@ -54,6 +62,7 @@
       `Current view: ${s.visible} of ${s.totalLoaded} loaded pending question(s)`,
       `Ageing in current view: ${b.today} today · ${b.within2} within 2 days · ${b.three7} 3–7 days · ${b.over7} over 7 days${b.unknown?` · ${b.unknown} age unavailable`:''}`,
       `Oldest visible wait: ${s.oldest==null?'age unavailable':s.oldest===0?'submitted today':s.oldest+' day'+(s.oldest===1?'':'s')}`,
+      priorityText(s),
       `Subject view: ${s.subject}`,
       `Order: ${s.order}${s.searchActive?' · Search/filter text active':''}`,
       'Operational workload summary only; no verification decision or question record is changed.'
@@ -86,7 +95,7 @@
     if(!s.visible){focus.textContent='Ageing focus will appear here after pending questions are loaded.';return}
     const old=s.buckets.over7;
     const oldest=s.oldest==null?'oldest age unavailable':s.oldest===0?'all known visible questions were submitted today':`oldest visible wait ${s.oldest} day${s.oldest===1?'':'s'}`;
-    focus.innerHTML=`<b>Ageing focus:</b> ${old?`<b>${old}</b> waiting over 7 days · `:''}${oldest}.${s.buckets.unknown?` ${s.buckets.unknown} visible question${s.buckets.unknown===1?' has':'s have'} no usable age.`:''} <span style="font-weight:400">Current filtered view only.</span>`;
+    focus.innerHTML=`<b>Ageing focus:</b> ${old?`<b>${old}</b> waiting over 7 days · `:''}${oldest}. <b>${priorityText(s)}</b>${s.buckets.unknown?` ${s.buckets.unknown} visible question${s.buckets.unknown===1?' has':'s have'} no usable age.`:''} <span style="font-weight:400">Current filtered view only; priority guidance does not change verification order or status.</span>`;
   }
 
   function install(){
