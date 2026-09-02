@@ -139,13 +139,64 @@ function numberedQuestionBlocks(rawText=''){
   })).filter(item=>item.text);
 }
 
+// Word can occasionally lose one automatic-list number while retaining the
+// full question text. If a numbered sequence jumps by one and the preceding
+// captured block contains two complete Answer: lines, split that block into
+// two questions instead of silently merging the missing-number question.
+function recoverEmbeddedAnsweredQuestions(blocks=[]){
+  const out=[];
+  for(let i=0;i<blocks.length;i++){
+    const block=blocks[i],next=blocks[i+1],gap=next?next.no-block.no:1;
+    const answers=[...String(block.text||'').matchAll(/(?:^|\n)\s*(?:answer|ans(?:wer)?)\s*[:\-][^\n]*(?:\n|$)/gi)];
+    if(gap>1&&answers.length>1){
+      let start=0,no=block.no;
+      const take=Math.min(answers.length,gap);
+      for(let j=0;j<take;j++){
+        const end=answers[j].index+answers[j][0].length,part=block.text.slice(start,end).trim();
+        if(part)out.push({no:no++,text:part});
+        start=end;
+      }
+      const tail=block.text.slice(start).trim();
+      if(tail&&out.length)out[out.length-1].text+='\n'+tail;
+      else if(tail)out.push({no:block.no,text:tail});
+    }else out.push(block);
+  }
+  return out;
+}
+
 function wordQuestionItem(block,defaults={}){
   const separated=splitWordAnswer(block.text),parsed=extractTrailingMarks(separated.question,defaults.marks);
   return normaliseQuestionRow({}, {...defaults,questionText:parsed.question,answer:separated.answer||defaults.answer,marks:parsed.marks,sourceRow:block.no});
 }
 
+function wordQuestionSections(rawText='',defaults={}){
+  const source=String(rawText||'').replace(/\r/g,'').replace(/\u00a0/g,' ');
+  // Explicit marks-section headings are strong structure signals. Teachers
+  // commonly restart numbering at Q1 under THREE MARKS / FIVE MARKS sections.
+  const heading=/^[^\n]*\b(?:(?:3|5)\s*[-–—]?\s*marks?|three\s+marks?|five\s+marks?)\s+questions?\b[^\n]*$/gim;
+  const matches=[...source.matchAll(heading)];
+  if(!matches.length)return[{body:source,defaults}];
+  const sections=[];
+  if(matches[0].index>0)sections.push({body:source.slice(0,matches[0].index),defaults});
+  for(let i=0;i<matches.length;i++){
+    const line=matches[i][0],start=matches[i].index+line.length,end=matches[i+1]?.index??source.length;
+    const marks=/\b(?:3\s*[-–—]?\s*marks?|three\s+marks?)\b/i.test(line)?3:5;
+    let body=source.slice(start,end);
+    // A./B./C. subsection labels inside 3/5-mark banks are headings, not
+    // answer options. Removing them prevents a heading being appended to the
+    // preceding question when Word stores many questions in one paragraph.
+    body=body.replace(/^\s*[A-Z]\.\s+[^\n]{1,100}\s*$/gim,'');
+    sections.push({body,defaults:{...defaults,marks,questionType:marks===3?'Short Answer':'Long Answer'}});
+  }
+  return sections;
+}
+
 export function parseWordQuestionText(rawText='',defaults={}){
-  const items=numberedQuestionBlocks(rawText).map(block=>wordQuestionItem(block,defaults));
+  const items=[];
+  for(const section of wordQuestionSections(rawText,defaults)){
+    const blocks=recoverEmbeddedAnsweredQuestions(numberedQuestionBlocks(section.body));
+    items.push(...blocks.map(block=>wordQuestionItem(block,section.defaults)));
+  }
   if(!items.length){
     // A labelled Word template may use one QUESTION: block separated by ---.
     for(const block of String(rawText || '').split(/\n\s*-{3,}\s*\n/g)){
