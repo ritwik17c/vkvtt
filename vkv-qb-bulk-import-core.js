@@ -108,8 +108,8 @@ function isLineStart(source,index){
   return !source.slice(start,index).trim();
 }
 
-function numberedQuestionBlocks(rawText=''){
-  const source=String(rawText || '').replace(/\r/g,'').replace(/\u00a0/g,' ');
+function numberedQuestionBlocks(rawText='',options={}){
+  const source=String(rawText || '').replace(/\r/g,'').replace(/\u00a0/g,' '),inlineSequential=options.inlineSequential===true;
   const marker=/(?:q(?:uestion)?\s*[.:#\-]?\s*)?(\d{1,4})\s*[.):-]\s*/gi,matches=[];
   let found;
   while((found=marker.exec(source))){
@@ -127,10 +127,11 @@ function numberedQuestionBlocks(rawText=''){
     if(candidate.no<expected)continue;
     const currentText=source.slice(previous.end,candidate.index);
     const followsAnswer=/(?:answer|ans(?:wer)?)\s*[:\-]/i.test(currentText);
-    // Word may remove the paragraph boundary between an answer and the next
-    // number (for example "Answer: C. Water2. What ..."). In that case the
-    // consecutive number is still a safe question boundary.
-    if(candidate.no===expected&&(candidate.lineStart||followsAnswer))accepted.push(candidate);
+    // Objective sections remain strict because numbers can legitimately occur
+    // in options and answers. Explicit 3/5-mark sections are different: Word
+    // often stores Q1...Q2...Q3 in one paragraph, so a consecutive number is
+    // a safe boundary even when there is no line break or Answer: marker.
+    if(candidate.no===expected&&(candidate.lineStart||followsAnswer||inlineSequential))accepted.push(candidate);
     else if(candidate.no>expected&&candidate.lineStart)accepted.push(candidate);
   }
   return accepted.map((item,index)=>({
@@ -175,9 +176,9 @@ function wordQuestionSections(rawText='',defaults={}){
   // commonly restart numbering at Q1 under THREE MARKS / FIVE MARKS sections.
   const heading=/^[^\n]*\b(?:(?:3|5)\s*[-–—]?\s*marks?|three\s+marks?|five\s+marks?)\s+questions?\b[^\n]*$/gim;
   const matches=[...source.matchAll(heading)];
-  if(!matches.length)return[{body:source,defaults}];
+  if(!matches.length)return[{body:source,defaults,inlineSequential:false}];
   const sections=[];
-  if(matches[0].index>0)sections.push({body:source.slice(0,matches[0].index),defaults});
+  if(matches[0].index>0)sections.push({body:source.slice(0,matches[0].index),defaults,inlineSequential:false});
   for(let i=0;i<matches.length;i++){
     const line=matches[i][0],start=matches[i].index+line.length,end=matches[i+1]?.index??source.length;
     const marks=/\b(?:3\s*[-–—]?\s*marks?|three\s+marks?)\b/i.test(line)?3:5;
@@ -186,7 +187,7 @@ function wordQuestionSections(rawText='',defaults={}){
     // answer options. Removing them prevents a heading being appended to the
     // preceding question when Word stores many questions in one paragraph.
     body=body.replace(/^\s*[A-Z]\.\s+[^\n]{1,100}\s*$/gim,'');
-    sections.push({body,defaults:{...defaults,marks,questionType:marks===3?'Short Answer':'Long Answer'}});
+    sections.push({body,defaults:{...defaults,marks,questionType:marks===3?'Short Answer':'Long Answer'},inlineSequential:true});
   }
   return sections;
 }
@@ -194,7 +195,7 @@ function wordQuestionSections(rawText='',defaults={}){
 export function parseWordQuestionText(rawText='',defaults={}){
   const items=[];
   for(const section of wordQuestionSections(rawText,defaults)){
-    const blocks=recoverEmbeddedAnsweredQuestions(numberedQuestionBlocks(section.body));
+    const blocks=recoverEmbeddedAnsweredQuestions(numberedQuestionBlocks(section.body,{inlineSequential:section.inlineSequential}));
     items.push(...blocks.map(block=>wordQuestionItem(block,section.defaults)));
   }
   if(!items.length){
