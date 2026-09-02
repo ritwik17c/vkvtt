@@ -6,13 +6,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>VKV Nalbari · Examination Department</title>
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1">
-<link rel="stylesheet" href="exam-department.css?v=1.0.1">
+<link rel="stylesheet" href="exam-department.css?v=1.1.0">
 </head>
 <body>
 <header class="topbar">
   <div class="topbarInner">
     <div class="brand"><img src="school-logo.jpg" alt="Vivekananda Kendra Vidyalaya, Nalbari logo"><div><h1>Examination Department</h1><p>Exam timetable · Invigilation · Reliever duties</p></div></div>
-    <div class="topActions"><span id="saveState" class="saveState">Loading…</span><button id="saveDraft" class="button pale" hidden>Save Draft</button><a class="button pale" href="index.html?v=66.0">Home</a></div>
+    <div class="topActions"><span id="saveState" class="saveState">Loading…</span><button id="saveDraft" class="button pale" hidden>Save Cloud Draft</button><button id="submitDraft" class="button pale" hidden>Submit to Principal</button><button id="approvePublish" class="button pale" hidden>Approve & Publish</button><button id="returnDraft" class="button pale" hidden>Return for Correction</button><a class="button pale" href="index.html?v=66.0">Home</a></div>
   </div>
 </header>
 
@@ -40,6 +40,7 @@
     <div class="workspace">
       <section class="pane active" data-pane="setup">
         <div class="paneHead"><div><div class="eyebrow">Configuration</div><h2>Exam Setup</h2><p>Set the examination window, cadence and session timings.</p></div></div>
+        <div id="workflowStatus" class="notice info">A cloud draft can be submitted to the Principal. It becomes visible to staff only after approval.</div>
         <div class="summaryGrid">
           <article class="summaryCard master"><span class="eyebrow">Imported source</span><h3 id="masterName">Activated Schedule</h3><p id="masterMeta">Reading the active timetable…</p><div id="masterStats" class="chips"></div></article>
           <article class="summaryCard"><span class="eyebrow">Draft identity</span><label>Examination / session name<input id="workspaceName" value="New Examination Schedule"></label><label>Notes<textarea id="workspaceDescription" rows="3" placeholder="Term, classes, instructions or internal reference"></textarea></label></article>
@@ -84,6 +85,8 @@
       <section class="pane" data-pane="staff">
         <div class="paneHead"><div><div class="eyebrow">Master timetable import</div><h2>Invigilators & Availability</h2><p>Teachers are imported using their timetable short codes. Disable staff or list sessions when they are unavailable.</p></div></div>
         <article class="surface">
+          <div class="sectionTitle"><div><h3>Approved Leave Connection</h3><p>Approved Leave, Duty/OD and Special Assignment records inside the examination window are excluded automatically.</p></div><button id="refreshApprovedLeave" class="button">Refresh Approved Leave</button></div>
+          <div id="leaveSyncStatus" class="notice info">Approved leave will be checked before duty generation.</div>
           <div class="notice info">Availability format: <b>YYYY-MM-DD</b> blocks the full day; <b>YYYY-MM-DD|SESSION_1</b> blocks one session. Separate entries with commas.</div>
           <div class="toolbar"><input id="teacherSearch" type="search" placeholder="Search teacher name or code"><button id="enableVisibleTeachers" class="button">Enable Visible</button><button id="disableVisibleTeachers" class="button">Disable Visible</button></div>
           <div class="tableWrap"><table><thead><tr><th>Available for duty</th><th>Teacher</th><th>Code</th><th>Max invigilation duties</th><th>Max reliever duties</th><th>Unavailable dates / sessions</th></tr></thead><tbody id="teacherRows"></tbody></table></div>
@@ -106,8 +109,8 @@
         <div id="dutyStatus" class="notice info">Generate the exam timetable before allocating duties.</div>
         <div id="dutyMetrics" class="metrics"></div>
         <div class="outputGrid">
-          <article class="surface"><h3>Invigilation Duty List</h3><div class="tableWrap"><table><thead><tr><th>Date</th><th>Session</th><th>Room / Class</th><th>Teacher</th><th>Code</th></tr></thead><tbody id="invigilationRows"><tr><td colspan="5">No allocation generated.</td></tr></tbody></table></div></article>
-          <article class="surface"><h3>Reliever Duty List</h3><div class="tableWrap"><table><thead><tr><th>Date</th><th>Session</th><th>Time</th><th>Teacher</th><th>Code</th></tr></thead><tbody id="relieverRows"><tr><td colspan="5">No allocation generated.</td></tr></tbody></table></div></article>
+          <article class="surface"><h3>Invigilation Duty List</h3><p class="tableHint">Use the teacher selector for a day-of correction; hard-rule checks run immediately.</p><div class="tableWrap"><table><thead><tr><th>Date</th><th>Session</th><th>Room / Class</th><th>Assigned Teacher</th><th>Code</th></tr></thead><tbody id="invigilationRows"><tr><td colspan="5">No allocation generated.</td></tr></tbody></table></div></article>
+          <article class="surface"><h3>Reliever Duty List</h3><p class="tableHint">Use the teacher selector for a day-of correction; invigilators remain excluded from reliever duty on the same date.</p><div class="tableWrap"><table><thead><tr><th>Date</th><th>Session</th><th>Time</th><th>Assigned Teacher</th><th>Code</th></tr></thead><tbody id="relieverRows"><tr><td colspan="5">No allocation generated.</td></tr></tbody></table></div></article>
         </div>
       </section>
 
@@ -118,13 +121,13 @@
           <h3>Outputs</h3><div class="buttonRow"><button id="printExam" class="button primary">Print Exam Timetable</button><button id="printDuties" class="button primary">Print Duty Lists</button><button id="downloadExamCsv" class="button">Download Exam CSV</button><button id="downloadDutyCsv" class="button">Download Duty CSV</button></div>
         </article>
         <article class="surface">
-          <div class="sectionTitle"><div><h3>Saved Drafts on This Device</h3><p>Saving creates a restorable snapshot; it never changes the active master timetable.</p></div><button id="newDraft" class="button">New from Master</button></div>
+          <div class="sectionTitle"><div><h3>Cloud Examination Workspaces</h3><p>Exam Managers submit drafts here. The Principal can return, approve and publish them.</p></div><button id="newDraft" class="button">New from Master</button></div>
           <div id="draftList" class="draftList"></div>
         </article>
       </section>
     </div>
   </div>
 </main>
-<script type="module" src="exam-department.js?v=1.0.1"></script>
+<script type="module" src="exam-department.js?v=1.1.0"></script>
 </body>
 </html>

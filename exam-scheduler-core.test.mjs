@@ -37,6 +37,14 @@ assert.equal(validateDutyRoster(workspace).valid,true);
 const invigilatorDates=new Set(workspace.duties.invigilation.map(item=>item.teacherCode+'|'+item.date));
 assert.equal(workspace.duties.relievers.some(item=>invigilatorDates.has(item.teacherCode+'|'+item.date)),false);
 
+const leaveAware=createWorkspaceFromMaster(master);
+Object.assign(leaveAware.settings,{startDate:'2026-09-01',endDate:'2026-09-05',cadence:'alternate',excludedWeekdays:[0],relieversPerSession:1});
+leaveAware.timetable=generateExamTimetable(leaveAware);
+leaveAware.teachers.find(item=>item.code==='AA').approvedLeaveDates=['2026-09-01','2026-09-03','2026-09-05'];
+leaveAware.duties=generateDutyRoster(leaveAware);
+assert.equal([...leaveAware.duties.invigilation,...leaveAware.duties.relievers].some(item=>item.teacherCode==='AA'&&['2026-09-01','2026-09-03','2026-09-05'].includes(item.date)),false);
+assert.equal(validateDutyRoster(leaveAware).valid,true);
+
 const impossible=createWorkspaceFromMaster(master);
 Object.assign(impossible.settings,{startDate:'2026-09-01',endDate:'2026-09-01',cadence:'continuous',maxExamsPerClassPerDay:1});
 impossible.timetable=generateExamTimetable(impossible);

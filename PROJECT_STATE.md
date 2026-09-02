@@ -1,5 +1,11 @@
 # VKV Nalbari Timetable — Current Next Release
 
+## Examination Department workflow — 2 September 2026
+
+The Examination Department now uses a cloud workflow: Exam Manager draft → submission → Principal return/approval → automatic staff publication. Approved Leave, Duty/OD and Special Assignment records are checked before duties are generated. Invigilators and relievers can be replaced manually for day-of corrections while the scheduler revalidates hard rules.
+
+Cloud data uses `examSchedules` and `publishedExam/current`. Publish `FIRESTORE_RULES_V66_REPLACE_ALL.txt` before testing cloud save/submit/approval. The staff-facing output is `exam-timetable.html`; the approved schedule is also announced on VKVTT Home.
+
 ## v66.0 — Timetable Studio and Annual Calendar
 
 The new Studio builds and stores complete timetable versions without modifying the operational master. Components and allocation cards are reusable; each generator run stores its own seed, parameters and score. Only the Principal/Admin can activate a clean Ready version. Previous active timetables remain in the version library for later reactivation.
