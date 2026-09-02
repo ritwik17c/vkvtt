@@ -1,4 +1,4 @@
-// Read-only Coordinator Inbox helper: copies an aggregate workload summary only.
+// Read-only Coordinator Inbox helper: copies an aggregate workload summary and shows live ageing focus.
 // No Firestore/network access, no question text or teacher identity is copied, and no workflow state is changed.
 (function(){
   'use strict';
@@ -16,13 +16,17 @@
   function snapshot(){
     const cards=[...document.querySelectorAll('#list .q')];
     const buckets={today:0,within2:0,three7:0,over7:0,unknown:0};
+    const knownAges=[];
     cards.forEach(card=>{
       const n=waitingAge(card);
       if(n==null)buckets.unknown++;
-      else if(n===0)buckets.today++;
-      else if(n<=2)buckets.within2++;
-      else if(n<=7)buckets.three7++;
-      else buckets.over7++;
+      else{
+        knownAges.push(n);
+        if(n===0)buckets.today++;
+        else if(n<=2)buckets.within2++;
+        else if(n<=7)buckets.three7++;
+        else buckets.over7++;
+      }
     });
 
     const status=norm($('status')?.textContent);
@@ -36,6 +40,7 @@
       visible:cards.length,
       totalLoaded,
       buckets,
+      oldest:knownAges.length?Math.max(...knownAges):null,
       subject:norm(subject?.selectedOptions?.[0]?.textContent)||'All assigned subjects',
       order:norm(order?.selectedOptions?.[0]?.textContent)||'Current order',
       searchActive:Boolean(search)
@@ -48,6 +53,7 @@
       'VKVTT Question Bank — Coordinator Inbox',
       `Current view: ${s.visible} of ${s.totalLoaded} loaded pending question(s)`,
       `Ageing in current view: ${b.today} today · ${b.within2} within 2 days · ${b.three7} 3–7 days · ${b.over7} over 7 days${b.unknown?` · ${b.unknown} age unavailable`:''}`,
+      `Oldest visible wait: ${s.oldest==null?'age unavailable':s.oldest===0?'submitted today':s.oldest+' day'+(s.oldest===1?'':'s')}`,
       `Subject view: ${s.subject}`,
       `Order: ${s.order}${s.searchActive?' · Search/filter text active':''}`,
       'Operational workload summary only; no verification decision or question record is changed.'
@@ -73,9 +79,14 @@
     setMessage.timer=setTimeout(()=>{if(el)el.textContent=''},2600);
   }
 
-  function refreshLabel(){
-    const btn=$('qbCopyQueueSummary');if(!btn)return;
-    btn.textContent=`Copy Queue Summary (${snapshot().visible})`;
+  function refresh(){
+    const s=snapshot(),btn=$('qbCopyQueueSummary'),focus=$('qbQueueAgeFocus');
+    if(btn)btn.textContent=`Copy Queue Summary (${s.visible})`;
+    if(!focus)return;
+    if(!s.visible){focus.textContent='Ageing focus will appear here after pending questions are loaded.';return}
+    const old=s.buckets.over7;
+    const oldest=s.oldest==null?'oldest age unavailable':s.oldest===0?'all known visible questions were submitted today':`oldest visible wait ${s.oldest} day${s.oldest===1?'':'s'}`;
+    focus.innerHTML=`<b>Ageing focus:</b> ${old?`<b>${old}</b> waiting over 7 days · `:''}${oldest}.${s.buckets.unknown?` ${s.buckets.unknown} visible question${s.buckets.unknown===1?' has':'s have'} no usable age.`:''} <span style="font-weight:400">Current filtered view only.</span>`;
   }
 
   function install(){
@@ -90,13 +101,17 @@
       const msg=document.createElement('span');msg.id='qbQueueSummaryMsg';msg.className='small';msg.setAttribute('aria-live','polite');
       actions.append(btn,msg);
     }
+    if(!$('qbQueueAgeFocus')){
+      const focus=document.createElement('div');focus.id='qbQueueAgeFocus';focus.className='small';focus.style.marginTop='7px';focus.setAttribute('role','status');focus.setAttribute('aria-live','polite');
+      actions.insertAdjacentElement('afterend',focus);
+    }
     const list=$('list');
     if(list&&!list.dataset.qbQueueSummaryObserved){
       list.dataset.qbQueueSummaryObserved='1';
-      new MutationObserver(refreshLabel).observe(list,{childList:true,subtree:true});
+      new MutationObserver(refresh).observe(list,{childList:true,subtree:true});
     }
-    ['subjectFilter','sortOrder','search'].forEach(id=>$(id)?.addEventListener(id==='search'?'input':'change',refreshLabel));
-    refreshLabel();
+    ['subjectFilter','sortOrder','search'].forEach(id=>$(id)?.addEventListener(id==='search'?'input':'change',refresh));
+    refresh();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
