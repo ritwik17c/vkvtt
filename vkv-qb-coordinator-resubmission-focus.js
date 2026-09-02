@@ -1,4 +1,4 @@
-// Read-only Coordinator Inbox helper: adds a client-side focus for questions resubmitted after correction.
+// Read-only Coordinator Inbox helper: adds a client-side focus and visible marker for questions resubmitted after correction.
 // It reads only the already-rendered revision trail. No Firestore/network access and no workflow state change.
 (function(){
   'use strict';
@@ -7,6 +7,20 @@
   const cards=()=>[...document.querySelectorAll('#list .q')];
   const isResubmitted=card=>/Resubmitted after correction/i.test(String(card.textContent||''));
 
+  function syncBadge(card,revised){
+    let badge=card.querySelector('[data-qb-resubmitted-badge]');
+    if(!revised){if(badge)badge.remove();return}
+    if(badge)return;
+    const firstBadge=card.querySelector('.badge'),host=firstBadge?.parentElement;
+    if(!host)return;
+    badge=document.createElement('span');
+    badge.className='badge ageWatch';
+    badge.dataset.qbResubmittedBadge='1';
+    badge.textContent='🔁 Resubmitted after correction';
+    badge.title='This question was returned for correction and has been submitted again by the teacher.';
+    host.appendChild(badge);
+  }
+
   function apply(){
     const select=$('qbCoordinatorFocus'),msg=$('qbCoordinatorFocusMsg');
     if(!select||!msg)return;
@@ -14,6 +28,7 @@
     let shown=0,resubmitted=0;
     all.forEach(card=>{
       const revised=isResubmitted(card);if(revised)resubmitted++;
+      syncBadge(card,revised);
       const visible=mode!=='resubmitted'||revised;
       card.style.display=visible?'':'none';
       if(visible)shown++;
