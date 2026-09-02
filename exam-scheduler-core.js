@@ -159,7 +159,9 @@ export function validateExamTimetable(workspace={}){
 }
 
 function unavailable(teacher,date,slotId){
-  const values=new Set((teacher.unavailableSlots||[]).map(text));return values.has(date)||values.has(date+'|'+slotId);
+  const values=new Set((teacher.unavailableSlots||[]).map(text));
+  const approvedLeave=new Set((teacher.approvedLeaveDates||[]).map(text));
+  return approvedLeave.has(date)||values.has(date)||values.has(date+'|'+slotId);
 }
 
 export function generateDutyRoster(workspace={}){
@@ -212,7 +214,21 @@ export function generateDutyRoster(workspace={}){
 export function validateDutyRoster(workspace={}){
   const duties=workspace.duties||{invigilation:[],relievers:[],unfilled:[]},issues=[];
   const invigDates=new Set((duties.invigilation||[]).map(item=>item.teacherCode+'|'+item.date));
+  const teachers=new Map((workspace.teachers||[]).map(item=>[item.code,item]));
+  const occupied=new Set();
+  for(const item of duties.invigilation||[]){
+    const teacher=teachers.get(item.teacherCode),cell=item.teacherCode+'|'+item.date+'|'+item.slotId;
+    if(!teacher||teacher.active===false)issues.push({level:'error',code:'INELIGIBLE_INVIGILATOR',message:(item.teacherName||item.teacherCode)+' is not currently eligible for invigilation.'});
+    else if(unavailable(teacher,item.date,item.slotId))issues.push({level:'error',code:'UNAVAILABLE_INVIGILATOR',message:item.teacherName+' is unavailable on '+displayDate(item.date)+' · '+item.slotId+'.'});
+    if(occupied.has(cell))issues.push({level:'error',code:'DUPLICATE_SESSION_DUTY',message:item.teacherName+' has more than one duty in '+item.slotId+' on '+displayDate(item.date)+'.'});else occupied.add(cell);
+  }
   for(const item of duties.relievers||[])if(invigDates.has(item.teacherCode+'|'+item.date))issues.push({level:'error',code:'SAME_DAY_DUAL_ROLE',message:item.teacherName+' is both invigilator and reliever on '+displayDate(item.date)+'.'});
+  for(const item of duties.relievers||[]){
+    const teacher=teachers.get(item.teacherCode),cell=item.teacherCode+'|'+item.date+'|'+item.slotId;
+    if(!teacher||teacher.active===false)issues.push({level:'error',code:'INELIGIBLE_RELIEVER',message:(item.teacherName||item.teacherCode)+' is not currently eligible for relieving duty.'});
+    else if(unavailable(teacher,item.date,item.slotId))issues.push({level:'error',code:'UNAVAILABLE_RELIEVER',message:item.teacherName+' is unavailable on '+displayDate(item.date)+' · '+item.slotId+'.'});
+    if(occupied.has(cell))issues.push({level:'error',code:'DUPLICATE_SESSION_DUTY',message:item.teacherName+' has more than one duty in '+item.slotId+' on '+displayDate(item.date)+'.'});else occupied.add(cell);
+  }
   for(const item of duties.unfilled||[])issues.push({level:'error',code:'UNFILLED_DUTY',message:item.role+' duty is unfilled on '+displayDate(item.date)+' · '+item.slotId+(item.roomId&&item.roomId!=='—'?' · '+item.roomId:'')+'.'});
   return {valid:!issues.some(item=>item.level==='error'),issues,invigilation:(duties.invigilation||[]).length,relievers:(duties.relievers||[]).length,unfilled:(duties.unfilled||[]).length};
 }
