@@ -21,6 +21,10 @@
     const hits=[];String(s||'').replace(/\b([A-Za-z][A-Za-z'’-]*)\s+\1\b/gi,(m,w)=>{hits.push(w);return m});return hits;
   }
   function removeAdjacentRepeats(s){return String(s||'').replace(/\b([A-Za-z][A-Za-z'’-]*)\s+\1\b/gi,'$1')}
+  function likelyDirectQuestion(s){
+    const value=String(s||'').trim().replace(/^[\"'“‘(\[]+/,'');
+    return /^(?:who|whom|whose|what|which|when|where|why|how|is|are|am|was|were|do|does|did|can|could|will|would|shall|should|may|might|must|has|have|had)\b/i.test(value);
+  }
   function attach(frame){
     let doc;try{doc=frame.contentDocument}catch(_){return}
     const q=doc?.getElementById('qt');if(!q||doc.getElementById('qbDictationReview'))return;
@@ -38,10 +42,12 @@
       if(english&&capitaliseStart(spacing(raw))!==spacing(raw))changes.push('capital letter at the beginning');
       const hasSpoken=english&&/\b(question mark|full stop|comma|colon|semicolon|exclamation mark)\b/i.test(raw);
       const repeats=english?adjacentRepeats(raw):[];
-      const terminal=String(suggested).trim();const noEnd=english&&terminal&&!/[.?!…][\"'”’)]?$/.test(terminal);
+      const terminal=String(suggested).trim();const noEnd=english&&terminal&&!/[.?!…][\"'”’)]?$/.test(terminal),likelyQuestion=noEnd&&likelyDirectQuestion(terminal);
       apply.style.display=changes.length?'inline-block':'none';spoken.style.display=hasSpoken?'inline-block':'none';repeat.style.display=repeats.length?'inline-block':'none';repeat.textContent=repeats.length>1?'Remove repeated words':'Remove repeated word';addQ.style.display=noEnd?'inline-block':'none';addDot.style.display=noEnd?'inline-block':'none';
-      msg.textContent=changes.length?changes.length+' safe formatting suggestion'+(changes.length===1?'':'s')+' found.':repeats.length?'Possible dictation repetition detected. Please review it before changing the text.':noEnd?'Wording looks clean. Please choose the intended ending punctuation if needed.':'No safe formatting change is currently suggested.';
-      details.innerHTML=(changes.length?'<div><b>Suggested:</b> '+changes.join(' · ')+'</div>':'')+(hasSpoken?'<div>Spoken punctuation words detected. Convert them only if they were intended as punctuation.</div>':'')+(repeats.length?'<div>Possible adjacent repetition: <b>'+repeats.map(x=>x+' '+x).join(' · ')+'</b>. Repetition can be intentional, so remove it only after checking the sentence.</div>':'')+(noEnd?'<div>Ending punctuation is missing. Choose <b>?</b> or <b>.</b> only after checking the intended meaning.</div>':'');
+      if(likelyQuestion){addQ.textContent='Add ? · likely question';addDot.textContent='Add .';}
+      else{addQ.textContent='Add ?';addDot.textContent='Add .';}
+      msg.textContent=changes.length?changes.length+' safe formatting suggestion'+(changes.length===1?'':'s')+' found.':repeats.length?'Possible dictation repetition detected. Please review it before changing the text.':likelyQuestion?'This looks like a direct question and has no ending punctuation. A question mark is likely, but you must choose it.':noEnd?'Wording looks clean. Please choose the intended ending punctuation if needed.':'No safe formatting change is currently suggested.';
+      details.innerHTML=(changes.length?'<div><b>Suggested:</b> '+changes.join(' · ')+'</div>':'')+(hasSpoken?'<div>Spoken punctuation words detected. Convert them only if they were intended as punctuation.</div>':'')+(repeats.length?'<div>Possible adjacent repetition: <b>'+repeats.map(x=>x+' '+x).join(' · ')+'</b>. Repetition can be intentional, so remove it only after checking the sentence.</div>':'')+(likelyQuestion?'<div><b>Likely question:</b> the wording begins like a direct English question. The helper will not add <b>?</b> unless you press the button.</div>':noEnd?'<div>Ending punctuation is missing. Choose <b>?</b> or <b>.</b> only after checking the intended meaning.</div>':'');
       return suggested;
     }
     function applyChange(next,label){if(next===q.value)return;before=q.value;q.value=next;q.dispatchEvent(new Event('input',{bubbles:true}));undo.style.display='inline-block';msg.textContent=label;analyse()}
