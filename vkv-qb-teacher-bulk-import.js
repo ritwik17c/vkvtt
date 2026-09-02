@@ -89,7 +89,7 @@ async function importAll(requestedStatus){
       if(coordinatorSubmit){const verifiedAt=Date.now(),verifiedWorkflow=[...workflow,{action:'subject_coordinator_self_verification',atMs:verifiedAt,byUid:user.uid,byName:actor,subject:item.subject}];await setDoc(ref,{status:'approved',coordinatorRequired:false,verificationMethod:'subject_coordinator_self_verification',verifiedAtMs:verifiedAt,verifiedByUid:user.uid,verifiedByEmail:mail(user.email),verifiedByName:actor,updatedAtMs:verifiedAt,workflow:verifiedWorkflow},{merge:true})}
       saved++;setMessage(`Saving… ${saved+skipped} of ${items.length}`,'tip');
     }
-    setMessage(`Import complete: ${saved} question(s) saved${skipped?`; ${skipped} already-existing question(s) safely skipped`:''}.`, 'ok');items=[];$('qbBulkFile').value='';$('qbBulkPreview').innerHTML='';
+    setMessage(`Import complete: ${saved} question(s) saved${skipped?`; ${skipped} already-existing question(s) safely skipped`:''}. They are now available in My History.`, 'ok');window.dispatchEvent(new CustomEvent('vkv-qb-questions-saved',{detail:{saved,skipped,status:requestedStatus}}));items=[];$('qbBulkFile').value='';$('qbBulkPreview').innerHTML='';
   }catch(error){setMessage('Import stopped: '+(error.message||error),'warning');renderPreview()}
 }
 

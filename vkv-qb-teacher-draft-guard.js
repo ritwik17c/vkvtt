@@ -18,6 +18,9 @@
     if(!doc.getElementById('qbBulkImportEnhancement')){
       const enhancement=doc.createElement('script');enhancement.id='qbBulkImportEnhancement';enhancement.type='module';enhancement.src='vkv-qb-teacher-bulk-import.js?v=20260901-2';doc.body.appendChild(enhancement);
     }
+    if(!doc.getElementById('qbHistoryRefreshEnhancement')){
+      const history=doc.createElement('script');history.id='qbHistoryRefreshEnhancement';history.type='module';history.src='vkv-qb-safe-history-refresh.js?v=20260902-1';doc.body.appendChild(history);
+    }
     if(doc.getElementById('qbDraftGuardStatus'))return;
     const qt=doc.getElementById('qt');
     const status=doc.createElement('div');
