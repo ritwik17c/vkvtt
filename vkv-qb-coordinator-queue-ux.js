@@ -1,0 +1,10 @@
+/* Preview 2 coordinator queue UX: read-only filters and summary. */
+const review=document.getElementById('review'),list=document.getElementById('reviewList');
+if(review&&list){
+ const box=document.createElement('div');box.id='qbCoordinatorTools';box.className='tip';box.style.margin='10px 0';
+ box.innerHTML='<div class="actions" style="justify-content:flex-start"><input id="qbReviewSearch" type="search" placeholder="Search teacher, subject, class or question" style="max-width:360px"><select id="qbReviewKind" style="max-width:230px"><option value="all">All pending</option><option value="resubmitted">Corrected / Resubmitted</option><option value="new">New submissions</option></select><button id="qbReviewClear" type="button">Clear filters</button></div><div id="qbReviewSummary" class="small" style="margin-top:8px">Queue summary will appear after questions load.</div>';
+ list.before(box);const search=document.getElementById('qbReviewSearch'),kind=document.getElementById('qbReviewKind'),summary=document.getElementById('qbReviewSummary');
+ const cards=()=>[...list.querySelectorAll('.qcard')];const corrected=card=>!!card.querySelector('.warning')||/return|correction/i.test(card.textContent||'');
+ function apply(){const all=cards(),term=(search.value||'').trim().toLowerCase(),mode=kind.value;let shown=0,resub=0;all.forEach(card=>{const c=corrected(card);if(c)resub++;const ok=(mode==='all'||(mode==='resubmitted'&&c)||(mode==='new'&&!c))&&(!term||(card.textContent||'').toLowerCase().includes(term));card.style.display=ok?'':'none';if(ok)shown++});summary.textContent=all.length?`${shown} shown · ${all.length} pending · ${resub} corrected/resubmitted · ${all.length-resub} new`:'No questions are currently waiting in this coordinator queue.'}
+ search.addEventListener('input',apply);kind.addEventListener('change',apply);document.getElementById('qbReviewClear').addEventListener('click',()=>{search.value='';kind.value='all';apply()});new MutationObserver(apply).observe(list,{childList:true,subtree:true});apply();
+}
