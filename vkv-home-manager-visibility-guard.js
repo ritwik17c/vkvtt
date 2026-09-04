@@ -1,0 +1,9 @@
+import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import{getAuth,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
+const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+function norm(v){return String(v??'').trim().toLowerCase().replace(/[\s_-]+/g,'')}
+function ensureTile(grid,label,path){if(!grid)return;const exists=[...grid.querySelectorAll('a,button')].some(x=>(x.textContent||'').trim()===label);if(exists)return;const a=document.createElement('a');a.className='tile';a.textContent=label;a.href='./'+path;grid.appendChild(a)}
+async function apply(u){if(!u)return;try{const s=await getDoc(doc(db,'authorizedUsers',u.uid));if(!s.exists()||s.data().active===false)return;const p=s.data()||{};if(norm(p.role)!=='manager')return;let tries=0;const t=setInterval(()=>{const grid=document.getElementById('delegatedGrid'),sec=document.getElementById('delegated');if(!grid){if(++tries>40)clearInterval(t);return}ensureTile(grid,'👥 Proxy Manager','proxy-manager.html?v=20260904-manager-visibility-1');ensureTile(grid,'🗂 Leave Manager','leave-manager.html?v=20260904-manager-visibility-1');ensureTile(grid,'🕘 Attendance Manager','admin-attendance.html?v=20260904-manager-visibility-1');sec?.classList.remove('hidden');if(++tries>8)clearInterval(t)},250)}catch(e){console.warn('Manager visibility guard:',e)}}
+onAuthStateChanged(auth,apply);
