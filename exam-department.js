@@ -1,7 +1,7 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence} from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import {getFirestore,doc,getDoc,collection,getDocs,setDoc,serverTimestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
-import {candidateExamDates,createWorkspaceFromMaster,dayName,displayDate,generateExamTimetable,generateDutyRoster,validateExamTimetable,validateDutyRoster} from './exam-scheduler-core.js?v=1.1.0';
+import {candidateExamDates,createWorkspaceFromMaster,dayName,displayDate,generateExamTimetable,generateDutyRoster,validateExamTimetable,validateDutyRoster} from './exam-scheduler-core.js?v=1.2.1-double-slot';
 
 const firebaseConfig={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();setPersistence(auth,browserLocalPersistence).catch(()=>{});
@@ -9,6 +9,12 @@ const $=id=>document.getElementById(id),safe=value=>String(value??'').replace(/[
 const clone=value=>JSON.parse(JSON.stringify(value));
 const state={user:null,profile:null,isAdmin:false,master:null,workspace:null,dirty:false,visiblePapers:[],visibleTeachers:[],cloudId:'',cloudMeta:null,cloudItems:[],leaveSync:null};
 const WEEKDAYS=[['0','Sunday'],['1','Monday'],['2','Tuesday'],['3','Wednesday'],['4','Thursday'],['5','Friday'],['6','Saturday']];
+
+function createFreshExamWorkspace(master){
+  const workspace=createWorkspaceFromMaster(master);
+  for(const paper of workspace.papers||[])paper.included=false;
+  return workspace
+}
 
 function setSaveState(message,dirty=false){$('saveState').textContent=message;$('saveState').dataset.dirty=dirty?'true':'false'}
 function markDirty(message='Unsaved changes'){state.dirty=true;if(state.workspace)state.workspace.updatedAtMs=Date.now();setSaveState(message,true);renderReview();renderWorkflow()}
@@ -37,7 +43,7 @@ async function verifyAccess(user){
     if(!allowed){$('gateMessage').innerHTML='<b>Examination Department access is not enabled for this account.</b><br>Ask the Principal/Admin to delegate this workspace in User Access & Roles.';return}
     state.profile=profile;state.isAdmin=profile.role==='admin';
     const masterSnap=await getDoc(doc(db,'master','current'));if(!masterSnap.exists())throw new Error('The active master timetable was not found.');
-    state.master=masterSnap.data();state.workspace=createWorkspaceFromMaster(state.master);
+    state.master=masterSnap.data();state.workspace=createFreshExamWorkspace(state.master);
     $('authGate').hidden=true;$('examApp').hidden=false;renderAll();await Promise.all([renderDraftList(),refreshApprovedLeave(false)]);setSaveState('New unsaved cloud draft',true);state.dirty=true;renderWorkflow();
   }catch(error){$('gateMessage').textContent='Could not open the Examination Department: '+(error.message||error)}
 }
@@ -71,6 +77,35 @@ function renderAll(){
   renderMasterSummary();renderSetup();renderSessions();renderPapers();renderTeachers();renderTimetable();renderDuties();renderReview();renderWorkflow();
 }
 
+function examBaseClass(value){return String(value||'').trim().replace(/\s+/g,' ').replace(/^((?:XI|XII))\s*(?:[-–]\s*|\s+|\(\s*)(?:SCI(?:ENCE)?|ARTS?|HUMANITIES)\s*\)?$/i,(_,grade)=>grade.toUpperCase()).replace(/(?:\s*[-–]\s*|\s+)(?:SECTION\s*)?[A-DV]$/i,'').replace(/\s*\((?:A|B|C|D|V)\)$/i,'').trim()}
+function examSubjectKey(value){const s=String(value||'').trim().toLowerCase().replace(/\s+/g,' ');if(['as','assamese'].includes(s))return'assamese';if(['eng','english'].includes(s))return'english';if(['sci','science'].includes(s))return'science';if(['ssc','social science'].includes(s))return'socialscience';if(['sans','sanskrit'].includes(s))return'sanskrit';if(/^information technology/.test(s)||/^it(?:\s|$)/.test(s))return'it';if(/^maths?(?:\s|$)/.test(s)||s==='mathematics')return'maths';return s.replace(/[^a-z0-9]+/g,'')}
+function examPaperId(className,subject){const part=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,36)||'ITEM';return'EXAM_MASTER_'+part(className)+'_'+part(subject)}
+function relatedSubjectKeys(value){const out=new Set([examSubjectKey(value)]);for(const part of String(value||'').split(/\s*(?:\/|&|,|\band\b)\s*/i)){const k=examSubjectKey(part);if(k)out.add(k)}if(out.has('science'))for(const k of['physics','phy','chemistry','chem','biology','bio'])out.add(k);if(out.has('socialscience'))for(const k of['history','hist','geography','geo','economics','eco','politicalscience','polsci'])out.add(k);return out}
+function relatedTeacherCodes(source,subject){const wanted=relatedSubjectKeys(subject);return[...new Set(source.filter(p=>[...relatedSubjectKeys(p.subject)].some(k=>wanted.has(k))).flatMap(p=>p.teacherCodes||[]))]}
+function applyExaminationSubjectMaster(className,subjects){
+  if(!state.workspace)return false;const cls=examBaseClass(className),names=[...new Map((subjects||[]).map(value=>String(value||'').trim()).filter(Boolean).map(value=>[examSubjectKey(value),value])).values()];if(!cls||!names.length)return false;
+  const papers=state.workspace.papers||[],source=papers.filter(p=>examBaseClass(p.className)===cls);for(const paper of source)paper.included=false;
+  state.workspace.papers=papers.filter(p=>!(p.examMasterOnly&&examBaseClass(p.className)===cls));
+  for(const subject of names)state.workspace.papers.push({id:examPaperId(cls,subject),className:cls,subject,teacherCodes:relatedTeacherCodes(source,subject),included:true,roomId:cls,fixedDate:'',fixedSlotId:'',examMasterOnly:true,examSubjectMaster:true});
+  if(!(state.workspace.classes||[]).includes(cls))state.workspace.classes.push(cls);
+  state.workspace.timetable={events:[],unplaced:[],dates:[],slots:[]};state.workspace.duties={invigilation:[],relievers:[],unfilled:[]};renderAll();markDirty('Examination Subject Master applied; regenerate the timetable');document.dispatchEvent(new CustomEvent('vkv-exam-workspace-subjects-applied',{detail:{className:cls,subjects:names}}));return true
+}
+function installExaminationSubjectCatalogue(classes){
+  if(!state.workspace||!classes||typeof classes!=='object')return false;
+  const existing=state.workspace.papers||[],selected=new Set(existing.filter(p=>p.included!==false).map(p=>examBaseClass(p.className)+'|'+examSubjectKey(p.subject)));
+  const logicalClasses=new Map();for(const [className,subjects] of Object.entries(classes)){const cls=examBaseClass(className);if(!cls)continue;if(!logicalClasses.has(cls))logicalClasses.set(cls,new Map());for(const subject of subjects||[]){const name=String(subject||'').trim();if(name)logicalClasses.get(cls).set(examSubjectKey(name),name)}}
+  const catalogue=[];
+  for(const [cls,subjects] of logicalClasses){
+    const source=existing.filter(p=>examBaseClass(p.className)===cls);
+    for(const name of subjects.values()){
+      catalogue.push({id:examPaperId(cls,name),className:cls,subject:name,teacherCodes:relatedTeacherCodes(source,name),included:selected.has(cls+'|'+examSubjectKey(name)),roomId:cls,fixedDate:'',fixedSlotId:'',examMasterOnly:true,examSubjectMaster:true})
+    }
+  }
+  state.workspace.classes=[...new Set(catalogue.map(p=>p.className))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  state.workspace.papers=catalogue;state.workspace.timetable={events:[],unplaced:[],dates:[],slots:[]};state.workspace.duties={invigilation:[],relievers:[],unfilled:[]};renderAll();document.dispatchEvent(new CustomEvent('vkv-exam-workspace-subjects-applied',{detail:{catalogue:true}}));return true
+}
+window.vkvExamWorkspace={applySubjectMaster:applyExaminationSubjectMaster,installSubjectCatalogue:installExaminationSubjectCatalogue,undoTimetable:undoGeneratedTimetable};
+
 function renderMasterSummary(){
   const master=state.master||{},data=master.data&&typeof master.data==='object'?{...master,...master.data}:master,source=state.workspace.sourceSchedule||{};
   $('masterName').textContent=source.name||master.activeTimetableVersionName||'Activated Schedule';
@@ -81,8 +116,9 @@ function renderMasterSummary(){
 
 function renderSetup(){
   const workspace=state.workspace,settings=workspace.settings;
+  if(!$('allowDoubleBooking')){const label=document.createElement('label');label.className='checkLabel';label.innerHTML='<input id="allowDoubleBooking" type="checkbox"> Allow double booking <small>Up to two alternative papers for one class on the same date/session</small>';$('maxPerDay').closest('label')?.after(label)}
   $('workspaceName').value=workspace.name;$('workspaceDescription').value=workspace.description||'';$('sideName').textContent=workspace.name;
-  $('startDate').value=settings.startDate||'';$('endDate').value=settings.endDate||'';$('cadence').value=settings.cadence||'continuous';$('maxPerDay').value=settings.maxExamsPerClassPerDay||1;
+  $('startDate').value=settings.startDate||'';$('endDate').value=settings.endDate||'';$('cadence').value=settings.cadence||'continuous';$('maxPerDay').value=settings.allowDoubleBooking?Math.max(2,settings.maxExamsPerClassPerDay||2):(settings.maxExamsPerClassPerDay||1);$('allowDoubleBooking').checked=settings.allowDoubleBooking===true;
   $('excludedDates').value=(settings.excludedDates||[]).join(', ');$('customDates').value=(settings.customDates||[]).join(', ');
   $('weekdayChecks').innerHTML=WEEKDAYS.map(([number,name])=>`<label><input type="checkbox" data-weekday="${number}" ${(settings.excludedWeekdays||[]).map(Number).includes(Number(number))?'checked':''}> ${name}</label>`).join('');
   renderDatePreview();
@@ -91,19 +127,26 @@ function renderSetup(){
 function syncSetup(){
   const workspace=state.workspace,settings=workspace.settings;
   workspace.name=$('workspaceName').value.trim()||'Untitled Examination Schedule';workspace.description=$('workspaceDescription').value.trim();$('sideName').textContent=workspace.name;
-  settings.startDate=$('startDate').value;settings.endDate=$('endDate').value;settings.cadence=$('cadence').value;settings.maxExamsPerClassPerDay=Math.max(1,Number($('maxPerDay').value)||1);
+  settings.startDate=$('startDate').value;settings.endDate=$('endDate').value;settings.cadence=$('cadence').value;settings.allowDoubleBooking=$('allowDoubleBooking')?.checked===true;settings.maxExamsPerClassPerDay=settings.allowDoubleBooking?Math.max(2,Number($('maxPerDay').value)||2):Math.max(1,Number($('maxPerDay').value)||1);if(settings.allowDoubleBooking)$('maxPerDay').value=settings.maxExamsPerClassPerDay;
   settings.excludedDates=listValues($('excludedDates').value);settings.customDates=listValues($('customDates').value);settings.excludedWeekdays=[...document.querySelectorAll('[data-weekday]:checked')].map(item=>Number(item.dataset.weekday));
   renderDatePreview();markDirty();
 }
 
-['workspaceName','workspaceDescription','startDate','endDate','cadence','maxPerDay','excludedDates','customDates'].forEach(id=>$(id).addEventListener('change',syncSetup));
+['workspaceName','workspaceDescription','startDate','endDate','cadence','maxPerDay','excludedDates','customDates'].forEach(id=>$(id).addEventListener('change',syncSetup));document.addEventListener('change',e=>{if(e.target.id==='allowDoubleBooking')syncSetup()});
 $('weekdayChecks').addEventListener('change',syncSetup);
 
 function renderDatePreview(){
   const dates=candidateExamDates(state.workspace.settings),settings=state.workspace.settings;
   const sample=dates.slice(0,7).map(value=>displayDate(value)+' '+dayName(value)).join(' · ');
   showNotice('datePreview',dates.length?`<b>${dates.length} eligible examination date(s).</b> ${safe(sample)}${dates.length>7?' …':''}`:'<b>No eligible examination dates.</b> Check the date range, cadence and exclusions.',dates.length?'info':'warn');
+  if(!$('examDateChecks')){const wrap=document.createElement('div');wrap.className='surface';wrap.style.marginTop='12px';wrap.innerHTML='<div class="sectionTitle"><div><h4 style="margin:0">Select Examination Dates</h4><p class="small">After choosing the date range, tick only the dates on which examinations will be held.</p></div><div class="buttonRow"><button type="button" class="button" id="selectAllExamDates">Select All</button><button type="button" class="button" id="clearAllExamDates">Clear All</button></div></div><div id="examDateChecks"></div>';$('datePreview').after(wrap)}
+  const choices=candidateExamDates({...settings,cadence:'continuous',customDates:[]}),chosen=new Set(settings.cadence==='custom'?(settings.customDates||[]):choices);
+  $('examDateChecks').innerHTML=choices.length?`<div class="inlineChecks">${choices.map(value=>`<label><input type="checkbox" data-exam-date="${safe(value)}" ${chosen.has(value)?'checked':''}> ${safe(displayDate(value))} · ${safe(dayName(value))}</label>`).join('')}</div>`:'<span class="small">Select a valid start and end date to see date options.</span>';
 }
+
+function setSelectedExamDates(dates,message){const settings=state.workspace.settings;settings.cadence='custom';settings.customDates=[...new Set(dates)].sort();$('cadence').value='custom';$('customDates').value=settings.customDates.join(', ');renderDatePreview();markDirty(message)}
+document.addEventListener('change',event=>{if(!event.target.matches?.('[data-exam-date]'))return;setSelectedExamDates([...document.querySelectorAll('[data-exam-date]:checked')].map(x=>x.dataset.examDate),'Examination dates selected')});
+document.addEventListener('click',event=>{const all=event.target.closest?.('#selectAllExamDates'),none=event.target.closest?.('#clearAllExamDates');if(!all&&!none)return;const boxes=[...document.querySelectorAll('[data-exam-date]')];setSelectedExamDates(all?boxes.map(x=>x.dataset.examDate):[],all?'All eligible examination dates selected':'Examination dates cleared')});
 
 function renderSessions(){
   const options=state.workspace.slots;
@@ -127,12 +170,19 @@ $('includeVisible').onclick=()=>setVisiblePapers(true);$('excludeVisible').oncli
 
 function renderTimetable(){
   const result=state.workspace.timetable||{events:[],unplaced:[]},validation=validateExamTimetable(state.workspace),events=result.events||[];
+  ensureUndoTimetableButton();
   $('examRows').innerHTML=events.length?events.map(item=>{const slot=slotById(item.slotId);return `<tr><td>${displayDate(item.date)}</td><td>${safe(item.day)}</td><td>${safe(slot?.name||item.slotId)}</td><td>${safe(timeText(slot))}</td><td><b>${safe(item.className)}</b></td><td>${safe(item.subject)}</td></tr>`}).join(''):'<tr><td colspan="6">No timetable generated.</td></tr>';
   $('timetableMetrics').innerHTML=[['Eligible dates',(result.dates||[]).length],['Included papers',validation.total],['Scheduled',validation.scheduled],['Unplaced',validation.unplaced]].map(([label,value])=>`<div class="metric"><strong>${value}</strong><span>${label}</span></div>`).join('');
   if(events.length)showNotice('timetableStatus',validation.valid?'<b>Timetable passes the current hard-rule checks.</b> Continue to staff availability and duty allocation.':'<b>Timetable needs attention.</b> '+validation.issues.map(item=>safe(item.message)).join(' '),validation.valid?'success':'error');
   else showNotice('timetableStatus','Complete Exam Setup and Subjects, then generate a draft timetable.','info');
   $('unplacedBlock').innerHTML=(result.unplaced||[]).length?`<div class="notice error"><b>Unscheduled papers</b><ul class="issueList">${result.unplaced.map(item=>`<li>${safe(item.className)} · ${safe(item.subject)} — ${safe(item.reason)}</li>`).join('')}</ul></div>`:'';
 }
+
+function ensureUndoTimetableButton(){
+  let button=$('undoGeneratedTimetable');if(!button){button=document.createElement('button');button.id='undoGeneratedTimetable';button.type='button';button.className='button';button.textContent='Undo Generated Timetable';$('generateTimetable')?.before(button);button.onclick=()=>undoGeneratedTimetable()}
+  const hasGenerated=!!(state.workspace?.timetable?.events?.length||state.workspace?.timetable?.unplaced?.length||(state.workspace?.papers||[]).some(p=>p.fixedDate||p.fixedSlotId));button.hidden=!hasGenerated
+}
+function undoGeneratedTimetable({ask=true}={}){const hasGenerated=!!(state.workspace?.timetable?.events?.length||state.workspace?.timetable?.unplaced?.length),hasAssignments=(state.workspace?.papers||[]).some(p=>p.fixedDate||p.fixedSlotId);if(!hasGenerated&&!hasAssignments){document.dispatchEvent(new CustomEvent('vkv-exam-timetable-undone'));return false}if(ask&&!confirm('Undo the generated examination timetable and its printable assignments?\n\nSelected examination dates, classes, subjects and sessions will be kept. Dependent duty allocations will be cleared.'))return false;state.workspace.timetable={events:[],unplaced:[],dates:[],slots:[]};state.workspace.duties={invigilation:[],relievers:[],unfilled:[]};for(const paper of state.workspace.papers||[]){paper.fixedDate='';paper.fixedSlotId=''}document.dispatchEvent(new CustomEvent('vkv-exam-timetable-undone'));renderPapers();renderTimetable();renderDuties();renderReview();markDirty('Generated timetable and printable assignments undone; selections preserved');return true}
 $('generateTimetable').onclick=()=>{syncSetup();state.workspace.timetable=generateExamTimetable(state.workspace);state.workspace.duties={invigilation:[],relievers:[],unfilled:[]};renderTimetable();renderDuties();markDirty('Exam timetable generated');document.querySelector('[data-pane="timetable"]').scrollIntoView({behavior:'smooth'})};
 
 function normalDate(value){const textValue=String(value||'').trim();let match=textValue.match(/^(\d{4})-(\d{2})-(\d{2})/);if(match)return match[1]+'-'+match[2]+'-'+match[3];match=textValue.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);return match?match[3]+'-'+String(match[2]).padStart(2,'0')+'-'+String(match[1]).padStart(2,'0'):''}
@@ -187,12 +237,12 @@ function renderReview(){
 }
 
 async function renderDraftList(){
-  if(!state.user)return;try{const snap=await getDocs(collection(db,'examSchedules')),items=[];snap.forEach(item=>{const data=item.data()||{};if(state.isAdmin||data.ownerUid===state.user.uid)items.push({id:item.id,...data})});items.sort((a,b)=>Number(b.updatedAtMs||b.createdAtMs||0)-Number(a.updatedAtMs||a.createdAtMs||0));state.cloudItems=items;
+  if(!state.user)return;try{const snap=await getDocs(collection(db,'examSchedules')),items=[];snap.forEach(item=>{const data=item.data()||{};if(item.id!=='EXAM_SUBJECT_MASTER'&&data.configOnly!==true&&(state.isAdmin||data.ownerUid===state.user.uid))items.push({id:item.id,...data})});items.sort((a,b)=>Number(b.updatedAtMs||b.createdAtMs||0)-Number(a.updatedAtMs||a.createdAtMs||0));state.cloudItems=items;
     $('draftList').innerHTML=items.length?items.map(item=>{const status=item.status||'draft',canOpen=state.isAdmin||['draft','returned'].includes(status),revision=status==='published'&&item.ownerUid===state.user.uid;return `<div class="draftCard"><h4>${safe(item.name||'Untitled Examination Schedule')}</h4><p><span class="workflowPill ${safe(status)}">${safe(status==='published'?'Published':status==='submitted'?'Submitted':status==='returned'?'Returned':'Draft')}</span>${new Date(item.updatedAtMs||item.createdAtMs||Date.now()).toLocaleString('en-GB')}</p><p>${item.workspace?.timetable?.events?.length||0} papers · ${item.workspace?.duties?.invigilation?.length||0} invigilation duties</p>${item.reviewNote?`<p><b>Principal note:</b> ${safe(item.reviewNote)}</p>`:''}<div class="buttonRow">${canOpen?`<button class="button" data-open-cloud="${safe(item.id)}">Open</button>`:''}${revision?`<button class="button" data-revise-cloud="${safe(item.id)}">Start Revision</button>`:''}</div></div>`}).join(''):'<div class="empty">No cloud examination workspace has been saved yet.</div>';
   }catch(e){$('draftList').innerHTML='<div class="notice error">Cloud workspaces could not be loaded: '+safe(e.message||e)+'</div>'}
 }
 $('draftList').addEventListener('click',event=>{const open=event.target.closest('[data-open-cloud]'),revise=event.target.closest('[data-revise-cloud]'),id=open?.dataset.openCloud||revise?.dataset.reviseCloud;if(!id)return;const item=state.cloudItems.find(value=>value.id===id);if(!item?.workspace)return;if(state.dirty&&!confirm('Open this cloud workspace and discard the current unsaved changes?'))return;state.workspace=clone(item.workspace);state.cloudId=revise?'':item.id;state.cloudMeta=revise?{status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email,revisionOf:item.id}:clone(item);state.dirty=!!revise;renderAll();setSaveState(revise?'New revision — save before submission':'Cloud workspace opened',!!revise);document.querySelector('[data-pane-target="setup"]').click()});
-$('newDraft').onclick=()=>{if(state.dirty&&!confirm('Start a new draft from the active master and discard current unsaved changes?'))return;state.workspace=createWorkspaceFromMaster(state.master);state.cloudId='';state.cloudMeta={status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email};state.dirty=true;renderAll();setSaveState('New unsaved cloud draft',true);document.querySelector('[data-pane-target="setup"]').click()};
+$('newDraft').onclick=()=>{if(state.dirty&&!confirm('Start a new draft from the active master and discard current unsaved changes?'))return;state.workspace=createFreshExamWorkspace(state.master);state.cloudId='';state.cloudMeta={status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email};state.dirty=true;renderAll();setSaveState('New unsaved cloud draft',true);document.querySelector('[data-pane-target="setup"]').click()};
 
 function csvCell(value){const text=String(value??'');return /[",\n]/.test(text)?'"'+text.replace(/"/g,'""')+'"':text}
 function download(name,rows){const csv='\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}

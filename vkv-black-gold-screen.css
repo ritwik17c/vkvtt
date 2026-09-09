@@ -1,0 +1,155 @@
+/* VKVTT shared black + saffron screen theme.
+   Presentation only. Official print output remains white/black. */
+:root{
+  --vkv-screen-bg:#090a0a;
+  --vkv-screen-panel:#131414;
+  --vkv-screen-panel2:#181817;
+  --vkv-screen-line:#3a382f;
+  --vkv-screen-line2:#5c4b17;
+  --vkv-screen-gold:#f2c335;
+  --vkv-screen-gold2:#d9a91c;
+  --vkv-screen-cream:#f6f2e8;
+  --vkv-screen-muted:#aaa79f;
+  --vkv-card-gold:#e8bd3d;
+  --vkv-card-gold-soft:#f0cf69;
+  --vkv-card-ink:#17130b;
+}
+
+@media screen{
+  html{color-scheme:dark}
+  body,html.v66-ui body{
+    background:radial-gradient(circle at 88% 2%,rgba(242,195,53,.07),transparent 26rem),linear-gradient(180deg,#0b0c0c,#080909 68%,#060707)!important;
+    color:var(--vkv-screen-cream)!important;
+  }
+  body>header,html.v66-ui body>header:not(.topbar),.topbar{
+    background:linear-gradient(135deg,#111212 0%,#161713 58%,#211b0d 100%)!important;
+    color:#fff!important;
+    border-color:var(--vkv-screen-line2)!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.26)!important;
+  }
+  body h1,body h2,body h3,body h4,body h5,body h6,body legend,body strong{color:#fffaf0!important}
+  body p{color:#ddd7ca}
+  body .card,body .panel,body .view,body .surface,body .gateCard,body .workspaceBadge,body .summaryCard,body .metric,body .tile,body .qcard,body .currentBox,body .replacementItem,body .historyItem,body .resultbox,body .tableWrap,body .tablewrap,body .table-wrap,body .table-shell,body .draftCard,body .outputCard,body .reviewCard,
+  html.v66-ui body .card,html.v66-ui body .panel,html.v66-ui body .view,html.v66-ui body .tile{
+    background:linear-gradient(145deg,#151616,#111212)!important;
+    color:var(--vkv-screen-cream)!important;
+    border-color:var(--vkv-screen-line)!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+  }
+  body .hero,body .schedule,body .tip,body .notice.info,body .info,body .warning,body .hardRule,body .adminWorkspaceHero{
+    background:linear-gradient(145deg,#171611,#201b0e)!important;
+    color:#e9e0c9!important;
+    border-color:var(--vkv-screen-line2)!important;
+  }
+  body .notice,body .status{background:#131414!important;color:var(--vkv-screen-cream)!important;border-color:var(--vkv-screen-line)!important}
+  body .ok,body .green,body .notice.success{background:#102016!important;color:#a9dbb5!important;border-color:#315d3c!important}
+  body .error,body .danger,body .notice.error{background:#261313!important;color:#f0b7b7!important;border-color:#713939!important}
+  body .eyebrow,body .v66-eyebrow,body .noticeHead,body .num,body .adminWorkspaceCopy .eyebrow{color:var(--vkv-screen-gold)!important}
+  body .small,body .help,body .sub,body .subtitle,body .lab,body label,body .tableHint,body .breadcrumb,body .adminWorkspaceCopy p{color:var(--vkv-screen-muted)!important}
+  body .adminWorkspaceCopy strong{color:#fffaf0!important}
+  body button,body .btn,body a.btn,body .button,body .navButton,
+  html.v66-ui body button,html.v66-ui body .btn{
+    background:#171817!important;
+    color:var(--vkv-screen-cream)!important;
+    border-color:#5a5648!important;
+    box-shadow:none!important;
+  }
+  body button:hover,body .btn:hover,body a.btn:hover,body .button:hover,body .navButton:hover{background:#211f18!important;border-color:#8b7426!important}
+  body button.primary,body .primary,body .button.primary,body .tabs button.active,body .navButton.active,body [aria-pressed="true"],
+  html.v66-ui body button.primary,html.v66-ui body .btn.primary{
+    background:var(--vkv-screen-gold)!important;
+    color:#15130b!important;
+    border-color:var(--vkv-screen-gold)!important;
+    outline-color:var(--vkv-screen-gold)!important;
+  }
+  body input,body select,body textarea,html.v66-ui body input,html.v66-ui body select,html.v66-ui body textarea{background:#101111!important;color:var(--vkv-screen-cream)!important;border-color:#4a4638!important}
+  body input::placeholder,body textarea::placeholder{color:#77736c!important}
+  body option{background:#101111;color:var(--vkv-screen-cream)}
+  body input[type="checkbox"],body input[type="radio"]{accent-color:var(--vkv-screen-gold2)}
+  body .tableWrap,body .tablewrap,body .table-wrap,body .table-shell{background:#111212!important}
+  body table,html.v66-ui body table{background:#121313!important;color:#eee9dd!important}
+  body th,html.v66-ui body th{background:#1d1c17!important;color:#f4d566!important;border-color:#34322c!important}
+  body td,html.v66-ui body td{background:#121313!important;color:#eee9dd!important;border-color:#302f2a!important}
+  body tr:hover td{background:#181817!important}
+  body a{color:#f0cd58}
+  body .badge,body .tag,body .chip,body .chips>*,body .pill{
+    background:#282311!important;color:#f1d36c!important;border-color:#64531b!important;
+  }
+  body .sidebar{background:#101111!important;border-color:#34322c!important}
+  body .workspace{background:transparent!important}
+  body .paneHead p,body .sectionTitle p{color:var(--vkv-screen-muted)!important}
+  body hr{border-color:#333128!important}
+  body .myGrid>button,body .nav>button,body .opsGrid>button{background:#151616!important;color:var(--vkv-screen-cream)!important;border-color:#4b4430!important;border-left-color:var(--vkv-screen-gold2)!important}
+  body .myGrid>button.active,body .nav>button.active,body .opsGrid>button.active{background:#211d10!important;color:#fffaf0!important;border-color:var(--vkv-screen-gold)!important}
+  body.adminDashboardPage #dashboardHome{border-top-color:var(--vkv-screen-gold)!important}
+  body .adminWorkspaceArt{filter:sepia(.4) brightness(1.35);opacity:.55!important}
+
+  /* Legacy module surfaces that otherwise stayed pale inside the dark shell. */
+  body .ruleCard,body .profile,body .timeItem,body .teacherChoice,body .item,
+  body .visibility,body .leaveCalendarCard,body .needcard,body .proxycard{
+    background:linear-gradient(145deg,#171817,#121313)!important;
+    color:var(--vkv-screen-cream)!important;
+    border-color:#484437!important;
+  }
+  body .ruleCard b,body .profile b,body .timeItem b,body .teacherChoice .name,body .item b,
+  body .visibility strong,body .needcard b,body .proxycard b{color:#fff7dc!important}
+  body .profile span,body .visibility span,body .teacherChoice .meta,body .item .meta{color:#aaa79f!important}
+  body .profile.active,body .profile.selected{background:#211d10!important;border-color:#a78520!important;outline-color:#7c641e!important}
+
+  /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
+  body.adminDashboardPage .tile,
+  body.adminDashboardPage .premiumTile,
+  body.adminDashboardPage .tiles>.tile{
+    background:linear-gradient(145deg,var(--vkv-card-gold-soft),var(--vkv-card-gold))!important;
+    border-color:#b78d13!important;
+    border-left-color:#7e5f08!important;
+    color:var(--vkv-card-ink)!important;
+    box-shadow:0 8px 20px rgba(0,0,0,.18)!important;
+  }
+  body.adminDashboardPage .tile b,body.adminDashboardPage .tile strong,
+  body.adminDashboardPage .premiumTile b,body.adminDashboardPage .premiumTile strong{color:#17130b!important}
+  body.adminDashboardPage .tile span,body.adminDashboardPage .tile p,
+  body.adminDashboardPage .premiumTile span,body.adminDashboardPage .premiumTile p{color:#3c3218!important}
+  body.adminDashboardPage .tile:hover,body.adminDashboardPage .premiumTile:hover{
+    background:linear-gradient(145deg,#f4d77a,#e8bd3d)!important;
+    border-color:#d2a51f!important;
+  }
+  body.adminDashboardPage .tile::after,body.adminDashboardPage .premiumTile::after{opacity:.18!important}
+
+  /* Common contrast repairs for legacy semantic pills/cards. */
+  body .statusChip,body .status-chip,body .categoryBadge,body .category-badge,
+  body .pill.light,body .badge.light,body .tag.light{color:#19160d!important}
+  body .timeItem,body .periodCard,body .period-card{background:#181817!important;color:#f6f2e8!important;border-color:#5a5133!important}
+  body .timeItem label,body .periodCard label,body .period-card label{color:#cfc8b8!important}
+  body .timeItem input,body .periodCard input,body .period-card input{background:#0f1010!important;color:#fff!important;border-color:#655820!important}
+  body .goldCard,body .gold-card,body .warmCard,body .warm-card{background:linear-gradient(145deg,#f0cf69,#e8bd3d)!important;color:#17130b!important;border-color:#b78d13!important}
+  body .goldCard *,body .gold-card *,body .warmCard *,body .warm-card *{color:#17130b!important}
+
+  /* Finalisation preview deliberately resembles the actual printed sheet. */
+  body .printSheet{background:#fff!important;color:#000!important;border:1px solid #d0d0d0!important;border-radius:4px!important;padding:20px!important;box-shadow:0 8px 24px rgba(0,0,0,.28)!important}
+  body .printSheet h1,body .printSheet h2,body .printSheet h3,body .printSheet h4,
+  body .printSheet p,body .printSheet div,body .printSheet span,body .printSheet strong,
+  body .printSheet small,body .printSheet label{color:#000!important}
+  body .printSheet table,body .printSheet th,body .printSheet td{background:#fff!important;color:#000!important;border-color:#444!important}
+  body .printSheet .principalSignature{display:block!important;min-height:48px!important;margin-top:34px!important;padding-top:10px!important;text-align:right!important;color:#000!important;font-weight:700!important;page-break-inside:avoid!important}
+}
+
+/* Printing is deliberately formal and independent of the screen theme. */
+@media print{
+  html,body{color-scheme:light!important;background:#fff!important;color:#000!important}
+  body *{text-shadow:none!important;box-shadow:none!important;filter:none!important}
+  body,main,section,article,header,footer,
+  .card,.panel,.view,.surface,.gateCard,.workspaceBadge,.summaryCard,.metric,.tile,.qcard,.currentBox,.replacementItem,.historyItem,.resultbox,.notice,.status,.tip,.warning,.info,.hardRule,.tableWrap,.tablewrap,.table-wrap,.table-shell,.printSheet,
+  table,thead,tbody,tfoot,tr,th,td{background:#fff!important;color:#000!important;border-color:#000!important}
+  h1,h2,h3,h4,h5,h6,p,span,strong,small,label,legend,.small,.help,.sub,.subtitle,.lab,.eyebrow,.v66-eyebrow{color:#000!important}
+  input,select,textarea,button,.btn,.button,.navButton{background:#fff!important;color:#000!important;border-color:#000!important}
+  a,a:visited{color:#000!important;text-decoration:none!important}
+  header::before,header::after,.tile::before,.tile::after,.adminWorkspaceHero::before{display:none!important}
+  .printSheet .principalSignature{display:block!important;min-height:16mm!important;margin-top:12mm!important;padding-top:3mm!important;text-align:right!important;color:#000!important;font-weight:700!important;page-break-inside:avoid!important}
+
+  /* Class Observation official signatures: teacher left, observer right. */
+  .printSign{display:flex!important;width:100%!important;justify-content:space-between!important;align-items:flex-start!important;gap:24mm!important;margin-top:18mm!important;page-break-inside:avoid!important}
+  .printSign span{display:block!important;flex:0 0 40%!important;width:40%!important;max-width:40%!important;border-top:1px solid #000!important;padding-top:3mm!important;white-space:nowrap!important}
+  .printSign span:first-child{margin-right:auto!important;text-align:left!important}
+  .printSign span:last-child{margin-left:auto!important;text-align:right!important}
+}
