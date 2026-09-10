@@ -107,3 +107,24 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
   window.VKVTheme={get:()=>theme,set:t=>apply(t),applyToDocument:(doc,t=theme)=>apply(t,doc,false)};
 })();
+
+/* Class Observation: Managers may prepare drafts, but Principal/Admin alone finalises. */
+(()=>{
+  if(!/class-observation\.html$/i.test(location.pathname))return;
+  const applyManagerGuard=()=>{
+    const gate=document.getElementById('gateMsg'),finalise=document.getElementById('finalise');
+    if(!gate||!finalise)return;
+    const manager=/^Manager access confirmed\.?$/i.test(String(gate.textContent||'').trim());
+    if(!manager)return;
+    finalise.disabled=true;
+    finalise.hidden=true;
+    finalise.setAttribute('aria-hidden','true');
+    const actions=finalise.parentElement;
+    if(actions&&!document.getElementById('managerObservationNote')){
+      const note=document.createElement('span');
+      note.id='managerObservationNote';note.className='small';note.textContent='Manager access: draft preparation only. Finalisation and sharing remain with Principal/Admin.';actions.appendChild(note);
+    }
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyManagerGuard,{once:true});else applyManagerGuard();
+  new MutationObserver(applyManagerGuard).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
