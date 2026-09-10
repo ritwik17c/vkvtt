@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance Repair · 09–10 September 2026 · VKV Nalbari</title>
+<style>
+:root{--navy:#123b58;--line:#bfd0da;--bg:#f4f8fa;--blue:#eaf4fa;--green:#eaf7ec;--amber:#fff5da;--red:#9b2c2c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px system-ui,-apple-system,Segoe UI,sans-serif;color:#18313f}header{background:var(--navy);color:#fff;padding:18px}main{max-width:960px;margin:auto;padding:14px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;margin:12px 0}.notice{background:var(--amber);border:1px solid #e6c66f;border-radius:10px;padding:12px}.ok{background:var(--green);border:1px solid #abd5b3}.bad{color:var(--red);font-weight:700}button{font:inherit;font-weight:750;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--blue);cursor:pointer}.primary{background:var(--navy);color:#fff}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{padding:8px;border-bottom:1px solid #dce6eb;text-align:left}.small{font-size:12px;color:#526a76}
+</style>
+</head>
+<body>
+<header><div style="max-width:960px;margin:auto"><h1 style="margin:0">Attendance Repair</h1><div>VKV Nalbari · 09–10 September 2026 · Normal Schedule only</div></div></header>
+<main>
+<div id="gate" class="card"><b id="gateMsg">Checking Principal/Admin access…</b><div class="actions"><button id="signIn" hidden class="primary">Sign in with Google</button><button onclick="location.href='admin-attendance.html'">← Attendance Administration</button></div></div>
+<div id="app" hidden>
+  <div class="card notice"><b>Protected scope</b><br>This one-time repair touches only arrival records dated 09/09/2026 and 10/09/2026. It recalculates lateness using Reporting 08:00, Grace 5 minutes, Late from 08:06. Original event snapshots are written to the immutable attendance audit collection before any change.</div>
+  <div class="card"><h2>Preview</h2><div id="preview">Loading…</div><div class="actions"><button id="repair" class="primary" disabled>Repair these two dates</button><button id="rescan">Rescan</button></div><p id="msg"></p></div>
+</div>
+</main>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+import{getFirestore,doc,getDoc,setDoc,deleteDoc,serverTimestamp,collection,getDocs,query,where}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
+const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
+const fb=initializeApp(cfg),auth=getAuth(fb),db=getFirestore(fb),provider=new GoogleAuthProvider();await setPersistence(auth,browserLocalPersistence).catch(()=>{});if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
+const $=id=>document.getElementById(id),DATES=['2026-09-09','2026-09-10'],RUN_ID='attendance_repair_2026-09-09_2026-09-10_normal_0800_grace5_v1',LATE_FROM=8*60+6;
+let user=null,profile=null,rows=[];
+$('signIn').onclick=()=>signInWithPopup(auth,provider);$('rescan').onclick=scan;
+const fmtDate=k=>{const [y,m,d]=k.split('-');return `${d}/${m}/${y}`};
+const localMinutes=ms=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(Number(ms)));const h=Number(parts.find(x=>x.type==='hour')?.value||0),m=Number(parts.find(x=>x.type==='minute')?.value||0);return h*60+m};
+const fmtTime=ms=>new Date(Number(ms)).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'});
+function repairedLate(ms){return Math.max(0,localMinutes(ms)-(8*60+5))}
+async function scan(){
+ $('repair').disabled=true;$('msg').textContent='';$('preview').textContent='Scanning…';rows=[];
+ const run=await getDoc(doc(db,'attendanceTestAudit',RUN_ID));
+ if(run.exists()){$('preview').innerHTML='<div class="ok notice"><b>This repair has already been completed.</b><br>Run marker exists, so the utility will not run twice.</div>';$('repair').disabled=true;return}
+ for(const date of DATES){const snap=await getDocs(query(collection(db,'attendanceEvents'),where('date','==',date)));for(const d of snap.docs){const x={id:d.id,...d.data()};if(x.type!=='arrival')continue;const next=repairedLate(x.clientTimeMs),old=Number(x.lateMinutes||0),oldReport=x.scheduleSnapshot?.reportingTime||'',oldName=x.scheduleSnapshot?.scheduleName||'';rows.push({...x,date,nextLate:next,oldLate:old,needsChange:old!==next||oldReport!=='08:00'||Number(x.scheduleSnapshot?.graceMinutes||0)!==5||oldName!=='Normal Schedule'})}}
+ const changed=rows.filter(x=>x.needsChange);
+ $('preview').innerHTML=`<div><b>${rows.length}</b> arrival record(s) found; <b>${changed.length}</b> require correction.</div>`+(rows.length?'<table><thead><tr><th>Date</th><th>Staff</th><th>Arrival</th><th>Old result</th><th>Correct result</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${fmtDate(x.date)}</td><td>${String(x.staffName||x.staffCode||'')}</td><td>${fmtTime(x.clientTimeMs)}</td><td>${x.oldLate>0?'Late '+x.oldLate+' min':'On time'}<div class="small">${String(x.scheduleSnapshot?.scheduleName||'')} · ${String(x.scheduleSnapshot?.reportingTime||'—')}</div></td><td>${x.nextLate>0?'Late '+x.nextLate+' min':'On time'} · Normal 08:00 + 5</td></tr>`).join('')+'</tbody></table>':'<div class="notice">No arrival records found for these dates.</div>');
+ $('repair').disabled=changed.length===0;
+}
+$('repair').onclick=async()=>{
+ if(!rows.length)return;const changed=rows.filter(x=>x.needsChange);if(!changed.length)return;
+ $('repair').disabled=true;$('rescan').disabled=true;$('msg').textContent='Repairing…';
+ try{
+  for(const x of changed){
+   const auditId=`${RUN_ID}_${x.id}`;
+   const existingAudit=await getDoc(doc(db,'attendanceTestAudit',auditId));
+   if(!existingAudit.exists())await setDoc(doc(db,'attendanceTestAudit',auditId),{action:'historical_attendance_late_repair',runId:RUN_ID,eventId:x.id,date:x.date,performedBy:user.uid,performedByName:user.displayName||profile.name||user.email,performedAt:serverTimestamp(),rule:{reportingTime:'08:00',graceMinutes:5,lateFrom:'08:06'},originalRecord:x});
+   const repairedSnapshot={...(x.scheduleSnapshot||{}),scheduleId:'normal',scheduleName:'Normal Schedule',reportingTime:'08:00',graceMinutes:5,lateThresholdMinutes:LATE_FROM,applicableDate:x.date,repairRunId:RUN_ID};
+   await setDoc(doc(db,'attendanceEvents',x.id),{scheduleSnapshot:repairedSnapshot,lateMinutes:x.nextLate,historicalLatenessRepaired:true,historicalLatenessRepairRunId:RUN_ID,historicalLatenessRepairedAt:serverTimestamp(),historicalLatenessRepairedBy:user.uid},{merge:true});
+   const lateId=`${x.date}_${x.uid}`;
+   if(x.nextLate>0){await setDoc(doc(db,'attendanceLate',lateId),{date:x.date,uid:x.uid,staffName:x.staffName||'',staffGroup:x.staffGroup||'teaching',arrivalTime:x.recordedAt||serverTimestamp(),arrivalClientTimeMs:x.clientTimeMs,lateMinutes:x.nextLate,lateThresholdMinutes:LATE_FROM,verificationStatus:x.verificationStatus||'provisional'},{merge:true})}
+   else await deleteDoc(doc(db,'attendanceLate',lateId)).catch(()=>{});
+  }
+  await setDoc(doc(db,'attendanceTestAudit',RUN_ID),{action:'historical_attendance_late_repair_completed',dates:DATES,rule:{reportingTime:'08:00',graceMinutes:5,lateFrom:'08:06'},arrivalRecordsScanned:rows.length,recordsChanged:changed.length,performedBy:user.uid,performedByName:user.displayName||profile.name||user.email,performedAt:serverTimestamp()});
+  $('msg').className='ok notice';$('msg').innerHTML=`Repair completed successfully. ${changed.length} arrival record(s) corrected. The utility is now locked against a second run.`;await scan();
+ }catch(e){$('msg').className='bad';$('msg').textContent='Repair stopped: '+(e.message||e);$('rescan').disabled=false;await scan().catch(()=>{})}
+};
+onAuthStateChanged(auth,async u=>{user=u;if(!u){$('gateMsg').textContent='Please sign in with the Principal/Admin Google account.';$('signIn').hidden=false;return}try{const p=await getDoc(doc(db,'authorizedUsers',u.uid));if(!p.exists()||p.data().active!==true||p.data().role!=='admin')throw new Error('Principal/Admin access is required.');profile=p.data();$('gate').hidden=true;$('app').hidden=false;await scan()}catch(e){$('gateMsg').className='bad';$('gateMsg').textContent=e.message||String(e)}});
+</script>
+</body>
+</html>
