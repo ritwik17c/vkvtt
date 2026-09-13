@@ -22,20 +22,20 @@ function questionScore(q,duplicateCount){
   let clarity=0,completeness=0,cognitive=0,alignment=0,originality=0,review=0;
 
   const len=qt.length;
-  clarity+=len>=20&&len<=320?10:len>=10&&len<=500?7:3;
-  clarity+=(qt.includes('?')||hasWord(qt,directive))?6:2;
-  clarity+=!/\?\?\?|!!|\.\.\.|\s{3,}/.test(qt)?5:2;
-  clarity+=qt.split(/\s+/).filter(Boolean).length>=5?4:1;
+  clarity+=len>=20&&len<=320?8:len>=10&&len<=500?6:2;
+  clarity+=(qt.includes('?')||hasWord(qt,directive))?5:2;
+  clarity+=!/\?\?\?|!!|\.\.\.|\s{3,}/.test(qt)?4:1;
+  clarity+=qt.split(/\s+/).filter(Boolean).length>=5?3:1;
 
-  completeness+=ans?7:0;
-  completeness+=scheme?6:0;
-  completeness+=marks>0?4:0;
-  completeness+=(text(q.chapter)||text(q.topic))?4:0;
-  completeness+=text(q.learningOutcome)?4:0;
+  completeness+=ans?6:0;
+  completeness+=scheme?5:0;
+  completeness+=marks>0?3:0;
+  completeness+=(text(q.chapter)||text(q.topic))?3:0;
+  completeness+=text(q.learningOutcome)?3:0;
 
   if(hasWord(qt,higher))cognitive+=14;else if(hasWord(qt,recall))cognitive+=8;else cognitive+=6;
-  cognitive+=text(q.difficulty)?4:1;
-  cognitive+=text(q.questionType)?4:1;
+  cognitive+=text(q.difficulty)?3:1;
+  cognitive+=text(q.questionType)?3:1;
 
   alignment+=text(q.className)?4:0;
   alignment+=text(q.subject)?4:0;
@@ -107,7 +107,7 @@ async function init(){
         rows.push({code:g.code,name:g.name,count,approved,returned,score:avg('total'),parts:{clarity:avg('clarity'),completeness:avg('completeness'),cognitive:avg('cognitive'),alignment:avg('alignment'),originality:avg('originality'),review:avg('review')},provisional:count<5});
       }
       rows.sort((a,b)=>Number(a.provisional)-Number(b.provisional)||b.score-a.score||b.count-a.count||a.name.localeCompare(b.name));last=rows;
-      let officialRank=0;out.innerHTML=rows.length?rows.map(r=>{const rank=r.provisional?'P':++officialRank;return`<div class="leader"><div class="rank">${r.provisional?'P':rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'#'+rank}</div><div class="grow"><b>${esc(r.name)}</b> <span class="badge">${esc(grade(r.score))}</span>${r.provisional?'<span class="badge">Provisional sample</span>':''}<div class="small">Quality score: <b>${r.score.toFixed(1)}/100</b> · Assessed: <b>${r.count}</b> · Approved: ${r.approved} · Returned: ${r.returned}</div><div class="small">Clarity ${r.parts.clarity.toFixed(1)}/25 · Completeness ${r.parts.completeness.toFixed(1)}/25 · Cognitive depth ${r.parts.cognitive.toFixed(1)}/20 · Alignment ${r.parts.alignment.toFixed(1)}/20 · Originality ${r.parts.originality.toFixed(1)}/10 · Review confidence ${r.parts.review.toFixed(1)}/10</div></div></div>`}).join(''):'<div class="empty">No eligible submitted/approved/returned questions were found for this selection.</div>';
+      let officialRank=0;out.innerHTML=rows.length?rows.map(r=>{const rank=r.provisional?'P':++officialRank;return`<div class="leader"><div class="rank">${r.provisional?'P':rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'#'+rank}</div><div class="grow"><b>${esc(r.name)}</b> <span class="badge">${esc(grade(r.score))}</span>${r.provisional?'<span class="badge">Provisional sample</span>':''}<div class="small">Quality score: <b>${r.score.toFixed(1)}/100</b> · Assessed: <b>${r.count}</b> · Approved: ${r.approved} · Returned: ${r.returned}</div><div class="small">Clarity ${r.parts.clarity.toFixed(1)}/20 · Completeness ${r.parts.completeness.toFixed(1)}/20 · Cognitive depth ${r.parts.cognitive.toFixed(1)}/20 · Alignment ${r.parts.alignment.toFixed(1)}/20 · Originality ${r.parts.originality.toFixed(1)}/10 · Review confidence ${r.parts.review.toFixed(1)}/10</div></div></div>`}).join(''):'<div class="empty">No eligible submitted/approved/returned questions were found for this selection.</div>';
       if(snap.size===1000)out.insertAdjacentHTML('afterbegin','<div class="warn">The first 1000 workflow questions were assessed. A later server-side quality index can remove this safety cap if the bank grows beyond it.</div>');
     }catch(e){console.error('Qualitative QB leaderboard:',e);out.innerHTML='<div class="empty" style="color:#8b2d2d">Qualitative leaderboard could not be calculated: '+esc(e.message||e)+'</div>'}finally{b.disabled=false;b.textContent=old}
   };
