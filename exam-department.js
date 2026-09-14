@@ -75,6 +75,7 @@ $('returnDraft').onclick=async()=>{try{if(!state.isAdmin||workflowStatus()!=='su
 
 function renderAll(){
   renderMasterSummary();renderSetup();renderSessions();renderPapers();renderTeachers();renderTimetable();renderDuties();renderReview();renderWorkflow();
+  document.dispatchEvent(new CustomEvent('vkv-exam-workspace-rendered'));
 }
 
 function examBaseClass(value){return String(value||'').trim().replace(/\s+/g,' ').replace(/^((?:XI|XII))\s*(?:[-–]\s*|\s+|\(\s*)(?:SCI(?:ENCE)?|ARTS?|HUMANITIES)\s*\)?$/i,(_,grade)=>grade.toUpperCase()).replace(/(?:\s*[-–]\s*|\s+)(?:SECTION\s*)?[A-DV]$/i,'').replace(/\s*\((?:A|B|C|D|V)\)$/i,'').trim()}
@@ -104,7 +105,7 @@ function installExaminationSubjectCatalogue(classes){
   state.workspace.classes=[...new Set(catalogue.map(p=>p.className))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   state.workspace.papers=catalogue;state.workspace.timetable={events:[],unplaced:[],dates:[],slots:[]};state.workspace.duties={invigilation:[],relievers:[],unfilled:[]};renderAll();document.dispatchEvent(new CustomEvent('vkv-exam-workspace-subjects-applied',{detail:{catalogue:true}}));return true
 }
-window.vkvExamWorkspace={applySubjectMaster:applyExaminationSubjectMaster,installSubjectCatalogue:installExaminationSubjectCatalogue,undoTimetable:undoGeneratedTimetable};
+window.vkvExamWorkspace={applySubjectMaster:applyExaminationSubjectMaster,installSubjectCatalogue:installExaminationSubjectCatalogue,undoTimetable:undoGeneratedTimetable,getWorkspace:()=>state.workspace,getMaster:()=>state.master,markDirty:message=>markDirty(message),renderReview:()=>renderReview()};
 
 function renderMasterSummary(){
   const master=state.master||{},data=master.data&&typeof master.data==='object'?{...master,...master.data}:master,source=state.workspace.sourceSchedule||{};
