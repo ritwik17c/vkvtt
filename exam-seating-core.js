@@ -48,7 +48,7 @@ export function reconcileSeating(existing={},selectedClasses=[],masterVenueNames
   const sectionStrengths=[];
   for(const className of classes)for(const sectionName of defaultSectionsForClass(className)){
     const old=oldStrengths.get(className+'|'+sectionName)||{};
-    sectionStrengths.push({className,sectionName,strength:Math.max(0,Number(old.strength)||0)});
+    sectionStrengths.push({className,sectionName,strength:Math.max(0,Number(old.strength)||0),startingRollNo:Math.max(1,Number(old.startingRollNo)||1)});
   }
   const oldVenues=new Map((existing.venues||[]).map(item=>[text(item.name).toLowerCase(),item]));
   const venues=[];
@@ -58,7 +58,7 @@ export function reconcileSeating(existing={},selectedClasses=[],masterVenueNames
     oldVenues.delete(name.toLowerCase());
   }
   for(const old of oldVenues.values())venues.push({id:text(old.id)||'VENUE_'+Date.now(),name:text(old.name),source:old.source==='master'?'master':'manual',active:old.active!==false,twoSeaterBenches:Math.max(0,Number(old.twoSeaterBenches)||0),threeSeaterBenches:Math.max(0,Number(old.threeSeaterBenches)||0)});
-  return {schemaVersion:1,sectionStrengths,venues,updatedAtMs:Number(existing.updatedAtMs)||Date.now()};
+  return {schemaVersion:2,sectionStrengths,venues,plan:existing.plan&&typeof existing.plan==='object'?existing.plan:null,updatedAtMs:Number(existing.updatedAtMs)||Date.now()};
 }
 
 export function seatingSummary(seating={}){
