@@ -28,7 +28,9 @@ export function deriveMasterVenues(rawMaster={},fallbackNames=[]){
     if(Array.isArray(source))for(const item of source){const name=itemName(item);if(name)values.push(name)}
     else if(source&&typeof source==='object')for(const [name,item] of Object.entries(source)){values.push(itemName(item)||name)}
   }
-  for(const item of master?.classes||[]){
+  const classSource=master?.classes||[];
+  const classItems=Array.isArray(classSource)?classSource:Object.entries(classSource).map(([name,item])=>item&&typeof item==='object'?{name,...item}:name);
+  for(const item of classItems){
     if(typeof item==='string'){values.push(item);continue}
     const explicit=text(item?.venueName||item?.roomName||item?.venue||item?.room||item?.roomId);
     values.push(explicit||itemName(item));
