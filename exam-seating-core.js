@@ -54,10 +54,10 @@ export function reconcileSeating(existing={},selectedClasses=[],masterVenueNames
   const venues=[];
   for(const name of unique(masterVenueNames)){
     const old=oldVenues.get(name.toLowerCase())||{};
-    venues.push({id:text(old.id)||'VENUE_'+name.toUpperCase().replace(/[^A-Z0-9]+/g,'_'),name,source:'master',active:old.active!==false,twoSeaterBenches:Math.max(0,Number(old.twoSeaterBenches)||0),threeSeaterBenches:Math.max(0,Number(old.threeSeaterBenches)||0)});
+    venues.push({id:text(old.id)||'VENUE_'+name.toUpperCase().replace(/[^A-Z0-9]+/g,'_'),name,source:'master',active:old.active!==false,twoSeaterBenches:Math.max(0,Number(old.twoSeaterBenches)||0),threeSeaterBenches:Math.max(0,Number(old.threeSeaterBenches)||0),benchesPerRow:Math.max(1,Math.min(6,Number(old.benchesPerRow)||3))});
     oldVenues.delete(name.toLowerCase());
   }
-  for(const old of oldVenues.values())venues.push({id:text(old.id)||'VENUE_'+Date.now(),name:text(old.name),source:old.source==='master'?'master':'manual',active:old.active!==false,twoSeaterBenches:Math.max(0,Number(old.twoSeaterBenches)||0),threeSeaterBenches:Math.max(0,Number(old.threeSeaterBenches)||0)});
+  for(const old of oldVenues.values())venues.push({id:text(old.id)||'VENUE_'+Date.now(),name:text(old.name),source:old.source==='master'?'master':'manual',active:old.active!==false,twoSeaterBenches:Math.max(0,Number(old.twoSeaterBenches)||0),threeSeaterBenches:Math.max(0,Number(old.threeSeaterBenches)||0),benchesPerRow:Math.max(1,Math.min(6,Number(old.benchesPerRow)||3))});
   return {schemaVersion:2,sectionStrengths,venues,plan:existing.plan&&typeof existing.plan==='object'?existing.plan:null,updatedAtMs:Number(existing.updatedAtMs)||Date.now()};
 }
 
