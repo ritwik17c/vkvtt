@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<script>try{const t=localStorage.getItem("vkvtt-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 <title>VKV Nalbari · Examination Module</title>
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1">
-<link rel="stylesheet" href="exam-department.css?v=1.1.0">
+<link rel="stylesheet" href="exam-department.css?v=1.2.0-theme">
 <script src="vkv-date-ui.js?v=20260904-approved-clean-1" defer></script>
 </head>
 <body>
-<header class="topbar"><div class="topbarInner"><div class="brand"><img src="school-logo.jpg" alt="Vivekananda Kendra Vidyalaya, Nalbari logo"><div><h1>Examination Module</h1><p>Exam timetable · Invigilation · Reliever duties</p></div></div><div class="topActions"><span id="saveState" class="saveState">Loading…</span><button id="saveDraft" class="button pale" hidden>Save Cloud Draft</button><button id="submitDraft" class="button pale" hidden>Submit to Principal</button><button id="approvePublish" class="button pale" hidden>Approve & Publish</button><button id="returnDraft" class="button pale" hidden>Return for Correction</button><a class="button pale" href="index.html?v=66.0">Home</a></div></div></header>
+<header class="topbar"><div class="topbarInner"><div class="brand"><img src="school-logo.jpg" alt="Vivekananda Kendra Vidyalaya, Nalbari logo"><div><h1>Examination Module</h1><p>Exam timetable · Invigilation · Reliever duties</p></div></div><div class="topActions"><button id="examThemeToggle" type="button" class="button pale themeToggle" aria-label="Switch colour theme" aria-pressed="false">Dark theme</button><span id="saveState" class="saveState">Loading…</span><button id="saveDraft" class="button pale" hidden>Save Cloud Draft</button><button id="submitDraft" class="button pale" hidden>Submit to Principal</button><button id="approvePublish" class="button pale" hidden>Approve & Publish</button><button id="returnDraft" class="button pale" hidden>Return for Correction</button><a class="button pale" href="index.html?v=66.0">Home</a></div></div></header>
 <main>
 <section id="authGate" class="gateCard"><div class="eyebrow">Authorised workspace</div><h2>Checking Examination Module access…</h2><p id="gateMessage">Please wait while your delegated permission is verified.</p><button id="signInButton" class="button primary" hidden>Sign in with Google</button></section>
 <div id="examApp" class="appShell" hidden><aside class="sidebar"><div class="workspaceBadge"><span class="eyebrow">Working draft</span><strong id="sideName">New Examination Schedule</strong><small id="sideSource">Active master timetable</small></div><nav aria-label="Examination Module sections"><button class="navButton active" data-pane-target="setup"><span>1</span> Exam Setup</button><button class="navButton" data-pane-target="subjects"><span>2</span> Subjects</button><button class="navButton" data-pane-target="timetable"><span>3</span> Exam Timetable</button><button class="navButton" data-pane-target="seatingPlan"><span>4</span> Class-wise Seating Plan</button><button class="navButton" data-pane-target="staff"><span>5</span> Staff & Availability</button><button class="navButton" data-pane-target="duties"><span>6</span> Duties</button><button class="navButton" data-pane-target="outputs"><span>7</span> Review & Output</button></nav><div class="sideNote">This workspace reads the activated master timetable. It does not replace or edit the school timetable.</div></aside>
@@ -24,10 +25,11 @@
 <section class="pane" data-pane="outputs"><div class="paneHead"><div><div class="eyebrow">Final checks</div><h2>Review, Save & Output</h2><p>Check completeness before printing or exporting operational lists.</p></div></div><div id="reviewSummary" class="reviewGrid"></div><article class="surface"><h3>Outputs</h3><div class="buttonRow"><button id="printExam" class="button primary">Print Exam Timetable</button><button id="printDuties" class="button primary">Print Duty Lists</button><button id="printSeatPlanSummaryReview" class="button primary">Print Seat Plan Summary</button><button id="printRoomStickersReview" class="button primary">Print Room Stickers</button><button id="downloadExamCsv" class="button">Download Exam CSV</button><button id="downloadDutyCsv" class="button">Download Duty CSV</button></div></article><article class="surface"><div class="sectionTitle"><div><h3>Cloud Examination Workspaces</h3><p>Exam Managers submit drafts here. The Principal can return, approve and publish them.</p></div><button id="newDraft" class="button">New from Master</button></div><div id="draftList" class="draftList"></div></article></section>
 </div></div>
 </main>
+<script src="vkv-exam-theme.js?v=20260914-theme-1" defer></script>
 <script src="vkv-exam-template-start-flow.js?v=20260906-title-persist-2"></script>
 <script src="vkv-exam-template-manual-repair.js?v=20260906-junior-import-wrap-4"></script>
 <script type="module" src="exam-department.js?v=20260905-live-subject-master-refresh-23"></script>
-<script type="module" src="vkv-exam-seating-plan.js?v=20260914-manual-auto-mix-4"></script>
+<script type="module" src="vkv-exam-seating-plan.js?v=20260914-capacity-occupancy-5"></script>
 <script type="module" src="vkv-exam-incharge-delegation.js?v=20260905-unified-senior-classes-22"></script>
 <script type="module" src="vkv-exam-major-workflow.js?v=20260905-unified-senior-classes-22"></script>
 <script type="module" src="vkv-exam-subject-master.js?v=20260906-stable-subject-master-1"></script>
