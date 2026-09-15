@@ -182,6 +182,23 @@
   body .sectionTitle{background:#10212a!important;color:#fff7dc!important}
   body .modal{background:rgba(7,18,27,.84)!important}
 
+  /* Administrative access, export and notice-board utility surfaces. */
+  body .permissionBox,body .permission,body .attachmentBox,body .exportCard{
+    background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+  }
+  body .permissionBox label,body .permission label,body .attachmentName,body .exportCard b{color:#fff7dc!important}
+  body .exportCard span,body .attachmentBox .meta{color:#a8bdc8!important}
+  body .exportCard:hover,body .exportCard:focus-within{background:#1b303b!important;border-color:#a78520!important}
+  body .fileChip,body a.fileChip:visited{
+    background:#1b303b!important;color:#f0cd58!important;border-color:#496675!important;
+  }
+  body .fileChip:hover,body .fileChip:active{background:#2d5364!important;color:#fff7dc!important;border-color:#d9a91c!important}
+  body .pill.good{background:#163524!important;color:#b9e5c7!important;border-color:#326846!important}
+  body .pill.bad,body .pill.leaveEditor,body .leaveEditor{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  body input[type="file"]::file-selector-button{background:#1b303b;color:#f6f2e8;border:1px solid #496675;border-radius:8px;padding:7px 9px}
+  body input[type="file"]::file-selector-button:hover{background:#244655;color:#fffaf0;border-color:#8b7426}
+  body .attachmentPreview img{background:#0d1b24!important;border-color:#42606f!important}
+
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
   body.adminDashboardPage .premiumTile,
