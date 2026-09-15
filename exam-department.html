@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<script>try{const t=localStorage.getItem("vkvtt-theme");document.documentElement.dataset.theme=t==="dark"||t==="light"?t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
+<script>try{const e=localStorage.getItem("vkvtt-exam-theme"),g=localStorage.getItem("vkvtt-theme"),t=e==="dark"||e==="light"?e:g==="light"?"light":g==="dark"?"dark":(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="light"}</script>
 <title>VKV Nalbari · Examination Module</title>
 <link rel="stylesheet" href="v66-design-system.css?v=66.0-school-identity-1">
 <link rel="stylesheet" href="exam-department.css?v=1.2.0-theme">
@@ -25,7 +25,7 @@
 <section class="pane" data-pane="outputs"><div class="paneHead"><div><div class="eyebrow">Final checks</div><h2>Review, Save & Output</h2><p>Check completeness before printing or exporting operational lists.</p></div></div><div id="reviewSummary" class="reviewGrid"></div><article class="surface"><h3>Outputs</h3><div class="buttonRow"><button id="printExam" class="button primary">Print Exam Timetable</button><button id="printDuties" class="button primary">Print Duty Lists</button><button id="printSeatPlanSummaryReview" class="button primary">Print Seat Plan Summary</button><button id="printRoomStickersReview" class="button primary">Print Room Stickers</button><button id="downloadExamCsv" class="button">Download Exam CSV</button><button id="downloadDutyCsv" class="button">Download Duty CSV</button></div></article><article class="surface"><div class="sectionTitle"><div><h3>Cloud Examination Workspaces</h3><p>Exam Managers submit drafts here. The Principal can return, approve and publish them.</p></div><button id="newDraft" class="button">New from Master</button></div><div id="draftList" class="draftList"></div></article></section>
 </div></div>
 </main>
-<script src="vkv-exam-theme.js?v=20260914-theme-1" defer></script>
+<script src="vkv-exam-theme.js?v=20260915-light-theme-fix-2" defer></script>
 <script src="vkv-exam-template-start-flow.js?v=20260906-title-persist-2"></script>
 <script src="vkv-exam-template-manual-repair.js?v=20260906-junior-import-wrap-4"></script>
 <script type="module" src="exam-department.js?v=20260905-live-subject-master-refresh-23"></script>
@@ -41,7 +41,7 @@
 <script src="vkv-exam-persistence-bridge.js?v=20260905-unified-senior-classes-22" defer></script>
 <script src="vkv-exam-autosave.js?v=20260905-live-subject-master-refresh-23" defer></script>
 <script src="vkv-exam-output-finalizer.js?v=20260905-unified-senior-classes-22" defer></script>
-<script src="vkv-exam-source-summary-clean.js?v=20260908-exact-footer-migration-2" defer></script>
+<script src="vkv-exam-source-summary-clean.js?v=20260915-light-theme-fix-2" defer></script>
 <script src="vkv-exam-template-fallback-editor.js?v=20260905-unified-senior-classes-22" defer></script>
 <script src="vkv-exam-workspace-mode-fix.js?v=20260904-workspace-mode-fix-1" defer></script>
 <script src="vkv-exam-generated-state-recovery.js?v=20260906-recovery-1" defer></script>
