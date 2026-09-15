@@ -2,7 +2,7 @@
 // Additive UI only. No leave/status writes are performed here.
 import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
 import{getAuth,setPersistence,browserLocalPersistence}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
-import{getFirestore,collection,getDocs}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
+import{getFirestore,doc,getDoc,collection,getDocs}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
 
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
@@ -30,7 +30,7 @@ function coverage(p){
  if(p?.duration==='half')return p.from&&p.to?`P${p.from}–P${p.to}`:'Half day';
  if(p?.from&&p?.to)return`P${p.from}–P${p.to}`;return'Full day';
 }
-function historyFor(code){return approved.filter(p=>p&&p.active!==false&&String(p.code||p.teacherCode||'')===String(code||'')).sort((a,b)=>String(datesOf(b).at(-1)||'').localeCompare(String(datesOf(a).at(-1)||''))}
+function historyFor(code){return approved.filter(p=>p&&p.active!==false&&String(p.code||p.teacherCode||'')===String(code||'')).sort((a,b)=>String(datesOf(b).at(-1)||'').localeCompare(String(datesOf(a).at(-1)||'')))}
 function historyHtml(code,compact=false){
  if(!code)return'<div class="vkh-empty">Select a staff member to view approved history.</div>';
  if(loadError)return`<div class="vkh-warn">Approved leave history could not be loaded for this account. ${safe(loadError)}</div>`;
@@ -40,16 +40,21 @@ function historyHtml(code,compact=false){
 }
 function ensureStyle(){if(document.getElementById('vkh-style'))return;const s=document.createElement('style');s.id='vkh-style';s.textContent=`.vkh-panel{border:1px solid #bcd5df;border-radius:14px;background:#f7fbfd;padding:13px;margin:12px 0}.vkh-title{font-weight:850;color:#17364f;margin-bottom:3px}.vkh-help,.vkh-empty{font-size:.83rem;color:#617685;line-height:1.45}.vkh-summary{font-size:.82rem;color:#476575;margin:8px 0}.vkh-list{display:grid;gap:7px}.vkh-row{border:1px solid #dce8ed;border-radius:10px;background:#fff;padding:9px 10px}.vkh-row>div{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.vkh-row b{color:#17364f;font-size:.87rem}.vkh-row span,.vkh-row small{color:#617685;font-size:.8rem}.vkh-row small{display:block;margin-top:3px}.vkh-warn{font-size:.82rem;color:#76570f;background:#fff7df;border:1px solid #e4c873;border-radius:9px;padding:9px}`;document.head.appendChild(s)}
 function mountQuick(){
- const sel=document.getElementById('teacher'),form=document.getElementById('formCard');if(!sel||!form)return;
- let p=document.getElementById('vkh-quick');if(!p){p=document.createElement('div');p.id='vkh-quick';p.className='vkh-panel';p.innerHTML='<div class="vkh-title">📚 Approved Leave / Duty History</div><div class="vkh-help">Review the selected staff member’s approved history before preparing a new provisional entry.</div><div id="vkh-quick-body"></div>';const firstGrid=form.querySelector('.grid2');firstGrid?.insertAdjacentElement('afterend',p)}
- const render=()=>{const b=document.getElementById('vkh-quick-body');if(b)b.innerHTML=historyHtml(sel.value,false)};sel.addEventListener('change',render);render();
+ const sel=document.getElementById('teacher')||document.getElementById('editTeacher'),form=document.getElementById('formCard')||document.getElementById('editorPanel');if(!sel||!form)return;
+ let p=document.getElementById('vkh-quick');if(!p){p=document.createElement('div');p.id='vkh-quick';p.className='vkh-panel';p.innerHTML='<div class="vkh-title">📚 Previous Approved Leave History</div><div class="vkh-help">Review the selected staff member’s previous approved Leave / OD / Special Assignment records before adding, editing or approving another entry.</div><div id="vkh-quick-body"></div>';const firstGrid=form.querySelector('.grid2');firstGrid?.insertAdjacentElement('afterend',p)}
+ const render=()=>{const b=document.getElementById('vkh-quick-body');if(b)b.innerHTML=historyHtml(sel.value,false)};sel.addEventListener('change',render);window.vkvRenderLeaveHistory=render;
+ document.addEventListener('click',event=>{if(event.target.closest?.('[data-edit-key],[data-resolve],[data-final],#newBtn'))setTimeout(render,60)});render();
 }
 function requestCode(id){const r=requests.find(x=>String(x.id)===String(id));return String(r?.code||r?.teacherCode||'')}
 function mountApprovalCards(){
- document.querySelectorAll('#queue .req').forEach(card=>{if(card.querySelector('.vkh-approval'))return;const btn=card.querySelector('[data-a],[data-r]'),id=btn?.dataset?.a||btn?.dataset?.r;if(!id)return;const code=requestCode(id);const p=document.createElement('div');p.className='vkh-panel vkh-approval';p.innerHTML=`<div class="vkh-title">📚 Approved History Before Decision</div><div class="vkh-help">Read-only context for this staff member. The current provisional request is not counted below.</div>${historyHtml(code,true)}`;const ta=card.querySelector('textarea');if(ta)card.insertBefore(p,ta);else card.appendChild(p)})
+ document.querySelectorAll('#queue .req').forEach(card=>{if(card.querySelector('.vkh-approval'))return;const btn=card.querySelector('[data-a],[data-r]'),id=btn?.dataset?.a||btn?.dataset?.r;if(!id)return;const code=requestCode(id);const p=document.createElement('div');p.className='vkh-panel vkh-approval';p.innerHTML=`<div class="vkh-title">📚 Previous Leave History Before Decision</div><div class="vkh-help">Read-only context for this staff member. The current provisional request is not counted below.</div>${historyHtml(code,true)}`;const ta=card.querySelector('textarea');if(ta)card.insertBefore(p,ta);else card.appendChild(p)})
 }
 async function loadData(){
- try{const a=await getDocs(collection(db,'approvedStatusPlans'));approved=[];a.forEach(d=>approved.push({id:d.id,...(d.data()||{})}))}catch(e){loadError=String(e?.code==='permission-denied'?'Approved-history read permission is not enabled for this role.':(e?.message||e))}
+ const merged=new Map(),results=await Promise.allSettled([getDocs(collection(db,'approvedStatusPlans')),getDoc(doc(db,'dailyRecords','__leavePlans'))]);
+ if(results[0].status==='fulfilled')results[0].value.forEach(d=>merged.set(d.id,{id:d.id,...(d.data()||{})}));
+ if(results[1].status==='fulfilled'&&results[1].value.exists())for(const [id,p] of Object.entries(results[1].value.data().plans||{}))if(p&&p.active!==false&&!merged.has(id))merged.set(id,{id,...p});
+ approved=[...merged.values()];
+ if(!approved.length&&results[0].status==='rejected')loadError=String(results[0].reason?.code==='permission-denied'?'Approved-history read permission is not enabled for this role.':(results[0].reason?.message||results[0].reason));
  if(document.getElementById('queue')){try{const q=await getDocs(collection(db,'provisionalLeavePlans'));requests=[];q.forEach(d=>requests.push({id:d.id,...(d.data()||{})}))}catch(_){}}
 }
 ensureStyle();await loadData();mountQuick();mountApprovalCards();
