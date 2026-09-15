@@ -273,6 +273,14 @@
   body .activeScheduleBanner{background:#152630!important;color:#e7edf0!important;border-color:#42606f!important}
   body .copymsg,body .load{color:#a8bdc8!important}
 
+  /* Attendance diagnostics and leave-audit details. */
+  body .item .meta>div,body .item .record{
+    background:#10212a!important;color:#e7edf0!important;border-color:#42606f!important;
+  }
+  body .badge.test{background:#3a1c22!important;color:#ffb5bd!important;border-color:#713939!important}
+  body .ruleCard.inactive{background:#10212a!important;color:#91a6b0!important;border-style:dashed!important;opacity:1!important}
+  body .ruleCard.inactive b,body .ruleCard.inactive strong{color:#c3d2d9!important}
+
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
   body.adminDashboardPage .premiumTile,
