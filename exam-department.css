@@ -53,6 +53,30 @@ html[data-theme="dark"] .hardRule{background:#153229;color:#b8ddcf}
 html[data-theme="dark"] .reviewCard.good{background:#153223;border-color:#376a48}
 html[data-theme="dark"] .reviewCard.bad{background:#382026;border-color:#70434b}
 html[data-theme="dark"] .saveState{color:#fff}
+/* Interactive and dynamically generated examination surfaces. Keep state changes
+   explicit so hover/click/disable never depend on opacity or browser defaults. */
+html[data-theme="dark"] .majorCard{background:#152630!important;color:#e5f0f5!important;border-color:#42606f!important}
+html[data-theme="dark"] .majorCard.off{background:#10212a!important;color:#a8bdc8!important;border-color:#34505d!important;opacity:1!important}
+html[data-theme="dark"] .majorCard b,html[data-theme="dark"] .majorGroup h4{color:#d8edf7!important}
+html[data-theme="dark"] .majorCard small{color:#a8bdc8!important}
+html[data-theme="dark"] .sourceBadge,html[data-theme="dark"] .roomModeBadge{background:#17394a!important;color:#bfe8fb!important;border:1px solid #42606f!important}
+html[data-theme="dark"] .sourceBadge.manual{background:#35284a!important;color:#eadcff!important;border-color:#66527e!important}
+html[data-theme="dark"] .seatingBalance.good{color:#8ed4a5!important}
+html[data-theme="dark"] .seatingBalance.bad{color:#ffb5bd!important}
+html[data-theme="dark"] .button:hover,html[data-theme="dark"] .navButton:hover{background:#294b5b!important;color:#fff!important;border-color:#7693a1!important;filter:none}
+html[data-theme="dark"] .button:active,html[data-theme="dark"] .navButton:active{background:#345d70!important;color:#fff!important;border-color:#f2c335!important;filter:none;transform:none}
+html[data-theme="dark"] .button.primary:hover{background:#20668d!important;color:#fff!important;border-color:#72b5da!important}
+html[data-theme="dark"] .button.primary:active{background:#174f73!important;color:#fff!important;border-color:#f2c335!important}
+html[data-theme="dark"] :is(.button,.navButton,input,select,textarea):disabled,
+html[data-theme="dark"] :is(.button,.navButton)[aria-disabled="true"]{background:#10212a!important;color:#91a6b0!important;border-color:#42606f!important;opacity:1!important;box-shadow:none!important;cursor:not-allowed!important}
+html[data-theme="dark"] :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #f2c335!important;outline-offset:2px!important}
+html[data-theme="dark"] a.button:visited{color:inherit!important}
+html[data-theme="light"] .button:active,html[data-theme="light"] .navButton:active{background:#cce2ed!important;color:#17364f!important;border-color:#236d99!important;filter:none;transform:none}
+html[data-theme="light"] .button.primary:active{background:#174f73!important;color:#fff!important;border-color:#174f73!important}
+html[data-theme="light"] :is(.button,.navButton,input,select,textarea):disabled,
+html[data-theme="light"] :is(.button,.navButton)[aria-disabled="true"]{background:#e6edf0!important;color:#526d7d!important;border-color:#bacbd3!important;opacity:1!important;box-shadow:none!important;cursor:not-allowed!important}
+html[data-theme="light"] :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #9b6f00!important;outline-offset:2px!important}
+html[data-theme="light"] a.button:visited{color:inherit!important}
 html[data-theme="dark"] .seatPlanSummarySheet,
 html[data-theme="dark"] .roomStickerSheet,
 html[data-theme="dark"] .seatPlanSheet{background:#fff;color:#111}
