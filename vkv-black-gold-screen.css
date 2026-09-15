@@ -221,6 +221,34 @@
   body .filterBtn.active,body .halfChip.selected{background:#f2c335!important;color:#17130b!important;border-color:#f2c335!important}
   body .filterBtn.active:active,body .halfChip.selected:active{background:#d9a91c!important;color:#17130b!important;border-color:#f2c335!important}
 
+  /* Timetable Studio workspace and data-generated visual editor. */
+  body .workspaceSummary,body .heroCard:not(.activeMaster),body .componentSection,
+  body .resultPanel,body .activationPanel,body .versionCard,body .entityCard,
+  body .allocationCard,body .generateHero,body .runItem,body .editorToolbar,
+  body .timetableWrap,body .modalCard{
+    background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+  }
+  body .sidebarNote,body .emptyState,body .resultMetric,body .scoreBoard>div,
+  body .componentSection summary,body .issue{
+    background:#1b303b!important;color:#e7edf0!important;border-color:#496675!important;
+  }
+  body .checkGrid label:hover{background:#244655!important;color:#fffaf0!important}
+  body .surface output{background:#1b303b!important;color:#f2c335!important}
+  body .ring{background:radial-gradient(circle at center,#152630 58%,transparent 59%),conic-gradient(#42a5c6 var(--progress),#34505d 0)!important;border-color:#42606f!important}
+  body .dropCell,body .periodCell{background:#10212a!important;color:#a8bdc8!important;border-color:#34505d!important}
+  body .dropCell:hover,body .dropCell.dragOver{background:#244655!important;box-shadow:inset 0 0 0 2px #f2c335!important}
+  body .lessonCard,body .unplacedCard{background:#1b303b!important;color:#f6f2e8!important;border-color:#496675!important}
+  body .lessonCard h4,body .lessonCard p,body .unplacedCard strong,body .unplacedCard span{color:inherit!important}
+  body .lessonCard.selected,body .unplacedCard.selected{background:#203a47!important;outline:3px solid #f2c335!important;border-color:#f2c335!important}
+  body .versionCard.activeVersion{background:#203a47!important;border-color:#f2c335!important;box-shadow:0 0 0 2px rgba(242,195,53,.18)!important}
+  body .dropCell.invalid,body .lessonCard.conflict,body .issue.error{background:#3a1c22!important;color:#ffb5bd!important;border-color:#713939!important}
+  body .issue.warn{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  body .issue.warn p,body .issue.error p{color:inherit!important}
+  body .statusPill,body .countPill{background:#1b303b!important;color:#c3d2d9!important;border:1px solid #496675!important}
+  body .statusPill.ready{background:#163524!important;color:#b9e5c7!important;border-color:#326846!important}
+  body .statusPill.draft,body .statusPill.unsaved{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  body .statusPill.active{background:#203a47!important;color:#f2d88a!important;border-color:#a78520!important}
+
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
   body.adminDashboardPage .premiumTile,
