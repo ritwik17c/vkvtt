@@ -29,7 +29,7 @@
   }
   body h1,body h2,body h3,body h4,body h5,body h6,body legend,body strong{color:#fffaf0!important}
   body p{color:#ddd7ca}
-  body .card,body .panel,body .view,body .surface,body .gateCard,body .workspaceBadge,body .summaryCard,body .metric,body .tile,body .qcard,body .currentBox,body .replacementItem,body .historyItem,body .resultbox,body .tableWrap,body .tablewrap,body .table-wrap,body .table-shell,body .draftCard,body .outputCard,body .reviewCard,
+  body .card,body .panel,body .view,body .surface,body .gateCard,body .loginbox,body .workspaceBadge,body .summaryCard,body .metric,body .tile,body .qcard,body .currentBox,body .replacementItem,body .historyItem,body .resultbox,body .tableWrap,body .tablewrap,body .table-wrap,body .table-shell,body .draftCard,body .outputCard,body .reviewCard,
   html.v66-ui body .card,html.v66-ui body .panel,html.v66-ui body .view,html.v66-ui body .tile{
     background:linear-gradient(145deg,#152630,#13242e)!important;
     color:var(--vkv-screen-cream)!important;
