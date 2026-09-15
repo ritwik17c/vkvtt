@@ -5,7 +5,7 @@ if(!document.querySelector('link[data-vkv-black-gold-theme]')){
   theme.dataset.vkvBlackGoldTheme='1';
   document.head.appendChild(theme);
 }
-import './qb-module-v3.js?v=20260908-p2-qb-sync-1';
+import './qb-module-v3.js?v=20260915-auth-rule-match-1';
 import './vkv-qb-dictation.js?v=20260902-language-safe-review-1';
 import './vkv-qb-history-enhancement.js?v=20260830-unverified-2';
 import './vkv-qb-imported-history-bridge.js?v=20260902-complete-legacy-history-1';
