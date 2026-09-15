@@ -152,6 +152,15 @@
   body #qbFeedbackComposer>div{background:#152630!important;color:#e7edf0!important;border:1px solid #42606f!important}
   body #qbTeacherBulkImport tr.qbbi-bad td{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
   body #qbTeacherBulkImport .qbbi-errors{color:#ffb5bd!important}
+  body .q,body .log,body .bulkbar,body #reviewList .history{
+    background:#152630!important;color:#e7edf0!important;border-color:#42606f!important;
+  }
+  body .q.selected{background:#203a47!important;color:#fff7dc!important;border-color:#f2c335!important;outline:2px solid #f2c335!important}
+  body .q.selected *,body .bulkbar strong{color:inherit!important}
+  body #reviewList .note,body #reviewList .ageWatch{
+    background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
+  }
+  body tr.bad td{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
 
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
