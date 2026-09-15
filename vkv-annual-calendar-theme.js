@@ -17,16 +17,16 @@
   html[data-vkv-theme="light"] #monthView .day-cell.today{background:#fff8e8!important;box-shadow:inset 0 0 0 2px #e9a925!important}
   html[data-vkv-theme="light"] #monthView .cal-event{background:color-mix(in srgb,var(--event-color) 13%,white)!important;color:#17364f!important;border-color:var(--event-color)!important}
   html[data-vkv-theme="light"] #monthView .cal-cont{background:color-mix(in srgb,var(--event-color) 42%,white)!important}
-  html[data-vkv-theme="black-gold"] #monthView,html[data-vkv-theme="black-gold"] #monthView .calendar-grid{background:#111212!important;color:#f6f2e8!important;border-color:#655820!important}
-  html[data-vkv-theme="black-gold"] #monthView .month-controls{background:#171817!important;border-color:#655820!important}
+  html[data-vkv-theme="black-gold"] #monthView,html[data-vkv-theme="black-gold"] #monthView .calendar-grid{background:#0c1720!important;color:#f6f2e8!important;border-color:#496675!important}
+  html[data-vkv-theme="black-gold"] #monthView .month-controls{background:#152630!important;border-color:#496675!important}
   html[data-vkv-theme="black-gold"] #monthView .month-controls h2{color:#fff7dc!important}
-  html[data-vkv-theme="black-gold"] #monthView .dow{background:#1d1c17!important;color:#f2c335!important;border-color:#4b4430!important}
-  html[data-vkv-theme="black-gold"] #monthView .day-cell{background:#121313!important;color:#f6f2e8!important;border-color:#3e3b32!important}
-  html[data-vkv-theme="black-gold"] #monthView .day-cell.outside{background:#0d0e0e!important;color:#77736c!important}
-  html[data-vkv-theme="black-gold"] #monthView .day-cell.today{background:#211d10!important;box-shadow:inset 0 0 0 2px #f2c335!important}
+  html[data-vkv-theme="black-gold"] #monthView .dow{background:#1b3644!important;color:#f2c335!important;border-color:#496675!important}
+  html[data-vkv-theme="black-gold"] #monthView .day-cell{background:#152630!important;color:#f6f2e8!important;border-color:#34505d!important}
+  html[data-vkv-theme="black-gold"] #monthView .day-cell.outside{background:#0d1b24!important;color:#91a6b0!important}
+  html[data-vkv-theme="black-gold"] #monthView .day-cell.today{background:#203a47!important;box-shadow:inset 0 0 0 2px #f2c335!important}
   html[data-vkv-theme="black-gold"] #monthView .day-num{color:#fff7dc!important}
-  html[data-vkv-theme="black-gold"] #monthView .cal-event{background:color-mix(in srgb,var(--event-color) 24%,#121313)!important;color:#fff!important;border-color:var(--event-color)!important}
-  html[data-vkv-theme="black-gold"] #monthView .cal-cont{background:color-mix(in srgb,var(--event-color) 58%,#171817)!important}
+  html[data-vkv-theme="black-gold"] #monthView .cal-event{background:color-mix(in srgb,var(--event-color) 24%,#152630)!important;color:#fff!important;border-color:var(--event-color)!important}
+  html[data-vkv-theme="black-gold"] #monthView .cal-cont{background:color-mix(in srgb,var(--event-color) 58%,#1b303b)!important}
   html[data-vkv-theme="black-gold"] .notice-card,html[data-vkv-theme="black-gold"] .notice-card *,html[data-vkv-theme="black-gold"] .hero-chip{color:#f6f2e8!important}
   html[data-vkv-theme="light"] .notice-card,html[data-vkv-theme="light"] .notice-card *{color:#334b5d!important}
   @media(max-width:900px){#monthView .day-cell{min-height:112px!important}}
