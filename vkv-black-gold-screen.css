@@ -134,6 +134,25 @@
   body tr.half:hover td{background:#493525!important}
   body .cat[style*="--cl"]{color:#17130b!important}
 
+  /* Teacher-facing Question Bank enhancements inserted after initial render. */
+  body .qb-callout,body .qb-callout.tip,body .qb-mini-callout,
+  body #qbPreSubmitReview,body #qbDraftRecovery{
+    background:#152630!important;color:#e7edf0!important;border-color:#42606f!important;
+  }
+  body .qb-callout::after{background:#152630!important;border-color:#42606f!important}
+  body .qb-callout strong,body .qb-mini-callout strong,
+  body #qbPreSubmitReview b,body #qbDraftRecovery b{color:#fff7dc!important}
+  body .qb-callout.good,body #qbSubmissionReadiness[data-complete="5"]{
+    background:#163524!important;color:#b9e5c7!important;border-color:#326846!important;
+  }
+  body #qbSubmissionReadiness:not([data-complete="5"]),body #qbTeacherBulkImport .warning{
+    background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important;
+  }
+  body #qbCorrectionPreview>div:not(.small):not(.actions){background:#10212a!important;color:#e7edf0!important;border-color:#42606f!important}
+  body #qbFeedbackComposer>div{background:#152630!important;color:#e7edf0!important;border:1px solid #42606f!important}
+  body #qbTeacherBulkImport tr.qbbi-bad td{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  body #qbTeacherBulkImport .qbbi-errors{color:#ffb5bd!important}
+
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
   body.adminDashboardPage .premiumTile,
