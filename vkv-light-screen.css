@@ -66,6 +66,20 @@
     color:#17364f!important;
     border-color:#bad0db!important;
   }
+  html[data-vkv-theme="light"] body button:hover,
+  html[data-vkv-theme="light"] body .btn:hover,
+  html[data-vkv-theme="light"] body a.btn:hover,
+  html[data-vkv-theme="light"] body .button:hover,
+  html[data-vkv-theme="light"] body .navButton:hover{
+    background:#dcecf4!important;color:#17364f!important;border-color:#6d9db6!important;
+  }
+  html[data-vkv-theme="light"] body button:active,
+  html[data-vkv-theme="light"] body .btn:active,
+  html[data-vkv-theme="light"] body a.btn:active,
+  html[data-vkv-theme="light"] body .button:active,
+  html[data-vkv-theme="light"] body .navButton:active{
+    background:#cce2ed!important;color:#17364f!important;border-color:#236d99!important;
+  }
   html[data-vkv-theme="light"] body button.primary,
   html[data-vkv-theme="light"] body .primary,
   html[data-vkv-theme="light"] body .button.primary,
@@ -76,6 +90,24 @@
     color:#fff!important;
     border-color:#236d99!important;
   }
+  html[data-vkv-theme="light"] body button.primary:active,
+  html[data-vkv-theme="light"] body .primary:active,
+  html[data-vkv-theme="light"] body .button.primary:active,
+  html[data-vkv-theme="light"] body .tabs button.active:active,
+  html[data-vkv-theme="light"] body .navButton.active:active,
+  html[data-vkv-theme="light"] body [aria-pressed="true"]:active{
+    background:#174f73!important;color:#fff!important;border-color:#174f73!important;
+  }
+  html[data-vkv-theme="light"] body :is(a,button,input,select,textarea,[tabindex]):focus-visible{
+    outline:3px solid #9b6f00!important;outline-offset:2px!important;
+  }
+  html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton,input,select,textarea):disabled,
+  html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton)[aria-disabled="true"]{
+    background:#e6edf0!important;color:#526d7d!important;border-color:#bacbd3!important;
+    opacity:1!important;box-shadow:none!important;cursor:not-allowed!important;
+  }
+  html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton):disabled *,
+  html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton)[aria-disabled="true"] *{color:#526d7d!important}
   html[data-vkv-theme="light"] body input,
   html[data-vkv-theme="light"] body select,
   html[data-vkv-theme="light"] body textarea{
@@ -86,6 +118,11 @@
   html[data-vkv-theme="light"] body table{background:#fff!important;color:#17364f!important}
   html[data-vkv-theme="light"] body th{background:#edf5f9!important;color:#17364f!important;border-color:#d7e4ea!important}
   html[data-vkv-theme="light"] body td{background:#fff!important;color:#263d4e!important;border-color:#e0e9ee!important}
+  html[data-vkv-theme="light"] body a:not(.btn):visited{color:#725400!important}
+  html[data-vkv-theme="light"] body :is([aria-selected="true"],[aria-current="page"],option:checked){
+    background:#236d99!important;color:#fff!important;border-color:#236d99!important;
+  }
+  html[data-vkv-theme="light"] body :is([aria-selected="true"],[aria-current="page"]) *{color:#fff!important}
   html[data-vkv-theme="light"] body .notice,
   html[data-vkv-theme="light"] body .status{background:#fff!important;color:#17364f!important;border-color:#cbdce5!important}
   html[data-vkv-theme="light"] body .schedule{background:#fff7dd!important;color:#604b0d!important;border-color:#dfbf62!important}
