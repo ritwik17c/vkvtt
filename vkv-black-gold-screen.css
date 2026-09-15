@@ -118,6 +118,22 @@
   body .profile span,body .visibility span,body .teacherChoice .meta,body .item .meta{color:#a8bdc8!important}
   body .profile.active,body .profile.selected{background:#203a47!important;border-color:#a78520!important;outline-color:#7c641e!important}
 
+  /* Legacy Leave, Attendance and staff-generated panels. These components are
+     created after sign-in and otherwise retain pale inline backgrounds. */
+  body .req,body .legend,body .box,body .vkh-panel,body .vkh-row,body #hleEdit{
+    background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+  }
+  body .req .entry{border-color:#34505d!important;color:#e7edf0!important}
+  body .vkh-title,body .vkh-row b,body #hleEdit h3{color:#fff7dc!important}
+  body .vkh-help,body .vkh-empty,body .vkh-summary,body .vkh-row span,body .vkh-row small{color:#a8bdc8!important}
+  body .vkh-warn,body .warn{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  body .bad{color:#ffb5bd!important}
+  body tr.full td{background:#17314a!important;color:#e7edf0!important;border-color:#34505d!important}
+  body tr.half td{background:#3a2a1e!important;color:#f3e7d5!important;border-color:#5e4936!important}
+  body tr.full:hover td{background:#1e405b!important}
+  body tr.half:hover td{background:#493525!important}
+  body .cat[style*="--cl"]{color:#17130b!important}
+
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
   body.adminDashboardPage .premiumTile,
