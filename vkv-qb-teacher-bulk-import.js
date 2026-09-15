@@ -32,7 +32,7 @@ function selectOptions(values,selected){const missing=selected&&!values.some(val
 function currentDefaults(){return{className:$('qbBulkClass')?.value||'',section:$('qbBulkSection')?.value||'',subject:$('qbBulkSubject')?.value||'',marks:$('qbBulkMarks')?.value||1,difficulty:$('qbBulkDifficulty')?.value||'Moderate',questionType:$('qbBulkType')?.value||'Short Answer'}}
 function teacherName(){return text(teacher?.name||teacher?.fullName||user?.displayName||'Teacher')}
 function teacherCode(){return canonical(codes(teacher)[0]||profile.teacherCode||'')}
-function isPrincipal(){return /admin|principal/i.test(String(profile?.role||''))}
+function isPrincipal(){return String(profile?.role||'').trim().toLowerCase()==='admin'}
 function syncPageSubjectDropdowns(){
   for(const id of ['qSubject','sub']){
     const select=$(id);if(!select)return;
