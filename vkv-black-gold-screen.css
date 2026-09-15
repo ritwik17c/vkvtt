@@ -199,6 +199,28 @@
   body input[type="file"]::file-selector-button:hover{background:#244655;color:#fffaf0;border-color:#8b7426}
   body .attachmentPreview img{background:#0d1b24!important;border-color:#42606f!important}
 
+  /* Leave Import reconciliation workspace generated after workbook preview. */
+  body .importTop,body .reviewGroup,body .reconcile,body .assistToolbar{
+    background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+  }
+  body .sourcePane,body .reconcileGrid>div,body .assistBox,body .auditSummary{
+    background:#10212a!important;color:#e7edf0!important;border-color:#42606f!important;
+  }
+  body .sourcePane b,body .assistBox strong,body .reconcileGrid b{color:#fff7dc!important}
+  body .sourceLine,body .auditMeta,body .auditList,body .progressNote{color:#a8bdc8!important}
+  body .reviewGroupSummary::after{color:#f2c335!important}
+  body .auditBox{background:#163524!important;color:#b9e5c7!important;border-color:#326846!important}
+  body .auditHead strong,body .auditSummary summary{color:#b9e5c7!important}
+  body .reviewCard.resolved{background:#163524!important;color:#b9e5c7!important;border-color:#326846!important}
+  body .reviewCard.excluded{background:#1b303b!important;color:#c3d2d9!important;border-color:#496675!important}
+  body .badge.ready,body .confidence.confHigh{background:#163524!important;color:#b9e5c7!important;border-color:#326846!important}
+  body .badge.warning,body .confidence.confMed{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  body .badge.duplicate{background:#1b303b!important;color:#c3d2d9!important;border-color:#496675!important}
+  body .badge.invalid{background:#3a1c22!important;color:#ffb5bd!important;border-color:#713939!important}
+  body .problemTag{background:#1b303b!important;color:#c3d2d9!important;border-color:#496675!important}
+  body .filterBtn.active,body .halfChip.selected{background:#f2c335!important;color:#17130b!important;border-color:#f2c335!important}
+  body .filterBtn.active:active,body .halfChip.selected:active{background:#d9a91c!important;color:#17130b!important;border-color:#f2c335!important}
+
   /* Admin dashboard launcher cards: deliberate warm gold with dark readable copy. */
   body.adminDashboardPage .tile,
   body.adminDashboardPage .premiumTile,
