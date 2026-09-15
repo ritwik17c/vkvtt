@@ -30,7 +30,7 @@ function coverage(p){
  if(p?.duration==='half')return p.from&&p.to?`P${p.from}–P${p.to}`:'Half day';
  if(p?.from&&p?.to)return`P${p.from}–P${p.to}`;return'Full day';
 }
-function historyFor(code){return approved.filter(p=>p&&p.active!==false&&String(p.code||p.teacherCode||'')===String(code||'')).sort((a,b)=>String(datesOf(b).at(-1)||'').localeCompare(String(datesOf(a).at(-1)||''))}
+function historyFor(code){return approved.filter(p=>p&&p.active!==false&&String(p.code||p.teacherCode||'')===String(code||'')).sort((a,b)=>String(datesOf(b).at(-1)||'').localeCompare(String(datesOf(a).at(-1)||'')))}
 function historyHtml(code,compact=false){
  if(!code)return'<div class="vkh-empty">Select a staff member to view approved history.</div>';
  if(loadError)return`<div class="vkh-warn">Approved leave history could not be loaded for this account. ${safe(loadError)}</div>`;
