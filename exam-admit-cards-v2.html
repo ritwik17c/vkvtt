@@ -9,12 +9,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}ifr
 </style>
 </head>
 <body>
-<iframe id="admitFrame" src="exam-admit-cards.html?v=20260916-contrast-3"></iframe>
+<iframe id="admitFrame" src="exam-admit-cards.html?v=20260916-signature-labels-1"></iframe>
 <script>
 const frame=document.getElementById('admitFrame');
 const qs=new URLSearchParams(location.search);
 const exam=qs.get('exam');
-frame.src='exam-admit-cards.html?v=20260916-contrast-3'+(exam?'&exam='+encodeURIComponent(exam):'');
+frame.src='exam-admit-cards.html?v=20260916-signature-labels-1'+(exam?'&exam='+encodeURIComponent(exam):'');
 frame.addEventListener('load',()=>{
   const d=frame.contentDocument;
   if(!d)return;
@@ -46,10 +46,19 @@ frame.addEventListener('load',()=>{
     input::placeholder{color:#6a7e91!important;opacity:1!important}
     .progress #progressDetail{color:#52677c!important}
     .screenonly[style*="color:var(--muted)"]{color:#52677c!important}
-    .signs{margin-top:3.5mm!important;font-size:8.3px!important}
-    .sigbox{min-height:10.5mm!important}
-    .sigbox img{display:block!important;max-height:7.5mm!important;max-width:28mm!important;width:auto!important;height:auto!important;object-fit:contain!important;margin:0 auto .8mm!important}
-    @media print{.admit{padding-bottom:5.5mm!important}}
+
+    /* Signature block: keep lines, images and all four designations safely inside the fixed card height. */
+    .signs{margin-top:2mm!important;font-size:8px!important;line-height:1.15!important;align-items:end!important}
+    .sigbox{min-height:9mm!important;max-height:11.5mm!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:center!important;overflow:visible!important}
+    .sigbox img{display:block!important;max-height:6.2mm!important;max-width:27mm!important;width:auto!important;height:auto!important;object-fit:contain!important;margin:0 auto .45mm!important}
+    .sigline{display:block!important;width:100%!important;border-top:1px solid #333!important;padding-top:.65mm!important;min-height:3.6mm!important;line-height:1.1!important;color:#111!important;white-space:nowrap!important;overflow:visible!important}
+    @media print{
+      .admit{padding-bottom:6.5mm!important}
+      .signs{margin-top:1.7mm!important}
+      .sigbox{min-height:8.8mm!important;max-height:11mm!important}
+      .sigbox img{max-height:6mm!important;margin-bottom:.35mm!important}
+      .sigline{padding-top:.55mm!important;min-height:3.4mm!important;font-size:7.8px!important}
+    }
   `;
   d.head.appendChild(style);
 
