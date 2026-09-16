@@ -10,13 +10,8 @@
   loadOnce('vkvExamMultiManager','vkv-exam-multi-manager.js?v=20260907-multi-manager-1');
   loadOnce('vkvExamCalendarGuard','vkv-exam-calendar-date-guard.js?v=20260907-calendar-guard-1');
   loadOnce('vkvExamDatewiseDuty','vkv-exam-datewise-duty-planner.js?v=20260907-datewise-duty-1');
-  // Frozen approved print layout from c3fe9c21 remains the only presentation authority.
   loadOnce('vkvExamFinalPrintLayout','vkv-exam-final-print-layout.js?v=c3fe9c21');
-  // Production consolidation: approved-output cards and shared saved records now live
-  // in one authoritative library. Do not load the old duplicate approved-output panel.
   loadOnce('vkvExamManagerSharedLibrary','vkv-exam-manager-shared-library.js?v=20260907-production-library-1');
-  // Shared Exam Manager View / Print feeds the saved record into the original
-  // majorPrint renderer; it does not construct a second print template.
   loadOnce('vkvExamSharedOfficialPrint','vkv-exam-shared-official-print-adapter.js?v=20260908-approved-renderer-1');
   const $=id=>document.getElementById(id);
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -31,8 +26,19 @@
   async function refreshImportedTimetable(){for(let i=0;i<60;i++){const panel=$('templatePatternQuickEdit');if(panel){const subjectsNav=document.querySelector('[data-pane-target="subjects"]'),timetableNav=document.querySelector('[data-pane-target="timetable"]');subjectsNav?.click();await wait(120);timetableNav?.click();await wait(120);const count=[...panel.querySelectorAll('[data-template-pattern-subject]')].filter(s=>String(s.value||'').trim()).length,cards=[...($('timetableMetrics')?.children||[])],strong=cards[1]?.querySelector('strong'),label=cards[1]?.querySelector('span');if(strong&&count)strong.textContent=String(count);if(label&&count)label.textContent='Imported timetable papers';enforceClassOrder();panel.scrollIntoView({behavior:'smooth',block:'start'});return}await wait(100)}}
   async function routeLegacyTemplateLoad(){const id=String($('majorTemplateSelect')?.value||'').trim();if(!id){alert('Select a saved template first.');return}if(window.vkvExamOpenSharedTemplate?.(id)){refreshImportedTimetable();return}const find=()=>document.querySelector(`[data-real-use-template="${CSS.escape(id)}"]`);let button=find();if(button){button.click();refreshImportedTimetable();return}document.querySelector('[data-pane-target="outputs"]')?.click();$('refreshSavedExamData')?.click();for(let i=0;i<30;i++){await wait(100);button=find();if(button){button.click();refreshImportedTimetable();return}}alert('The selected saved template could not be opened from the saved-template list. Please refresh and try again.')}
   let orderTimer=null;function scheduleOrder(delay=40){if(orderTimer)clearTimeout(orderTimer);orderTimer=setTimeout(()=>{orderTimer=null;enforceClassOrder()},delay)}
+  function installAdmitCardNav(){
+    const nav=document.querySelector('aside.sidebar nav[aria-label="Examination Module sections"]');
+    if(!nav||nav.querySelector('[data-vkv-admit-card-link]'))return;
+    const link=document.createElement('a');
+    link.href='admit-card-generator.html';
+    link.className='navButton';
+    link.dataset.vkvAdmitCardLink='1';
+    link.style.textDecoration='none';
+    link.innerHTML='<span>8</span> Admit Cards';
+    nav.appendChild(link);
+  }
   window.vkvExamClassCompare=classCompare;
-  window.addEventListener('load',()=>{clean();enforceClassOrder();setTimeout(()=>{clean();enforceClassOrder()},250);setTimeout(()=>{clean();enforceClassOrder()},900)});
+  window.addEventListener('load',()=>{clean();enforceClassOrder();installAdmitCardNav();setTimeout(()=>{clean();enforceClassOrder();installAdmitCardNav()},250);setTimeout(()=>{clean();enforceClassOrder();installAdmitCardNav()},900)});
   document.addEventListener('click',e=>{if(e.target.closest('[data-pane-target],[data-open-cloud],[data-real-open],[data-revise-cloud],[data-real-use-template],#generateTimetable,#refreshPrintableMatrix')){scheduleOrder(80);setTimeout(enforceClassOrder,350)}if(e.target.closest('[data-pane-target="setup"],[data-open-cloud],[data-real-open],[data-revise-cloud]')){setTimeout(clean,80);setTimeout(clean,350)}const load=e.target.closest('#majorLoadTemplate');if(load){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();routeLegacyTemplateLoad()}},true);
-  document.addEventListener('vkv-exam-workspace-subjects-applied',()=>{clean();scheduleOrder(80)});document.addEventListener('vkv-exam-subject-master-applied',()=>{clean();scheduleOrder(80)});const root=$('examApp')||document.body;new MutationObserver(()=>{clean();scheduleOrder(30)}).observe(root,{childList:true,subtree:true});
+  document.addEventListener('vkv-exam-workspace-subjects-applied',()=>{clean();scheduleOrder(80)});document.addEventListener('vkv-exam-subject-master-applied',()=>{clean();scheduleOrder(80)});const root=$('examApp')||document.body;new MutationObserver(()=>{clean();scheduleOrder(30);installAdmitCardNav()}).observe(root,{childList:true,subtree:true});
 })();
