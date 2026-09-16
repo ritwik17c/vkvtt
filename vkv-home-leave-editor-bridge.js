@@ -1,3 +1,4 @@
+import './vkv-home-auth-rescue.js?v=20260916-auth-rescue-1';
 import './vkv-date-ui.js?v=20260903-1';
 import './vkv-home-manual-notice-only.js?v=20260908-manual-only-2';
 import './vkv-home-published-proxy-fix.js?v=20260908-proxy-finalised-rows-1';
