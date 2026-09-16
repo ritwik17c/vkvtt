@@ -21,6 +21,11 @@
     background:radial-gradient(circle at 88% 2%,rgba(242,195,53,.07),transparent 26rem),linear-gradient(180deg,#0c1720,#0b1a24 68%,#09141c)!important;
     color:var(--vkv-screen-cream)!important;
   }
+  body .accountbar{
+    background:#152630!important;
+    color:var(--vkv-screen-cream)!important;
+    border-color:var(--vkv-screen-line)!important;
+  }
   body>header,html.v66-ui body>header:not(.topbar),.topbar{
     background:linear-gradient(135deg,#123d58 0%,#176f9b 72%,#0f766e 100%)!important;
     color:#fff!important;
