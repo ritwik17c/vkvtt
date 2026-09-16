@@ -16,18 +16,22 @@
     const primary=document.getElementById('openLeaveManager');
     if(primary){
       const b=primary.querySelector('b'),s=primary.querySelector('span');
-      if(b)b.textContent='🗂 Leave Management';
-      if(s)s.textContent='One complete leave workspace: review history, prepare entries, approve, search, edit/delete approved records, rules, import, reconciliation and audit.';
-      primary.onclick=()=>location.href='./leave-manager.html?v=20260916-unified-leave-1';
-      primary.style.display='';
+      const title='🗂 Leave Management';
+      const desc='One complete leave workspace: review history, prepare entries, approve, search, edit/delete approved records, rules, import, reconciliation and audit.';
+      if(b&&b.textContent!==title)b.textContent=title;
+      if(s&&s.textContent!==desc)s.textContent=desc;
+      if(primary.style.display==='none')primary.style.display='';
+      if(primary.dataset.vkvUnifiedLeave!=='1'){
+        primary.dataset.vkvUnifiedLeave='1';
+        primary.onclick=()=>location.href='./leave-manager.html?v=20260916-unified-leave-1';
+      }
     }
     ['openLeaveMasterEditor','openLeaveApprovals','openLeaveRules','openSuperLeaveFilter','openLeaveRegister','openLeaveImport'].forEach(id=>{
-      const x=document.getElementById(id);if(x)x.style.display='none';
+      const x=document.getElementById(id);if(x&&x.style.display!=='none')x.style.display='none';
     });
   }
   function ensure(){ensureRibbon();consolidateLeaveTiles()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensure,{once:true});else ensure();
-  let n=0;const t=setInterval(()=>{ensure();if(++n>50)clearInterval(t)},250);
-  new MutationObserver(()=>consolidateLeaveTiles()).observe(document.documentElement,{childList:true,subtree:true});
+  let n=0;const t=setInterval(()=>{ensure();if(++n>=20)clearInterval(t)},250);
   window.addEventListener('focus',ensure);
 })();
