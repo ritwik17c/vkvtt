@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VKV Nalbari · Bulk Admit Cards</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{border:0;width:100%;height:100%;display:block}
+</style>
+</head>
+<body>
+<iframe id="admitFrame" src="exam-admit-cards.html"></iframe>
+<script>
+const frame=document.getElementById('admitFrame');
+const qs=new URLSearchParams(location.search);
+const exam=qs.get('exam');
+if(exam) frame.src='exam-admit-cards.html?exam='+encodeURIComponent(exam);
+frame.addEventListener('load',()=>{
+  const d=frame.contentDocument,w=frame.contentWindow;
+  if(!d)return;
+
+  // Signature clipping hotfix for the 3-up A4 layout.
+  const style=d.createElement('style');
+  style.textContent=`
+    .signs{margin-top:3.5mm!important;font-size:8.3px!important}
+    .sigbox{min-height:10.5mm!important}
+    .sigbox img{display:block!important;max-height:7.5mm!important;max-width:28mm!important;width:auto!important;height:auto!important;object-fit:contain!important;margin:0 auto .8mm!important}
+    @media print{.admit{padding-bottom:5.5mm!important}}
+  `;
+  d.head.appendChild(style);
+
+  // Add Swamiji upload beside the existing signature controls.
+  if(!d.getElementById('swamiPhotoHotfix')){
+    const examSig=d.getElementById('examSig');
+    const target=examSig?.parentElement?.parentElement;
+    if(target){
+      const box=d.createElement('div');
+      box.innerHTML='<label>Swamiji Photograph</label><input id="swamiPhotoHotfix" type="file" accept="image/*">';
+      target.insertBefore(box,target.firstChild);
+      const input=box.querySelector('input');
+      input.addEventListener('change',e=>{
+        const f=e.target.files&&e.target.files[0];if(!f)return;
+        const r=new FileReader();
+        r.onload=()=>{
+          sessionStorage.setItem('vkvtt-swami-photo',r.result);
+          applySwami(r.result);
+        };
+        r.readAsDataURL(f);
+      });
+    }
+  }
+
+  function applySwami(src){
+    if(!src)return;
+    d.querySelectorAll('.achead img').forEach((img,i)=>{if(i%2===1)img.src=src});
+    d.querySelectorAll('img[src*="swamiji-portrait"]').forEach(img=>img.src=src);
+  }
+  const saved=sessionStorage.getItem('vkvtt-swami-photo');
+  if(saved)applySwami(saved);
+
+  new MutationObserver(()=>{
+    const src=sessionStorage.getItem('vkvtt-swami-photo');
+    if(src)applySwami(src);
+  }).observe(d.body,{childList:true,subtree:true});
+});
+</script>
+</body>
+</html>
