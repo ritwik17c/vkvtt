@@ -9,12 +9,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}ifr
 </style>
 </head>
 <body>
-<iframe id="admitFrame" src="exam-admit-cards.html"></iframe>
+<iframe id="admitFrame" src="exam-admit-cards.html?v=20260916-contrast-3"></iframe>
 <script>
 const frame=document.getElementById('admitFrame');
 const qs=new URLSearchParams(location.search);
 const exam=qs.get('exam');
-if(exam) frame.src='exam-admit-cards.html?exam='+encodeURIComponent(exam);
+frame.src='exam-admit-cards.html?v=20260916-contrast-3'+(exam?'&exam='+encodeURIComponent(exam):'');
 frame.addEventListener('load',()=>{
   const d=frame.contentDocument;
   if(!d)return;
@@ -25,18 +25,22 @@ frame.addEventListener('load',()=>{
     body{color:#12263a!important}
     header{color:#fff!important}
     header .brand{color:#fff!important}
-    header .back{color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.22)!important}
-    header .sub{color:#e8f2fa!important;opacity:1!important;font-weight:600!important}
+    header .back,header .back:link,header .back:visited,header .back:hover,header .back:active{color:#ffffff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.30)!important}
+    header .sub{color:#f1f7fc!important;opacity:1!important;font-weight:700!important}
     h1,h2,h3,h4{color:#12324d!important}
     .card h2{color:#12324d!important}
     label{color:#30465c!important}
     .callout{color:#294b69!important;background:#f2f7fd!important}
-    .stat span,.modal p,.screenonly small{color:#52677c!important}
+    .stat span,.modal p{color:#52677c!important}
+    .screenonly small:not(button small){color:#52677c!important}
     th{color:#334d66!important;background:#f4f8fb!important}
     td{color:#20384d!important}
     .ghost{color:#12324d!important;background:#eef6fb!important;border-color:#b8cedd!important}
     .secondary{color:#12324d!important}
-    button small{color:inherit!important;opacity:1!important}
+    button{color:#12324d}
+    button.primary,button.primary *{color:#ffffff!important}
+    button.primary small{color:#ffffff!important;opacity:1!important;font-weight:700!important}
+    button.ghost small,button.secondary small{color:#405a73!important;opacity:1!important;font-weight:700!important}
     button:disabled{opacity:.68!important;color:#52677c!important}
     input,select{color:#18344a!important;background:#fff!important}
     input::placeholder{color:#6a7e91!important;opacity:1!important}
