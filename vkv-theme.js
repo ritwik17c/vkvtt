@@ -83,7 +83,7 @@
   }
   function apply(next,doc=document,persist=doc===document){
     if(!VALID.has(next))next='black-gold';if(EXEMPT&&doc===document){doc.documentElement.dataset.vkvTheme='semantic';return}
-    const links=allThemeLinks(doc);ensureThemeSafetyStyle(doc);links.bg.forEach(l=>l.disabled=false);links.lt.forEach(l=>l.disabled=false);doc.documentElement.dataset.vkvTheme=next;if(doc===document)theme=next;
+    const links=allThemeLinks(doc);ensureThemeSafetyStyle(doc);links.bg.forEach(l=>{l.disabled=false;l.media=next==='black-gold'?'all':'not all'});links.lt.forEach(l=>{l.disabled=false;l.media=next==='light'?'all':'not all'});doc.documentElement.dataset.vkvTheme=next;if(doc===document)theme=next;
     if(persist){try{localStorage.setItem(KEY,next)}catch(_){}}
     if(doc===document){installCampusHeader(doc);document.querySelectorAll('[data-vkv-theme-choice]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.vkvThemeChoice===next?'true':'false'));syncEmbeddedFrames(next);window.dispatchEvent(new CustomEvent('vkv-theme-change',{detail:{theme:next}}));}
   }
