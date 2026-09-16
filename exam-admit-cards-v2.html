@@ -16,10 +16,9 @@ const qs=new URLSearchParams(location.search);
 const exam=qs.get('exam');
 if(exam) frame.src='exam-admit-cards.html?exam='+encodeURIComponent(exam);
 frame.addEventListener('load',()=>{
-  const d=frame.contentDocument,w=frame.contentWindow;
+  const d=frame.contentDocument;
   if(!d)return;
 
-  // Signature clipping hotfix for the 3-up A4 layout.
   const style=d.createElement('style');
   style.textContent=`
     .signs{margin-top:3.5mm!important;font-size:8.3px!important}
@@ -29,7 +28,6 @@ frame.addEventListener('load',()=>{
   `;
   d.head.appendChild(style);
 
-  // Add Swamiji upload beside the existing signature controls.
   if(!d.getElementById('swamiPhotoHotfix')){
     const examSig=d.getElementById('examSig');
     const target=examSig?.parentElement?.parentElement;
@@ -41,10 +39,7 @@ frame.addEventListener('load',()=>{
       input.addEventListener('change',e=>{
         const f=e.target.files&&e.target.files[0];if(!f)return;
         const r=new FileReader();
-        r.onload=()=>{
-          sessionStorage.setItem('vkvtt-swami-photo',r.result);
-          applySwami(r.result);
-        };
+        r.onload=()=>{sessionStorage.setItem('vkvtt-swami-photo',r.result);applySwami(r.result)};
         r.readAsDataURL(f);
       });
     }
@@ -55,12 +50,34 @@ frame.addEventListener('load',()=>{
     d.querySelectorAll('.achead img').forEach((img,i)=>{if(i%2===1)img.src=src});
     d.querySelectorAll('img[src*="swamiji-portrait"]').forEach(img=>img.src=src);
   }
+
+  function normalClass(v){
+    return String(v||'').trim().toUpperCase().replace(/\s+/g,'').replace(/_/g,'-');
+  }
+  function isAssessmentClass(v){
+    const c=normalClass(v);
+    return ['B1','B2','B3','BALVATIKA-1','BALVATIKA1','BALVATIKA-2','BALVATIKA2','BALVATIKA-3','BALVATIKA3','I','II','1','2'].includes(c);
+  }
+  function applyTicketTitles(){
+    d.querySelectorAll('.admit').forEach(card=>{
+      let classValue='';
+      card.querySelectorAll('.field').forEach(field=>{
+        const label=field.querySelector('b')?.textContent?.trim().toLowerCase();
+        if(label==='class:') classValue=field.querySelector('span')?.textContent?.trim()||'';
+      });
+      const title=card.querySelector('.school .title');
+      if(title) title.textContent=isAssessmentClass(classValue)?'ASSESSMENT TICKET':'ADMIT CARD';
+    });
+  }
+
   const saved=sessionStorage.getItem('vkvtt-swami-photo');
   if(saved)applySwami(saved);
+  applyTicketTitles();
 
   new MutationObserver(()=>{
     const src=sessionStorage.getItem('vkvtt-swami-photo');
     if(src)applySwami(src);
+    applyTicketTitles();
   }).observe(d.body,{childList:true,subtree:true});
 });
 </script>
