@@ -1,16 +1,24 @@
-const CACHE_NAME='vkvtt-shell-2026-09-15-theme-consistency-1';
+const CACHE_NAME='vkvtt-shell-2026-09-16-admin-66-4-1';
 const REMOVED_THEME_ASSET='./vkv-theme-contrast-hardening.css';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./vkv-campus-header.jpg','./vkv-theme.js','./vkv-theme-contrast-fixes.css','./vkv-theme-contrast-hardening.css','./vkv-home-header-typography.css','./vkv-home-card-cleanup.js','./vkv-annual-calendar-theme.js','./vkv-light-screen.css','./vkv-black-gold-screen.css','./class-observation-admin-bridge.js','./class-observation-teacher-bridge.js','./v66-home.css','./v66-design-system.css','./v66-home.js','./v66-home-cloud.js','./v66-ui.js','./period-notifications.js','./v66-home-shell-v662.css','./v66-home-shell-v662.js','./v66-premium-unified.css','./qb-module-v2.html','./qb-module-v2.js','./qb-module-v3.js','./vkv-qb-paper-scoring.js','./vkv-qb-paper-subquestion-marks.js','./vkv-qb-admin-production-tools.js','./admin-qb-live-teacher-audit.html','./admin-qb-source-reconcile.html','./admin-qb-submission-integrity-summary.html'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL.filter(path=>path!==REMOVED_THEME_ASSET))));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim();});
 function injectControllers(html,url){
-  const tags=[];const path=new URL(url).pathname;const isHome=/\/index\.html$/i.test(path)||/\/(?:vkvtt-preview-2|vkvtt)\/?$/i.test(path);
-  if(!/vkv-theme\.js/i.test(html))tags.push('<script src="./vkv-theme.js?v=20260915-theme-consistency-1"></script>');
+  const tags=[];const path=new URL(url).pathname;const isHome=/\/index\.html$/i.test(path)||/\/(?:vkvtt-preview-2|vkvtt)\/?$/i.test(path);const isAdmin=/admin-dashboard\.html$/i.test(path);
+  if(isAdmin){
+    html=html
+      .replace("const CURRENT_APP_VERSION = '66.0';","const CURRENT_APP_VERSION = '66.4';")
+      .replace(/Cloud v66\.0/g,'Cloud v66.4')
+      .replace(/v66-admin-reference-polish\.js\?v=[^\"']+/g,'v66-admin-reference-polish.js?v=20260916-disabled-stable-1')
+      .replace(/vkv-admin-dashboard-runtime\.js\?v=[^\"']+/g,'vkv-admin-dashboard-runtime.js?v=20260916-leave-unified-stable-1')
+      .replace(/vkv-theme\.js\?v=[^\"']+/g,'vkv-theme.js?v=20260916-header-safe-1');
+  }
+  if(!/vkv-theme\.js/i.test(html))tags.push('<script src="./vkv-theme.js?v=20260916-header-safe-1"></script>');
   if(!/vkv-theme-contrast-fixes\.css/i.test(html))tags.push('<link rel="stylesheet" href="./vkv-theme-contrast-fixes.css?v=20260909-contrast2">');
-  if(isHome&&!/vkv-home-header-typography\.css/i.test(html))tags.push('<link rel="stylesheet" href="./vkv-home-header-typography.css?v=20260909-header-type2">');
+  if(isHome&&!/vkv-home-header-typography\.css/i.test(html))tags.push('<link rel="stylesheet" href="./vkv-home-header-typography.css?v=20260916-theme-zone-1">');
   if(isHome&&!/vkv-home-card-cleanup\.js/i.test(html))tags.push('<script src="./vkv-home-card-cleanup.js?v=20260909-homecards2"></script>');
   if(/annual-calendar-2026-27\.html$/i.test(path)&&!/vkv-annual-calendar-theme\.js/i.test(html))tags.push('<script src="./vkv-annual-calendar-theme.js?v=20260909-calendar-theme2"></script>');
-  if(/admin-dashboard\.html$/i.test(path)&&!/class-observation-admin-bridge\.js/i.test(html))tags.push('<script src="./class-observation-admin-bridge.js?v=20260908-observation-2"></script>');
+  if(isAdmin&&!/class-observation-admin-bridge\.js/i.test(html))tags.push('<script src="./class-observation-admin-bridge.js?v=20260908-observation-2"></script>');
   if(isHome&&!/class-observation-teacher-bridge\.js/i.test(html))tags.push('<script src="./class-observation-teacher-bridge.js?v=20260908-observation-2"></script>');
   if(/admin-question-bank-v2\.html$/i.test(path)&&!/vkv-qb-admin-production-tools\.js/i.test(html))tags.push('<script src="./vkv-qb-admin-production-tools.js?v=20260908-qb-audit-1"></script>');
   if(!tags.length)return html;const tag=tags.join('');if(/<\/head>/i.test(html))return html.replace(/<\/head>/i,tag+'</head>');if(/<body/i.test(html))return html.replace(/<body/i,tag+'<body');return tag+html;
