@@ -25,7 +25,7 @@
 
   function admitUrl(){
     const name=(document.getElementById('workspaceName')||{}).value||'';
-    return 'exam-admit-cards.html?exam='+encodeURIComponent(name);
+    return 'exam-admit-cards-v2.html?exam='+encodeURIComponent(name);
   }
 
   function installAdmitCardEntry(){
