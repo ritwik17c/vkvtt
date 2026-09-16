@@ -28,6 +28,7 @@ function build(){const home=$('#dashboardHome');if(!home||$('#vkvAdminArchitectu
 
  const leave=section('vkvAdminLeave','3 · Regular Leave, Duty & Attendance','Regular Leave and Duty are separate categories. Leave Editors prepare entries; Principal/Admin gives final approval.');const g3=leave.querySelector('.tiles');
  g3.append(tile('openLeaveManager','🗂','Leave Manager','Regular Leave, Duty/OD, Special Assignment, approval, corrections, audit and cleanup in one controlled workflow.',P2+'leave-manager.html?v=2'));
+ g3.append(tile('openLeaveMasterEditor','🛠','Leave Master Editor + Integrity','Principal/Admin authoritative workspace for creating, editing, deleting, archiving, reconciling and checking approved Leave / Duty records.',P2+'admin-leave-full-edit.html?v=20260916-master-editor-delete-1'));
  const rules=move(g3,{id:'openLeaveRules'});relabel(rules,'⚙️ Regular Leave Rules','Configure leave categories and entitlements. OD/Duty is not deducted from leave balance.');
  g3.append(tile('openSuperLeaveFilter','🔎','Leave & Duty Search','Search Regular Leave, Duty/OD, Special Assignment and Vacant Position records.',P2+'super-leave-filter.html?v=manager2'));
  const reg=move(g3,{id:'openLeaveRegister'});if(reg){relabel(reg,'🗂 Approved Leave & Duty Register','Review approved Regular Leave and Duty records with consecutive dates consolidated.');reg.onclick=()=>location.href=P2+'admin-leave.html?v=range2'}
