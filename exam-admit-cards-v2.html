@@ -47,8 +47,8 @@ frame.addEventListener('load',()=>{
 
   function applySwami(src){
     if(!src)return;
-    d.querySelectorAll('.achead img').forEach((img,i)=>{if(i%2===1)img.src=src});
-    d.querySelectorAll('img[src*="swamiji-portrait"]').forEach(img=>img.src=src);
+    d.querySelectorAll('.achead img').forEach((img,i)=>{if(i%2===1 && img.src!==src)img.src=src});
+    d.querySelectorAll('img[src*="swamiji-portrait"]').forEach(img=>{if(img.src!==src)img.src=src});
   }
 
   function normalClass(v){
@@ -66,7 +66,10 @@ frame.addEventListener('load',()=>{
         if(label==='class:') classValue=field.querySelector('span')?.textContent?.trim()||'';
       });
       const title=card.querySelector('.school .title');
-      if(title) title.textContent=isAssessmentClass(classValue)?'ASSESSMENT TICKET':'ADMIT CARD';
+      if(title){
+        const wanted=isAssessmentClass(classValue)?'ASSESSMENT TICKET':'ADMIT CARD';
+        if(title.textContent!==wanted) title.textContent=wanted;
+      }
     });
   }
 
@@ -74,11 +77,18 @@ frame.addEventListener('load',()=>{
   if(saved)applySwami(saved);
   applyTicketTitles();
 
-  new MutationObserver(()=>{
-    const src=sessionStorage.getItem('vkvtt-swami-photo');
-    if(src)applySwami(src);
-    applyTicketTitles();
-  }).observe(d.body,{childList:true,subtree:true});
+  let scheduled=false;
+  const refresh=()=>{
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(()=>{
+      scheduled=false;
+      const src=sessionStorage.getItem('vkvtt-swami-photo');
+      if(src)applySwami(src);
+      applyTicketTitles();
+    });
+  };
+  new MutationObserver(refresh).observe(d.body,{childList:true,subtree:true});
 });
 </script>
 </body>
