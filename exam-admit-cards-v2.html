@@ -4,110 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VKV Nalbari · Bulk Admit Cards</title>
-<style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{border:0;width:100%;height:100%;display:block}
-</style>
-</head>
-<body>
-<iframe id="admitFrame" src="exam-admit-cards.html?v=20260919-final-runtime-8"></iframe>
 <script>
-const frame=document.getElementById('admitFrame');
-const qs=new URLSearchParams(location.search);
-const exam=qs.get('exam');
-frame.src='exam-admit-cards.html?v=20260919-final-runtime-8'+(exam?'&exam='+encodeURIComponent(exam):'');
-frame.addEventListener('load',()=>{
-  const d=frame.contentDocument;
-  if(!d)return;
-
-  const style=d.createElement('style');
-  style.textContent=`
-    /* Readability/contrast hardening for the complete Bulk Admit Cards workspace. */
-    body{color:#12263a!important}
-    header{color:#fff!important}
-    header .brand{color:#fff!important}
-    header .back,header .back:link,header .back:visited,header .back:hover,header .back:active{color:#ffffff!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,0,0,.30)!important}
-    header .sub{color:#f1f7fc!important;opacity:1!important;font-weight:700!important}
-    h1,h2,h3,h4{color:#12324d!important}
-    .card h2{color:#12324d!important}
-    label{color:#30465c!important}
-    .callout{color:#294b69!important;background:#f2f7fd!important}
-    .stat span,.modal p{color:#52677c!important}
-    .screenonly small:not(button small){color:#52677c!important}
-    th{color:#334d66!important;background:#f4f8fb!important}
-    td{color:#20384d!important}
-    .ghost{color:#12324d!important;background:#eef6fb!important;border-color:#b8cedd!important}
-    .secondary{color:#12324d!important}
-    button{color:#12324d}
-    button.primary,button.primary *{color:#ffffff!important}
-    button.primary small{color:#ffffff!important;opacity:1!important;font-weight:700!important}
-    button.ghost small,button.secondary small{color:#405a73!important;opacity:1!important;font-weight:700!important}
-    button:disabled{opacity:.68!important;color:#52677c!important}
-    input,select{color:#18344a!important;background:#fff!important}
-    input::placeholder{color:#6a7e91!important;opacity:1!important}
-    .progress #progressDetail{color:#52677c!important}
-    .screenonly[style*="color:var(--muted)"]{color:#52677c!important}
-
-    html[data-theme="dark"] body{color:#eaf2f7!important;background:#071923!important}
-    html[data-theme="dark"] h1,html[data-theme="dark"] h2,html[data-theme="dark"] h3,html[data-theme="dark"] h4{color:#eaf2f7!important}
-    html[data-theme="dark"] .card h2{color:#eaf2f7!important}
-    html[data-theme="dark"] label{color:#cfe0e9!important}
-    html[data-theme="dark"] .stat span,html[data-theme="dark"] .modal p{color:#b9ccd7!important}
-    html[data-theme="dark"] th{color:#dcebf3!important;background:#102c3b!important}
-    html[data-theme="dark"] td{color:#eaf2f7!important}
-    html[data-theme="dark"] input,html[data-theme="dark"] select{color:#f5fbff!important;background:#081b25!important;border-color:#416273!important}
-    html[data-theme="dark"] input::placeholder{color:#a9bec9!important}
-    html[data-theme="dark"] .ghost,html[data-theme="dark"] .secondary{color:#eaf2f7!important;background:#123244!important;border-color:#416273!important}
-
-    /* Signature block: keep lines, images and all four designations safely inside the fixed card height. */
-    .signs{margin-top:2mm!important;font-size:8px!important;line-height:1.15!important;align-items:end!important}
-    .sigbox{min-height:9mm!important;max-height:11.5mm!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:center!important;overflow:visible!important}
-    .sigbox img{display:block!important;max-height:9.8mm!important;max-width:34mm!important;width:auto!important;height:auto!important;object-fit:contain!important;filter:contrast(1.35)!important;margin:0 auto .45mm!important}
-    .sigline{display:block!important;width:100%!important;border-top:1px solid #333!important;padding-top:.65mm!important;min-height:3.6mm!important;line-height:1.1!important;color:#111!important;white-space:nowrap!important;overflow:visible!important}
-    @media print{
-      .admit{padding-bottom:6.5mm!important}
-      .signs{margin-top:1.7mm!important}
-      .sigbox{min-height:8.8mm!important;max-height:11mm!important}
-      .sigbox img{max-height:9.5mm!important;max-width:34mm!important;filter:contrast(1.4)!important;margin-bottom:.35mm!important}
-      .sigline{padding-top:.55mm!important;min-height:3.4mm!important;font-size:7.8px!important}
-    }
-  `;
-  d.head.appendChild(style);
-
-  function normalClass(v){
-    return String(v||'').trim().toUpperCase().replace(/\s+/g,'').replace(/_/g,'-');
-  }
-  function isAssessmentClass(v){
-    const c=normalClass(v);
-    return ['B1','B2','B3','BALVATIKA-1','BALVATIKA1','BALVATIKA-2','BALVATIKA2','BALVATIKA-3','BALVATIKA3','I','II','1','2'].includes(c);
-  }
-  function applyTicketTitles(){
-    d.querySelectorAll('.admit').forEach(card=>{
-      let classValue='';
-      card.querySelectorAll('.field').forEach(field=>{
-        const label=field.querySelector('b')?.textContent?.trim().toLowerCase();
-        if(label==='class:') classValue=field.querySelector('span')?.textContent?.trim()||'';
-      });
-      const title=card.querySelector('.school .title');
-      if(title){
-        const wanted=isAssessmentClass(classValue)?'ASSESSMENT TICKET':'ADMIT CARD';
-        if(title.textContent!==wanted) title.textContent=wanted;
-      }
-    });
-  }
-
-  applyTicketTitles();
-
-  let scheduled=false;
-  const refresh=()=>{
-    if(scheduled)return;
-    scheduled=true;
-    requestAnimationFrame(()=>{
-      scheduled=false;
-      applyTicketTitles();
-    });
-  };
-  new MutationObserver(refresh).observe(d.body,{childList:true,subtree:true});
-});
+(function(){
+  const q=location.search||'';
+  location.replace('exam-admit-cards.html?v=20260919-no-iframe-9'+(q?('&'+q.slice(1)):''));
+})();
 </script>
-</body>
+</head>
+<body></body>
 </html>
