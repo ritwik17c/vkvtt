@@ -9,12 +9,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}ifr
 </style>
 </head>
 <body>
-<iframe id="admitFrame" src="exam-admit-cards.html?v=20260919-workflow-v3-1"></iframe>
+<iframe id="admitFrame" src="exam-admit-cards.html?v=20260919-inherit-assets-4"></iframe>
 <script>
 const frame=document.getElementById('admitFrame');
 const qs=new URLSearchParams(location.search);
 const exam=qs.get('exam');
-frame.src='exam-admit-cards.html?v=20260919-workflow-v3-1'+(exam?'&exam='+encodeURIComponent(exam):'');
+frame.src='exam-admit-cards.html?v=20260919-inherit-assets-4'+(exam?'&exam='+encodeURIComponent(exam):'');
 frame.addEventListener('load',()=>{
   const d=frame.contentDocument;
   if(!d)return;
@@ -62,29 +62,6 @@ frame.addEventListener('load',()=>{
   `;
   d.head.appendChild(style);
 
-  if(!d.getElementById('swamiPhotoHotfix')){
-    const examSig=d.getElementById('examSig');
-    const target=examSig?.parentElement?.parentElement;
-    if(target){
-      const box=d.createElement('div');
-      box.innerHTML='<label>Swamiji Photograph</label><input id="swamiPhotoHotfix" type="file" accept="image/*">';
-      target.insertBefore(box,target.firstChild);
-      const input=box.querySelector('input');
-      input.addEventListener('change',e=>{
-        const f=e.target.files&&e.target.files[0];if(!f)return;
-        const r=new FileReader();
-        r.onload=()=>{sessionStorage.setItem('vkvtt-swami-photo',r.result);applySwami(r.result)};
-        r.readAsDataURL(f);
-      });
-    }
-  }
-
-  function applySwami(src){
-    if(!src)return;
-    d.querySelectorAll('.achead img').forEach((img,i)=>{if(i%2===1 && img.src!==src)img.src=src});
-    d.querySelectorAll('img[src*="swamiji-portrait"]').forEach(img=>{if(img.src!==src)img.src=src});
-  }
-
   function normalClass(v){
     return String(v||'').trim().toUpperCase().replace(/\s+/g,'').replace(/_/g,'-');
   }
@@ -107,8 +84,6 @@ frame.addEventListener('load',()=>{
     });
   }
 
-  const saved=sessionStorage.getItem('vkvtt-swami-photo');
-  if(saved)applySwami(saved);
   applyTicketTitles();
 
   let scheduled=false;
@@ -117,8 +92,6 @@ frame.addEventListener('load',()=>{
     scheduled=true;
     requestAnimationFrame(()=>{
       scheduled=false;
-      const src=sessionStorage.getItem('vkvtt-swami-photo');
-      if(src)applySwami(src);
       applyTicketTitles();
     });
   };
