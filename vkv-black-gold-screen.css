@@ -122,6 +122,12 @@
   body .visibility strong,body .needcard b,body .proxycard b{color:#fff7dc!important}
   body .profile span,body .visibility span,body .teacherChoice .meta,body .item .meta{color:#a8bdc8!important}
   body .profile.active,body .profile.selected{background:#203a47!important;border-color:#a78520!important;outline-color:#7c641e!important}
+  body .teacherChoice:hover{background:#244655!important;border-color:#8b7426!important}
+  body .teacherChoice:focus-within{outline:3px solid #f2c335!important;outline-offset:2px!important}
+  body .teacherChoice:has(input:checked){background:#f2c335!important;color:#17130b!important;border-color:#f2c335!important}
+  body .teacherChoice:has(input:checked) .name,
+  body .teacherChoice:has(input:checked) .meta,
+  body .teacherChoice:has(input:checked) .code{color:#17130b!important}
 
   /* Legacy Leave, Attendance and staff-generated panels. These components are
      created after sign-in and otherwise retain pale inline backgrounds. */
