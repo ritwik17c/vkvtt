@@ -132,6 +132,20 @@
   html[data-vkv-theme="light"] body .teacherChoice:has(input:checked) .name,
   html[data-vkv-theme="light"] body .teacherChoice:has(input:checked) .meta,
   html[data-vkv-theme="light"] body .teacherChoice:has(input:checked) .code{color:#fff!important}
+  /* Schedule Profiles has two independent states: operationally active and
+     clicked for editing. Keep both visible when they apply to the same card. */
+  html[data-vkv-theme="light"] body .profile:hover{background:#e8f1f4!important;border-color:#6d9db6!important}
+  html[data-vkv-theme="light"] body .profile.active{
+    background:#e7f6ea!important;color:#245c34!important;border-color:#8fc59b!important;
+  }
+  html[data-vkv-theme="light"] body .profile.active b,
+  html[data-vkv-theme="light"] body .profile.active span{color:#245c34!important}
+  html[data-vkv-theme="light"] body .profile.selected{
+    background:#eef7fb!important;border-color:#236d99!important;outline:3px solid #236d99!important;outline-offset:1px!important;
+  }
+  html[data-vkv-theme="light"] body .profile.active.selected{
+    background:#e7f6ea!important;border-color:#236d99!important;
+  }
   html[data-vkv-theme="light"] body input,
   html[data-vkv-theme="light"] body select,
   html[data-vkv-theme="light"] body textarea{
