@@ -8,7 +8,7 @@
   }
   const loadOnce=(key,src)=>{if(document.querySelector(`script[data-${key}]`))return;const s=document.createElement('script');s.src=src;s.dataset[key]='1';document.head.appendChild(s)};
   loadOnce('vkvExamMultiManager','vkv-exam-multi-manager.js?v=20260907-multi-manager-1');
-  loadOnce('vkvExamCalendarGuard','vkv-exam-calendar-date-guard.js?v=20260907-calendar-guard-1');
+  loadOnce('vkvExamCalendarGuard','vkv-exam-calendar-date-guard.js?v=20260920-readable-blocked-dates-1');
   loadOnce('vkvExamDatewiseDuty','vkv-exam-datewise-duty-planner.js?v=20260907-datewise-duty-1');
   // Frozen approved print layout from c3fe9c21 remains the only presentation authority.
   loadOnce('vkvExamFinalPrintLayout','vkv-exam-final-print-layout.js?v=c3fe9c21');
