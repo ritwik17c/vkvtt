@@ -176,6 +176,8 @@
   body .daychip,body .scorebar span{
     background:#1b303b!important;color:#f6f2e8!important;border-color:#496675!important;
   }
+  body .daychip:hover{background:#244655!important;color:#fffaf0!important;border-color:#8b7426!important}
+  body .daychip:focus-within{outline:3px solid #f2c335!important;outline-offset:2px!important}
   body .daychip:has(input:checked),body .scorebar input:checked+span{
     background:#f2c335!important;color:#17130b!important;border-color:#f2c335!important;
   }

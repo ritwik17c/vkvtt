@@ -129,6 +129,21 @@
   html[data-vkv-theme="light"] body .schedule{background:#fff7dd!important;color:#604b0d!important;border-color:#dfbf62!important}
   html[data-vkv-theme="light"] body .ok{background:#e7f6ea!important;color:#245c34!important;border-color:#a9d4b2!important}
   html[data-vkv-theme="light"] body .error{background:#fdecec!important;color:#8b2d2d!important;border-color:#e5b7b7!important}
+  /* Recurring-duty weekday chips must retain an unmistakable selection after
+     the checkbox click, rather than relying on the small native tick alone. */
+  html[data-vkv-theme="light"] body .daychip{
+    background:#fff!important;color:#17364f!important;border-color:#9db3bf!important;
+  }
+  html[data-vkv-theme="light"] body .daychip:hover{
+    background:#e8f1f4!important;color:#17364f!important;border-color:#6d9db6!important;
+  }
+  html[data-vkv-theme="light"] body .daychip:focus-within{
+    outline:3px solid #9b6f00!important;outline-offset:2px!important;
+  }
+  html[data-vkv-theme="light"] body .daychip:has(input:checked){
+    background:#17364f!important;color:#fff!important;border-color:#17364f!important;
+  }
+  html[data-vkv-theme="light"] body .daychip:has(input:checked) *{color:#fff!important}
   html[data-vkv-theme="light"] body .eyebrow,
   html[data-vkv-theme="light"] body .v66-eyebrow,
   html[data-vkv-theme="light"] body .noticeHead{color:#9b6f00!important}
