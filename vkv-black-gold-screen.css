@@ -166,6 +166,13 @@
     background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
   }
   body tr.bad td{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+  /* QB subject mapping rows remain legible after exclusion and can still be
+     reviewed or re-enabled without relying on low whole-row opacity. */
+  body #rows tr.excluded{opacity:1!important}
+  body #rows tr.excluded td{
+    background:#1b303b!important;color:#c3d2d9!important;border-color:#607985!important;border-style:dashed!important;
+  }
+  body #rows tr.excluded input,body #rows tr.excluded label{color:#c3d2d9!important}
 
   /* Class Observation and recurring-duty surfaces. Their page-local light
      styles otherwise leave pale rows or near-black modal panels in Deep Navy. */
