@@ -66,7 +66,7 @@
   function openAdmitCards(event){
     if(event)event.preventDefault();
     if(typeof window.vkvOpenAdmitCards==='function')return window.vkvOpenAdmitCards();
-    location.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
+    location.href='exam-admit-cards.html?v=20260919-explicit-exam-10';
   }
 
   function installAdmitCardEntry(){
@@ -75,7 +75,7 @@
       const a=document.createElement('a');
       a.id='bulkAdmitCardsNav';
       a.className='navButton';
-      a.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
+      a.href='exam-admit-cards.html?v=20260919-explicit-exam-10';
       a.innerHTML='<span>8</span> Admit Cards';
       a.addEventListener('click',openAdmitCards);
       nav.appendChild(a);
@@ -86,7 +86,7 @@
       const a=document.createElement('a');
       a.id='bulkAdmitCardsOutput';
       a.className='button primary';
-      a.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
+      a.href='exam-admit-cards.html?v=20260919-explicit-exam-10';
       a.textContent='Bulk Admit Cards';
       a.addEventListener('click',openAdmitCards);
       outputs.appendChild(a);
