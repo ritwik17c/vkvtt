@@ -63,20 +63,10 @@
   if(button) button.addEventListener('click',()=>apply(root.dataset.theme==='dark'?'light':'dark',true));
   new MutationObserver(disableLegacyTheme).observe(document.head,{childList:true});
 
-  function admitUrl(){
-    const name=((document.getElementById('workspaceName')||{}).value||'').trim();
-    try{
-      const workspace=window.vkvExamWorkspace?.getWorkspace?.();
-      const events=Array.isArray(workspace?.timetable?.events)?workspace.timetable.events:[];
-      const meaningfulName=name && name.toLowerCase()!=='new examination schedule';
-      if(workspace && meaningfulName && events.length){
-        const payload={name,timetable:events,capturedAtMs:Date.now()};
-        sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));
-      }
-    }catch(error){
-      console.warn('Admit Card workflow handoff:',error)
-    }
-    return 'exam-admit-cards-v2.html'+(name&&name.toLowerCase()!=='new examination schedule'?'?exam='+encodeURIComponent(name):'');
+  function openAdmitCards(event){
+    if(event)event.preventDefault();
+    if(typeof window.vkvOpenAdmitCards==='function')return window.vkvOpenAdmitCards();
+    location.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
   }
 
   function installAdmitCardEntry(){
@@ -85,9 +75,9 @@
       const a=document.createElement('a');
       a.id='bulkAdmitCardsNav';
       a.className='navButton';
-      a.href=admitUrl();
+      a.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
       a.innerHTML='<span>8</span> Admit Cards';
-      a.addEventListener('click',()=>{a.href=admitUrl()});
+      a.addEventListener('click',openAdmitCards);
       nav.appendChild(a);
     }
 
@@ -96,9 +86,9 @@
       const a=document.createElement('a');
       a.id='bulkAdmitCardsOutput';
       a.className='button primary';
-      a.href=admitUrl();
+      a.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
       a.textContent='Bulk Admit Cards';
-      a.addEventListener('click',()=>{a.href=admitUrl()});
+      a.addEventListener('click',openAdmitCards);
       outputs.appendChild(a);
     }
   }
