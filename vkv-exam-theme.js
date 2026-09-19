@@ -21,7 +21,7 @@
       .navButton:not(.active){color:#294b5f!important}
       .sideNote{color:#355f49!important}
       input::placeholder,textarea::placeholder{color:#617786!important;opacity:1!important}
-      .button:disabled{opacity:.72!important;color:#526777!important}
+      .button:disabled{opacity:1!important;background:#e6edf0!important;color:#526d7d!important;border-color:#bacbd3!important;box-shadow:none!important}
       .summaryCard.master p{color:#eef8fc!important}
       .summaryCard.master .eyebrow{color:#d4f1fb!important}
       html[data-theme="dark"] .topbar .brand p{color:rgba(255,255,255,.94)!important}
@@ -39,7 +39,7 @@
       html[data-theme="dark"] .navButton:not(.active){color:#d0e0e7!important}
       html[data-theme="dark"] input::placeholder,
       html[data-theme="dark"] textarea::placeholder{color:#a9bec9!important;opacity:1!important}
-      html[data-theme="dark"] .button:disabled{opacity:.76!important;color:#b9cad3!important}
+      html[data-theme="dark"] .button:disabled{opacity:1!important;background:#10212a!important;color:#b9cad3!important;border-color:#42606f!important;box-shadow:none!important}
       html[data-theme="dark"] .sideNote{color:#c0ddca!important}
     `;
     document.head.appendChild(style);
