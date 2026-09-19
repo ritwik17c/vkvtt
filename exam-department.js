@@ -106,6 +106,15 @@ function installExaminationSubjectCatalogue(classes){
   state.workspace.papers=catalogue;state.workspace.timetable={events:[],unplaced:[],dates:[],slots:[]};state.workspace.duties={invigilation:[],relievers:[],unfilled:[]};renderAll();document.dispatchEvent(new CustomEvent('vkv-exam-workspace-subjects-applied',{detail:{catalogue:true}}));return true
 }
 window.vkvExamWorkspace={applySubjectMaster:applyExaminationSubjectMaster,installSubjectCatalogue:installExaminationSubjectCatalogue,undoTimetable:undoGeneratedTimetable,getWorkspace:()=>state.workspace,getMaster:()=>state.master,markDirty:message=>markDirty(message),renderReview:()=>renderReview()};
+window.vkvOpenAdmitCards=()=>{
+  syncSetup();
+  const workspace=state.workspace;
+  const events=Array.isArray(workspace?.timetable?.events)?clone(workspace.timetable.events):[];
+  const name=String(workspace?.name||'').trim();
+  const payload={name,timetable:events,cloudId:state.cloudId||'',status:workflowStatus(),capturedAtMs:Date.now()};
+  try{sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));localStorage.setItem('vkvtt-admit-workflow-last',JSON.stringify(payload))}catch(error){}
+  location.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
+};
 
 function renderMasterSummary(){
   const master=state.master||{},data=master.data&&typeof master.data==='object'?{...master,...master.data}:master,source=state.workspace.sourceSchedule||{};
