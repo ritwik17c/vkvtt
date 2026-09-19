@@ -10,20 +10,29 @@ import{getAuth}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js'
 import{getFirestore,doc,getDoc,collection,getDocs}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
-window.vkvAdmitExamReady=(async()=>{
+window.vkvAdmitFetchExam=async examId=>{
   if(auth.authStateReady)await auth.authStateReady().catch(()=>{});
+  if(examId){
+    try{
+      const exact=await getDoc(doc(db,'examSchedules',examId));
+      if(exact.exists()){
+        const x=exact.data()||{},events=x.workspace?.timetable?.events||[];
+        if(events.length)return{id:exact.id,...x,source:'examSchedules/'+exact.id};
+      }
+    }catch(error){console.warn('Exact exam lookup failed:',error)}
+  }
   try{
     const s=await getDoc(doc(db,'publishedExam','current'));
     const p=s.exists()?s.data():null;
-    if(p?.workspace?.timetable?.events?.length&&String(p.name||'').trim())return{...p,source:'publishedExam/current'};
+    if(p?.workspace?.timetable?.events?.length)return{...p,source:'publishedExam/current'};
   }catch(error){}
   try{
     const snap=await getDocs(collection(db,'examSchedules')),items=[];
-    snap.forEach(d=>{const x=d.data()||{},events=x.workspace?.timetable?.events||[],name=String(x.name||'').trim();if(d.id!=='EXAM_SUBJECT_MASTER'&&name&&name.toLowerCase()!=='new examination schedule'&&events.length)items.push({id:d.id,...x})});
+    snap.forEach(d=>{const x=d.data()||{},events=x.workspace?.timetable?.events||[],name=String(x.name||x.workspace?.name||'').trim();if(d.id!=='EXAM_SUBJECT_MASTER'&&name&&name.toLowerCase()!=='new examination schedule'&&events.length)items.push({id:d.id,...x})});
     items.sort((a,b)=>Number(b.approvedAtMs||b.submittedAtMs||b.updatedAtMs||b.createdAtMs||0)-Number(a.approvedAtMs||a.submittedAtMs||a.updatedAtMs||a.createdAtMs||0));
     return items[0]||null;
   }catch(error){return null}
-})();
+};
 </script>
 <style>
 :root{--navy:#0b1f3a;--navy2:#12345a;--ink:#172033;--muted:#68758a;--bg:#f4f7fb;--line:#dce4ef;--soft:#eef4fb;--ok:#177a57;--warn:#b56c00;--bad:#b93434}html[data-theme="dark"]{--ink:#eaf2f7;--muted:#aac0ce;--bg:#071923;--line:#31505f;--soft:#102c3b}html[data-theme="dark"] body{background:#071923;color:#eaf2f7}html[data-theme="dark"] .card{background:#0d2531;border-color:#31505f}html[data-theme="dark"] h1,html[data-theme="dark"] h2,html[data-theme="dark"] h3,html[data-theme="dark"] h4,html[data-theme="dark"] label{color:#eaf2f7}html[data-theme="dark"] input,html[data-theme="dark"] select{background:#081b25;color:#f5fbff;border-color:#416273}html[data-theme="dark"] .callout{background:#eaf2fb;color:#153d5b}html[data-theme="dark"] .tablewrap,html[data-theme="dark"] th,html[data-theme="dark"] td{border-color:#31505f}html[data-theme="dark"] th{background:#102c3b;color:#dcebf3}html[data-theme="dark"] td{color:#eaf2f7}
@@ -31,7 +40,7 @@ window.vkvAdmitExamReady=(async()=>{
 </style>
 </head>
 <body>
-<header><div class="head"><a class="back" href="exam-department.html">← Examination Module</a><div><div class="brand">Bulk Admit Cards</div><div class="sub">Vivekananda Kendra Vidyalaya, Nalbari</div></div><button id="admitThemeToggle" class="ghost" type="button" style="margin-left:auto">Dark theme</button></div></header>
+<header><div class="head"><a class="back" href="exam-department.html">← Examination Module</a><div><div class="brand">Bulk Admit Cards</div><div class="sub">Vivekananda Kendra Vidyalaya, Nalbari</div></div></div></header>
 <main>
 <section class="card screenonly"><h2>1. Generation Channel</h2><div class="modegrid"><button id="modeFee" class="primary">Fee-linked<br><small>Fee clearance + Principal override</small></button><button id="modeDirect" class="ghost">Direct / No Fee Parameter<br><small>Generate directly from student data</small></button></div><div id="modeInfo" class="callout" style="margin-top:10px">Fee-linked generation is active.</div></section>
 <div class="grid screenonly"><section class="card"><h2>2. Examination & Signatures</h2><div class="row"><div><label>Examination Title <small>(inherited from Exam workflow for Class III onwards)</small></label><input id="examName" value="" ></div><div><label>Academic Session</label><input id="session" value="2026–27"></div></div><div class="row" style="margin-top:10px"><div><label>Exam In-charge Signature <small>(default loaded; upload only to override)</small></label><input id="examSig" type="file" accept="image/*"></div><div><label>Principal Signature <small>(default loaded; upload only to override)</small></label><input id="principalSig" type="file" accept="image/*"></div></div><div id="workflowImportStatus" class="callout" style="margin-top:10px">When opened from the Examination Module, the examination name and class-wise timetable are inherited automatically. B1–II generate Assessment Tickets without an examination-name line.</div><div class="callout" style="margin-top:10px">School logo and Swamiji portrait are loaded from the VKVTT repository. Student and Class Teacher signatures remain blank for physical signing.</div></section><section class="card"><h2>3. Student & Fee Data</h2><label>Student Excel</label><input id="studentFile" type="file" accept=".xlsx,.xls,.csv"><div style="height:8px"></div><label>Due Fee Report <small>(Fee-linked channel only)</small></label><input id="feeFile" type="file" accept=".xlsx,.xls,.csv"><div id="matchSummary" class="callout" style="margin-top:10px">Load the student master first.</div></section></div>
@@ -53,45 +62,47 @@ $('studentFile').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[
 $('feeFile').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[0].arrayBuffer(),{type:'array'}),m=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});state.feeRows=feeRows(m);matchFees();$('matchSummary').textContent=`Matched ${state.feeRows.length} due-fee rows by GR No. against ${state.students.length} students.`;render()}catch(err){ask('Fee file error',err.message)}};
 $('modeFee').onclick=()=>{state.mode='fee';$('modeFee').className='primary';$('modeDirect').className='ghost';if(state.feeRows.length)matchFees();render()};$('modeDirect').onclick=()=>{state.mode='direct';$('modeDirect').className='primary';$('modeFee').className='ghost';render()};$('rows').onchange=e=>{const s=state.students.find(x=>x.id===e.target.dataset.id);if(s){s.selected=e.target.checked;render()}};$('checkAll').onchange=e=>{state.students.forEach(x=>x.selected=e.target.checked);render()};$('selectAll').onclick=()=>{state.students.forEach(x=>x.selected=true);render()};$('selectPending').onclick=()=>{state.students.forEach(x=>x.selected=!isClear(x.fee)&&!x.override);render()};$('selectEligible').onclick=()=>{state.students.forEach(x=>x.selected=eligible(x));render()};$('clearSelection').onclick=()=>{state.students.forEach(x=>x.selected=false);render()};
 $('overridePending').onclick=()=>{const a=state.students.filter(x=>!isClear(x.fee)&&!x.override);ask('Override all pending?',`Principal override will be applied to ${a.length} pending student(s).`,()=>{a.forEach(x=>x.override=true);render()})};$('overrideSelected').onclick=()=>{const a=state.students.filter(x=>x.selected&&!isClear(x.fee)&&!x.override);ask('Override selected pending students?',`Principal override will be applied to ${a.length} selected student(s).`,()=>{a.forEach(x=>x.override=true);render()})};
-function classKey(v){let x=safe(v).toUpperCase().replace(/[_–—]/g,'-').replace(/\s+/g,' ').trim();if(/^BALVATIKA\s*-?\s*1$/.test(x))return'B1';if(/^BALVATIKA\s*-?\s*2$/.test(x))return'B2';if(/^BALVATIKA\s*-?\s*3$/.test(x))return'B3';x=x.replace(/\b(SCIENCE|ARTS?|HUMANITIES)\b/g,'').replace(/\bSECTION\s*[A-Z]+\b/g,'').replace(/[()]/g,'').replace(/[- ]+/g,'').trim();return x}
+function classKey(v){let x=safe(v).toUpperCase().replace(/[_–—]/g,'-').replace(/\s+/g,' ').trim();if(/^BALVATIKA\s*-?\s*1$/.test(x)||x==='B1')return'B1';if(/^BALVATIKA\s*-?\s*2$/.test(x)||x==='B2')return'B2';if(/^BALVATIKA\s*-?\s*3$/.test(x)||x==='B3')return'B3';x=x.replace(/\b(SCIENCE|SCI|ARTS?|HUMANITIES|HUM)\b/g,'').replace(/\bSECTION\s*[A-Z]+\b/g,'').replace(/\b(ANAND|VIVEK)\b/g,'').replace(/[()]/g,'').replace(/[- ]+/g,'').trim();return x}
 function isAssessmentClass(v){return['B1','B2','B3','I','II','1','2'].includes(classKey(v))}
 function shortSubject(v){const raw=safe(v),k=raw.toUpperCase().replace(/[^A-Z0-9/]+/g,' ');const map=[[/ASSAMESE.*HINDI|HINDI.*ASSAMESE/,'ASS/HIN'],[/^ASSAMESE$|^AS$/,'ASS'],[/^HINDI$/,'HIN'],[/^ENGLISH$|^ENG$/,'ENG'],[/^MATHEMATICS$|^MATHS?$|^MAT$/,'MAT'],[/^SCIENCE$|^SCI$/,'SCI'],[/^SOCIAL SCIENCE$|^SOCIAL STUDIES$|^SST$|^SSC$/,'SST'],[/^PHYSICS$|^PHY$/,'PHY'],[/^CHEMISTRY$|^CHEM$/,'CHE'],[/^BIOLOGY$|^BIO$/,'BIO'],[/^COMPUTER SCIENCE$|^CS$/,'CS'],[/^INFORMATION TECHNOLOGY$|^IT$/,'IT'],[/^POLITICAL SCIENCE$/,'POL'],[/^HISTORY$/,'HIS'],[/^GEOGRAPHY$/,'GEO'],[/^ECONOMICS$/,'ECO'],[/^SANSKRIT$/,'SAN']];for(const[r,code]of map)if(r.test(k.trim()))return code;const words=raw.replace(/[^A-Za-z0-9 ]+/g,' ').trim().split(/\s+/).filter(Boolean);return(words.length>1?words.map(w=>w[0]).join(''):raw.slice(0,4)).toUpperCase()}
 function displayShortDate(v){const m=safe(v).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]:safe(v)}
 function scheduleFor(s){if(isAssessmentClass(s.className))return[];const key=classKey(s.className),events=Array.isArray(state.workflow?.timetable)?state.workflow.timetable:[];const seen=new Set(),out=[];for(const e of events.filter(x=>classKey(x.className)===key).sort((a,b)=>safe(a.date).localeCompare(safe(b.date)))){const date=safe(e.date),subject=safe(e.subject);if(!date||!subject)continue;const id=date+'|'+subject.toUpperCase();if(seen.has(id))continue;seen.add(id);out.push({date,code:shortSubject(subject)})}return out}
 async function loadWorkflow(){
+  const q=new URLSearchParams(location.search),examId=safe(q.get('examId')||''),urlName=safe(q.get('examName')||q.get('exam')||'');
   try{
     const raw=sessionStorage.getItem('vkvtt-admit-workflow')||localStorage.getItem('vkvtt-admit-workflow-last');
     if(raw){
       const data=JSON.parse(raw);
-      if(data&&typeof data==='object'&&safe(data.name)&&Array.isArray(data.timetable)&&data.timetable.length)state.workflow=data;
+      if(data&&typeof data==='object'&&Array.isArray(data.timetable)&&data.timetable.length&&(safe(data.name)||urlName)){
+        state.workflow={...data,name:safe(data.name)||urlName};
+      }
     }
   }catch(error){}
-  if(!state.workflow){
+  if(!state.workflow||!state.workflow.timetable?.length){
     try{
-      const published=await window.vkvAdmitExamReady;
-      const events=published?.workspace?.timetable?.events;
-      if(published&&safe(published.name)&&Array.isArray(events)&&events.length){
-        state.workflow={name:safe(published.name),timetable:events,capturedAtMs:Number(published.approvedAtMs||published.updatedAtMs||Date.now()),source:published.source||published.id||'examSchedules'};
+      const exact=await window.vkvAdmitFetchExam(examId);
+      const events=exact?.workspace?.timetable?.events;
+      const exactName=safe(exact?.name||exact?.workspace?.name||urlName);
+      if(exact&&exactName&&Array.isArray(events)&&events.length){
+        state.workflow={name:exactName,timetable:events,capturedAtMs:Number(exact.approvedAtMs||exact.updatedAtMs||Date.now()),source:exact.source||exact.id||examId};
       }
-    }catch(error){console.warn('Published exam inheritance:',error)}
+    }catch(error){console.warn('Exam inheritance:',error)}
   }
-  const q=new URLSearchParams(location.search),fallback=safe(q.get('exam')||'');
-  const fallbackMeaningful=fallback&&fallback.toLowerCase()!=='new examination schedule';
-  const name=safe(state.workflow?.name)||(fallbackMeaningful?fallback:'');
-  $('examName').value=name;
-  if(state.workflow?.name&&state.workflow?.timetable?.length){
+  if(!state.workflow&&urlName)state.workflow={name:urlName,timetable:[],source:'url'};
+  $('examName').value=safe(state.workflow?.name)||urlName;
+  const count=Array.isArray(state.workflow?.timetable)?state.workflow.timetable.length:0;
+  if(count){
     $('examName').readOnly=true;
-    $('workflowImportStatus').innerHTML='<b>Exam workflow inherited.</b> '+state.workflow.name+' · '+state.workflow.timetable.length+' timetable event(s) linked.';
+    $('workflowImportStatus').innerHTML='<b>Exam workflow inherited.</b> '+$('examName').value+' · '+count+' timetable event(s) linked.';
   }else{
     $('examName').readOnly=false;
-    $('workflowImportStatus').innerHTML='<b>No published/current examination timetable was found.</b> Exam name and dates will not be printed until a valid exam workflow is available.';
+    $('workflowImportStatus').innerHTML='<b>No timetable events were linked.</b> Re-open this page from the prepared Exam workflow.';
   }
 }
 function cRank(v){const r=safe(v).toUpperCase().replace(/\s+/g,''),m={B1:1,'BALVATIKA-1':1,BALVATIKA1:1,B2:2,'BALVATIKA-2':2,BALVATIKA2:2,B3:3,'BALVATIKA-3':3,BALVATIKA3:3,I:4,II:5,III:6,IV:7,V:8,VI:9,VII:10,VIII:11,IX:12,X:13,XI:14,XISCIENCE:14,XIARTS:14,XII:15,XIISCIENCE:15,XIIARTS:15};return m[r]??999}function sRank(v){const x=safe(v).toUpperCase(),m={A:1,B:2,C:3,D:4,E:5,ANAND:20,VIVEK:21};return m[x]??50}function sorted(a){return[...a].sort((x,y)=>cRank(x.className)-cRank(y.className)||sRank(x.section)-sRank(y.section)||safe(x.section).localeCompare(safe(y.section))||(parseInt(x.roll)||9999)-(parseInt(y.roll)||9999)||x.name.localeCompare(y.name))}
 function card(s){const assessment=isAssessmentClass(s.className),examName=safe(state.workflow?.name)||safe($('examName').value),schedule=scheduleFor(s),scheduleHtml=!assessment&&schedule.length?`<div class="examstrip">${schedule.map(x=>`<div class="examcell"><b>${displayShortDate(x.date)}</b> · ${x.code}</div>`).join('')}</div>`:'';return`<div class="admit"><div class="achead"><img class="schoolmark" src="school-logo.jpg" onerror="this.onerror=null;this.src='icon-192.png'"><div class="school"><h3>VIVEKANANDA KENDRA VIDYALAYA, NALBARI</h3><div class="place">Nalbari, Assam</div><div class="title">${assessment?'ASSESSMENT TICKET':'ADMIT CARD'}</div>${!assessment&&examName?`<div class="exam">${examName}</div>`:''}</div><img class="swamimark" src="assets/admit-card/swamiji-portrait.jpg" onerror="this.onerror=null;this.src='./Swami%20Vivekananda.png'"></div><div class="bodygrid"><div class="field"><b>Student's Name:</b><span class="studentname">${s.name}</span></div><div class="field"><b>Gr. No.:</b><span>${s.gr}</span></div><div class="field"><b>Class:</b><span>${s.className}</span></div><div class="field"><b>Section:</b><span>${s.section}</span></div><div class="field"><b>Roll No.:</b><span>${s.roll}</span></div></div>${scheduleHtml}<div class="notice"><div class="noticegrid"><ul><li>Bring this ticket/card on every assessment or examination day.</li><li>Report to the allotted room at least 30 minutes before the scheduled time.</li><li>Follow all assessment/examination rules and instructions.</li></ul><ul><li>Use only permitted stationery/materials.</li><li>Any alteration to this ticket/card will make it invalid.</li></ul></div></div><div class="signs"><div class="sigbox">${state.examSig?`<img src="${state.examSig}">`:'<div style="height:9.5mm"></div>'}<div class="sigline">Exam In-charge</div></div><div class="sigbox"><div class="sigline">Student's Signature</div></div><div class="sigbox"><div class="sigline">Class Teacher's Signature</div></div><div class="sigbox">${state.principalSig?`<img src="${state.principalSig}">`:'<div style="height:9.5mm"></div>'}<div class="sigline">Principal's Signature</div></div></div></div>`}
 async function generate(list,print=false){const good=sorted(list.filter(eligible));if(!good.length)return ask('No eligible students','No cards can be generated.');$('progressBox').classList.remove('hidden');$('preview').innerHTML='';state.generated=[];for(let i=0;i<good.length;i+=20){const ch=good.slice(i,i+20);state.generated.push(...ch);$('preview').insertAdjacentHTML('beforeend',ch.map(card).join(''));const d=Math.min(i+20,good.length),p=Math.round(d/good.length*100);$('progressFill').style.width=p+'%';$('progressPct').textContent=p+'%';$('progressDetail').textContent=`${d} of ${good.length} cards generated`;await new Promise(r=>setTimeout(r,0))}$('progressTitle').textContent='Generation complete';if(print){await new Promise(r=>setTimeout(r,250));window.print()}}
 $('generateSelected').onclick=()=>{const a=state.students.filter(x=>x.selected);if(!a.length)return ask('No students selected','Select students first.');generate(a)};$('generateAll').onclick=()=>{if(state.mode==='fee'&&state.students.some(x=>!eligible(x)))return ask('Pending students still exist','Use Override All Pending first if you want cards for everyone.');generate(state.students)};$('generatePdf').onclick=()=>{const go=()=>generate(state.mode==='direct'?state.students:state.students.filter(eligible),true);go()};$('printBtn').onclick=()=>state.generated.length?window.print():ask('Nothing to print','Generate admit cards first.');
-(function initAdmitTheme(){const key='vkvtt-admit-theme',root=document.documentElement,btn=$('admitThemeToggle');let t='light';try{t=localStorage.getItem(key)||localStorage.getItem('vkvtt-exam-theme')||'light'}catch(error){}const apply=x=>{root.dataset.theme=x==='dark'?'dark':'light';if(btn)btn.textContent=root.dataset.theme==='dark'?'Light theme':'Dark theme'};apply(t);if(btn)btn.onclick=()=>{const next=root.dataset.theme==='dark'?'light':'dark';apply(next);try{localStorage.setItem(key,next)}catch(error){}}})();
 window.addEventListener('DOMContentLoaded',()=>loadWorkflow().then(render).catch(()=>render()),{once:true});
 </script>
 </body></html>
