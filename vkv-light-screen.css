@@ -138,6 +138,14 @@
   html[data-vkv-theme="light"] body .schedule{background:#fff7dd!important;color:#604b0d!important;border-color:#dfbf62!important}
   html[data-vkv-theme="light"] body .ok{background:#e7f6ea!important;color:#245c34!important;border-color:#a9d4b2!important}
   html[data-vkv-theme="light"] body .error{background:#fdecec!important;color:#8b2d2d!important;border-color:#e5b7b7!important}
+  /* QB subject mapping rows remain readable after exclusion; the dashed row
+     treatment conveys the inactive state without fading its controls. */
+  html[data-vkv-theme="light"] body #rows tr.excluded{opacity:1!important}
+  html[data-vkv-theme="light"] body #rows tr.excluded td{
+    background:#f4f7f8!important;color:#526d7d!important;border-color:#9fb2bc!important;border-style:dashed!important;
+  }
+  html[data-vkv-theme="light"] body #rows tr.excluded input,
+  html[data-vkv-theme="light"] body #rows tr.excluded label{color:#526d7d!important}
   /* Recurring-duty weekday chips must retain an unmistakable selection after
      the checkbox click, rather than relying on the small native tick alone. */
   html[data-vkv-theme="light"] body .daychip{
