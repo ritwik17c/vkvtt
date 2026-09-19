@@ -181,19 +181,21 @@ service cloud.firestore {
     // can return, approve and publish the staff-visible schedule.
     match /examSchedules/{scheduleId} {
       allow read: if canUseExamDepartment();
+
       allow create: if canUseExamDepartment()
                     && request.resource.data.ownerUid == request.auth.uid
                     && request.resource.data.status == 'draft';
+
       allow update: if isAdmin()
+                    || (scheduleId == 'EXAM_SUBJECT_MASTER'
+                        && canUseExamDepartment())
                     || (canUseExamDepartment()
                         && resource.data.ownerUid == request.auth.uid
                         && request.resource.data.ownerUid == resource.data.ownerUid
                         && resource.data.status in ['draft', 'returned']
                         && request.resource.data.status in ['draft', 'submitted']);
-      allow delete: if isAdmin()
-                    || (canUseExamDepartment()
-                        && resource.data.ownerUid == request.auth.uid
-                        && resource.data.status in ['draft', 'returned']);
+
+      allow delete: if isAdmin();
     }
 
     match /publishedExam/{documentId} {
@@ -391,9 +393,91 @@ service cloud.firestore {
     }
 
     match /qbQuestions/{questionId} {
-      allow get: if isAdmin()
+
+      // Bulk-import preflight:
+      // Teachers may check only a NEW deterministic QBTI document ID.
+      // Existing questions continue to use the protected rules below.
+      allow get: if (canReadSchool()
+                     && questionId.matches('^QBTI-[0-9a-f]{28}
+
+      allow list: if isAdmin()
+                  || qbQuestionOwner(resource.data)
+                  || (canReadSchool() && resource.data.status == 'approved')
+                  || qbCoordinator(resource.data.subject);
+
+      allow create: if isAdmin()
+                    || (canReadSchool()
+                        && request.resource.data.teacherUid == request.auth.uid
+                        && request.resource.data.teacherEmail == authEmail()
+                        && request.resource.data.status in ['draft','submitted']);
+
+      allow update: if isAdmin()
+                    || (qbQuestionOwner(resource.data)
+                        && request.resource.data.teacherUid == resource.data.teacherUid
+                        && request.resource.data.teacherEmail == resource.data.teacherEmail
+                        && resource.data.status in ['draft','returned']
+                        && request.resource.data.status in ['draft','submitted'])
+                    || (qbCoordinator(resource.data.subject)
+                        && resource.data.status == 'submitted'
+                        && request.resource.data.status in ['approved','returned']
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                          'status','verifiedAtMs','verifiedAt','verifiedByUid','verifiedByEmail','verifiedByName',
+                          'returnComment','returnedAtMs','returnedByUid','returnedByName','workflow','updatedAtMs'
+                        ]));
+
+      allow delete: if isAdmin();
+    }
+
+    match /qbAwards/{awardId} {
+      allow read: if canReadSchool();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Class Observation access
+    // Principal/Admin: full control.
+    // Manager: read workspace and create/update/delete only own drafts; cannot finalise/share.
+    // Concerned teacher: read-only access to own finalised observations.
+    match /classObservations/{observationId} {
+      allow get, list: if isAdmin()
+                       || (uidActive() && uidRole() == 'manager')
+                       || (canReadSchool()
+                           && verifiedEmail()
+                           && resource.data.status == 'finalised'
+                           && resource.data.teacherEmail is string
+                           && resource.data.teacherEmail == authEmail());
+
+      allow create: if isAdmin()
+                    || (uidActive()
+                        && uidRole() == 'manager'
+                        && request.resource.data.status == 'draft'
+                        && request.resource.data.observerUid == request.auth.uid);
+
+      allow update: if isAdmin()
+                    || (uidActive()
+                        && uidRole() == 'manager'
+                        && resource.data.status == 'draft'
+                        && resource.data.observerUid == request.auth.uid
+                        && request.resource.data.status == 'draft'
+                        && request.resource.data.observerUid == request.auth.uid);
+
+      allow delete: if isAdmin()
+                    || (uidActive()
+                        && uidRole() == 'manager'
+                        && resource.data.status == 'draft'
+                        && resource.data.observerUid == request.auth.uid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+)
+                     && !exists(/databases/$(database)/documents/qbQuestions/$(questionId)))
+                 || isAdmin()
                  || qbQuestionOwner(resource.data)
-                 || (canReadSchool() && resource.data.status == 'approved')
+                 || (canReadSchool()
+                     && resource.data.status == 'approved')
                  || qbCoordinator(resource.data.subject);
 
       allow list: if isAdmin()
