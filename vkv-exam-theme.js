@@ -64,19 +64,22 @@
   new MutationObserver(disableLegacyTheme).observe(document.head,{childList:true});
 
   function admitUrl(){
-    const name=(document.getElementById('workspaceName')||{}).value||'';
+    const name=((document.getElementById('workspaceName')||{}).value||'').trim();
     try{
       const workspace=window.vkvExamWorkspace?.getWorkspace?.();
-      if(workspace){
-        const payload={
-          name:name||workspace.name||'',
-          timetable:Array.isArray(workspace.timetable?.events)?workspace.timetable.events:[],
-          capturedAtMs:Date.now()
-        };
+      const events=Array.isArray(workspace?.timetable?.events)?workspace.timetable.events:[];
+      const meaningfulName=name && name.toLowerCase()!=='new examination schedule';
+      if(workspace && meaningfulName && events.length){
+        const payload={name,timetable:events,capturedAtMs:Date.now()};
         sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));
+      }else{
+        sessionStorage.removeItem('vkvtt-admit-workflow');
       }
-    }catch(error){console.warn('Admit Card workflow handoff:',error)}
-    return 'exam-admit-cards-v2.html?exam='+encodeURIComponent(name);
+    }catch(error){
+      sessionStorage.removeItem('vkvtt-admit-workflow');
+      console.warn('Admit Card workflow handoff:',error)
+    }
+    return 'exam-admit-cards-v2.html'+(name&&name.toLowerCase()!=='new examination schedule'?'?exam='+encodeURIComponent(name):'');
   }
 
   function installAdmitCardEntry(){
