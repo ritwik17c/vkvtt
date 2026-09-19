@@ -429,6 +429,40 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Class Observation access
+    // Principal/Admin: full control.
+    // Manager: read workspace and create/update/delete only own drafts; cannot finalise/share.
+    // Concerned teacher: read-only access to own finalised observations.
+    match /classObservations/{observationId} {
+      allow get, list: if isAdmin()
+                       || (uidActive() && uidRole() == 'manager')
+                       || (canReadSchool()
+                           && verifiedEmail()
+                           && resource.data.status == 'finalised'
+                           && resource.data.teacherEmail is string
+                           && resource.data.teacherEmail == authEmail());
+
+      allow create: if isAdmin()
+                    || (uidActive()
+                        && uidRole() == 'manager'
+                        && request.resource.data.status == 'draft'
+                        && request.resource.data.observerUid == request.auth.uid);
+
+      allow update: if isAdmin()
+                    || (uidActive()
+                        && uidRole() == 'manager'
+                        && resource.data.status == 'draft'
+                        && resource.data.observerUid == request.auth.uid
+                        && request.resource.data.status == 'draft'
+                        && request.resource.data.observerUid == request.auth.uid);
+
+      allow delete: if isAdmin()
+                    || (uidActive()
+                        && uidRole() == 'manager'
+                        && resource.data.status == 'draft'
+                        && resource.data.observerUid == request.auth.uid);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
