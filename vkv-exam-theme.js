@@ -65,6 +65,17 @@
 
   function admitUrl(){
     const name=(document.getElementById('workspaceName')||{}).value||'';
+    try{
+      const workspace=window.vkvExamWorkspace?.getWorkspace?.();
+      if(workspace){
+        const payload={
+          name:name||workspace.name||'',
+          timetable:Array.isArray(workspace.timetable?.events)?workspace.timetable.events:[],
+          capturedAtMs:Date.now()
+        };
+        sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));
+      }
+    }catch(error){console.warn('Admit Card workflow handoff:',error)}
     return 'exam-admit-cards-v2.html?exam='+encodeURIComponent(name);
   }
 
