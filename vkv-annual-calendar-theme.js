@@ -29,6 +29,18 @@
   html[data-vkv-theme="black-gold"] #monthView .cal-cont{background:color-mix(in srgb,var(--event-color) 58%,#1b303b)!important}
   html[data-vkv-theme="black-gold"] .notice-card,html[data-vkv-theme="black-gold"] .notice-card *,html[data-vkv-theme="black-gold"] .hero-chip{color:#f6f2e8!important}
   html[data-vkv-theme="light"] .notice-card,html[data-vkv-theme="light"] .notice-card *{color:#334b5d!important}
+  html[data-vkv-theme="light"] .tab-btn.active,html[data-vkv-theme="light"] .tab-btn.active:hover,html[data-vkv-theme="light"] .tab-btn.active:active{background:#236d99!important;color:#fff!important;border-color:#236d99!important}
+  html[data-vkv-theme="black-gold"] .tab-btn.active,html[data-vkv-theme="black-gold"] .tab-btn.active:hover,html[data-vkv-theme="black-gold"] .tab-btn.active:active{background:#f2c335!important;color:#15130b!important;border-color:#f2c335!important}
+  html[data-vkv-theme] .filter-chip.active,html[data-vkv-theme] .filter-chip.active:hover,html[data-vkv-theme] .filter-chip.active:active{color:#fff!important;border-color:transparent!important}
+  html[data-vkv-theme="light"] .filter-chip[data-cat="all"].active{background:#236d99!important}
+  html[data-vkv-theme="black-gold"] .filter-chip[data-cat="all"].active{background:#f2c335!important;color:#15130b!important}
+  html[data-vkv-theme] .filter-chip[data-cat="programme"].active{background:#3559a8!important}
+  html[data-vkv-theme] .filter-chip[data-cat="exam"].active{background:#7b4bb7!important}
+  html[data-vkv-theme] .filter-chip[data-cat="holiday"].active{background:#bd3d4a!important}
+  html[data-vkv-theme] .filter-chip[data-cat="celebration"].active{background:#d87813!important;color:#0c1720!important}
+  html[data-vkv-theme] .filter-chip[data-cat="observance"].active{background:#237a62!important}
+  html[data-vkv-theme] .filter-chip[data-cat="restricted"].active{background:#8b6e3f!important}
+  html[data-vkv-theme] .filter-chip[data-cat="session"].active{background:#306d9a!important}
   @media(max-width:900px){#monthView .day-cell{min-height:112px!important}}
   @media(max-width:620px){#monthView .day-cell{min-width:82px!important;min-height:104px!important}#monthView .dow{min-width:82px!important}}
   `;document.head.appendChild(st);

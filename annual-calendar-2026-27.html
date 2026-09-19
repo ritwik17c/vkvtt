@@ -215,9 +215,9 @@
 
     <nav class="toolbar" aria-label="Calendar controls">
       <div class="view-tabs" role="tablist" aria-label="Calendar views">
-        <button class="tab-btn" data-view="day" type="button">Daily</button>
-        <button class="tab-btn" data-view="month" type="button">Monthly</button>
-        <button class="tab-btn active" data-view="full" type="button">Full View</button>
+        <button class="tab-btn" data-view="day" type="button" role="tab" aria-selected="false" aria-controls="dayView">Daily</button>
+        <button class="tab-btn" data-view="month" type="button" role="tab" aria-selected="false" aria-controls="monthView">Monthly</button>
+        <button class="tab-btn active" data-view="full" type="button" role="tab" aria-selected="true" aria-controls="fullView">Full View</button>
       </div>
       <div class="toolbar-actions">
         <button class="soft-btn" id="homeBtn" type="button">← Timetable Home</button>
@@ -410,7 +410,7 @@ function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt
 function renderFilters(){
   const root=document.getElementById('filters');
   const cats=[['all','All'],...Object.entries(CATEGORY).map(([k,v])=>[k,v.label])];
-  root.innerHTML=cats.map(([k,label])=>`<button type="button" class="filter-chip ${activeCategory===k?'active':''}" data-cat="${k}">${esc(label)}</button>`).join('');
+  root.innerHTML=cats.map(([k,label])=>`<button type="button" class="filter-chip ${activeCategory===k?'active':''}" data-cat="${k}" aria-pressed="${activeCategory===k?'true':'false'}">${esc(label)}</button>`).join('');
   root.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{activeCategory=btn.dataset.cat;renderAll();}));
 }
 function renderStats(){
@@ -518,7 +518,7 @@ function closeModal(){document.getElementById('eventModal').classList.remove('op
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(name+'View').classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
+  document.querySelectorAll('.tab-btn').forEach(b=>{const selected=b.dataset.view===name;b.classList.toggle('active',selected);b.setAttribute('aria-selected',selected?'true':'false')});
   if(name==='full')renderFull();if(name==='month')renderMonth();if(name==='day')renderDay();
 }
 function renderAll(){renderFilters();renderFull();renderMonth();renderDay()}

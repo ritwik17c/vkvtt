@@ -77,7 +77,7 @@
       if(host)host.appendChild(box);else{const slot=document.createElement('div');slot.className='vkv-theme-slot';slot.style.position='fixed';slot.style.top='8px';slot.style.right='8px';slot.style.zIndex='220';slot.appendChild(box);document.body.appendChild(slot)}
       box.addEventListener('click',e=>{const b=e.target.closest('[data-vkv-theme-choice]');if(b)apply(b.dataset.vkvThemeChoice)});
     }
-    apply(theme);syncEmbeddedFrames(theme);registerThemeShell();if(/^annual-calendar-2026-27\.html$/i.test(page)&&!document.getElementById('vkvAnnualCalendarThemeHelper')){const s=document.createElement('script');s.id='vkvAnnualCalendarThemeHelper';s.src='./vkv-annual-calendar-theme.js?v=20260909-calendar-theme2';document.head.appendChild(s)}
+    apply(theme);syncEmbeddedFrames(theme);registerThemeShell();if(/^annual-calendar-2026-27\.html$/i.test(page)&&!document.getElementById('vkvAnnualCalendarThemeHelper')){const s=document.createElement('script');s.id='vkvAnnualCalendarThemeHelper';s.src='./vkv-annual-calendar-theme.js?v=20260920-calendar-selected-states-1';document.head.appendChild(s)}
   }
   if(!EXEMPT){allThemeLinks();ensureThemeSafetyStyle();apply(theme,document,false)}
   window.addEventListener('storage',e=>{if(e.key===KEY&&VALID.has(e.newValue)&&e.newValue!==theme)apply(e.newValue,document,false)});
