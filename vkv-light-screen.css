@@ -118,6 +118,20 @@
   html[data-vkv-theme="light"] body .disabledBox label,
   html[data-vkv-theme="light"] body .disabledBox .small,
   html[data-vkv-theme="light"] body .disabledBox .help{color:#526d7d!important}
+  /* Admin Dashboard permanent-teacher cards need a retained state after the
+     checkbox click, not merely a change in the small native checkbox. */
+  html[data-vkv-theme="light"] body .teacherChoice:hover{
+    background:#e8f1f4!important;border-color:#6d9db6!important;
+  }
+  html[data-vkv-theme="light"] body .teacherChoice:focus-within{
+    outline:3px solid #9b6f00!important;outline-offset:2px!important;
+  }
+  html[data-vkv-theme="light"] body .teacherChoice:has(input:checked){
+    background:#17364f!important;color:#fff!important;border-color:#17364f!important;
+  }
+  html[data-vkv-theme="light"] body .teacherChoice:has(input:checked) .name,
+  html[data-vkv-theme="light"] body .teacherChoice:has(input:checked) .meta,
+  html[data-vkv-theme="light"] body .teacherChoice:has(input:checked) .code{color:#fff!important}
   html[data-vkv-theme="light"] body input,
   html[data-vkv-theme="light"] body select,
   html[data-vkv-theme="light"] body textarea{
