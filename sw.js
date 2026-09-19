@@ -17,7 +17,7 @@ function injectControllers(html,url){
   if(!/vkv-theme-contrast-fixes\.css/i.test(html))tags.push('<link rel="stylesheet" href="./vkv-theme-contrast-fixes.css?v=20260909-contrast2">');
   if(isHome&&!/vkv-home-header-typography\.css/i.test(html))tags.push('<link rel="stylesheet" href="./vkv-home-header-typography.css?v=20260916-theme-zone-1">');
   if(isHome&&!/vkv-home-card-cleanup\.js/i.test(html))tags.push('<script src="./vkv-home-card-cleanup.js?v=20260909-homecards2"></script>');
-  if(/annual-calendar-2026-27\.html$/i.test(path)&&!/vkv-annual-calendar-theme\.js/i.test(html))tags.push('<script src="./vkv-annual-calendar-theme.js?v=20260909-calendar-theme2"></script>');
+  if(/annual-calendar-2026-27\.html$/i.test(path)&&!/vkv-annual-calendar-theme\.js/i.test(html))tags.push('<script src="./vkv-annual-calendar-theme.js?v=20260920-calendar-selected-states-1"></script>');
   if(isAdmin&&!/class-observation-admin-bridge\.js/i.test(html))tags.push('<script src="./class-observation-admin-bridge.js?v=20260908-observation-2"></script>');
   if(isHome&&!/class-observation-teacher-bridge\.js/i.test(html))tags.push('<script src="./class-observation-teacher-bridge.js?v=20260908-observation-2"></script>');
   if(/admin-question-bank-v2\.html$/i.test(path)&&!/vkv-qb-admin-production-tools\.js/i.test(html))tags.push('<script src="./vkv-qb-admin-production-tools.js?v=20260908-qb-audit-1"></script>');
