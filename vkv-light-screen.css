@@ -109,6 +109,15 @@
   }
   html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton):disabled *,
   html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton)[aria-disabled="true"] *{color:#526d7d!important}
+  /* Proxy Manager disables whole option panels while a different status type
+     is selected. Keep their instructions readable instead of fading the
+     complete panel through the legacy opacity rule. */
+  html[data-vkv-theme="light"] body .disabledBox{
+    opacity:1!important;background:#f4f7f8!important;border-color:#9fb2bc!important;border-style:dashed!important;
+  }
+  html[data-vkv-theme="light"] body .disabledBox label,
+  html[data-vkv-theme="light"] body .disabledBox .small,
+  html[data-vkv-theme="light"] body .disabledBox .help{color:#526d7d!important}
   html[data-vkv-theme="light"] body input,
   html[data-vkv-theme="light"] body select,
   html[data-vkv-theme="light"] body textarea{
