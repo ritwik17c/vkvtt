@@ -6,10 +6,11 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
 import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import{getAuth}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
-const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app);
-window.vkvAdmitPublishedExam=async()=>{const s=await getDoc(doc(db,'publishedExam','current'));return s.exists()?s.data():null};
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+window.vkvAdmitPublishedExam=async()=>{if(auth.authStateReady)await auth.authStateReady().catch(()=>{});const s=await getDoc(doc(db,'publishedExam','current'));return s.exists()?s.data():null};
 </script>
 <style>
 :root{--navy:#0b1f3a;--navy2:#12345a;--ink:#172033;--muted:#68758a;--bg:#f4f7fb;--line:#dce4ef;--soft:#eef4fb;--ok:#177a57;--warn:#b56c00;--bad:#b93434}
