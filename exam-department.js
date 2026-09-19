@@ -111,9 +111,13 @@ window.vkvOpenAdmitCards=()=>{
   const workspace=state.workspace;
   const events=Array.isArray(workspace?.timetable?.events)?clone(workspace.timetable.events):[];
   const name=String(workspace?.name||'').trim();
-  const payload={name,timetable:events,cloudId:state.cloudId||'',status:workflowStatus(),capturedAtMs:Date.now()};
+  const examId=String(state.cloudId||'').trim();
+  const payload={name,timetable:events,cloudId:examId,status:workflowStatus(),capturedAtMs:Date.now()};
   try{sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));localStorage.setItem('vkvtt-admit-workflow-last',JSON.stringify(payload))}catch(error){}
-  location.href='exam-admit-cards-v2.html?v=20260919-native-workflow-1';
+  const qs=new URLSearchParams();
+  if(examId)qs.set('examId',examId);
+  if(name)qs.set('examName',name);
+  location.href='exam-admit-cards.html?v=20260919-explicit-exam-10&'+qs.toString();
 };
 
 function renderMasterSummary(){
