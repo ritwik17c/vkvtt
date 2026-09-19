@@ -9,12 +9,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}ifr
 </style>
 </head>
 <body>
-<iframe id="admitFrame" src="exam-admit-cards.html?v=20260919-fixed-assets-6"></iframe>
+<iframe id="admitFrame" src="exam-admit-cards.html?v=20260919-runtime-fix-7"></iframe>
 <script>
 const frame=document.getElementById('admitFrame');
 const qs=new URLSearchParams(location.search);
 const exam=qs.get('exam');
-frame.src='exam-admit-cards.html?v=20260919-fixed-assets-6'+(exam?'&exam='+encodeURIComponent(exam):'');
+frame.src='exam-admit-cards.html?v=20260919-runtime-fix-7'+(exam?'&exam='+encodeURIComponent(exam):'');
 frame.addEventListener('load',()=>{
   const d=frame.contentDocument;
   if(!d)return;
