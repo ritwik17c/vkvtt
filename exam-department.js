@@ -111,13 +111,13 @@ window.vkvOpenAdmitCards=()=>{
   const workspace=state.workspace;
   const events=Array.isArray(workspace?.timetable?.events)?clone(workspace.timetable.events):[];
   const name=String(workspace?.name||'').trim();
-  const examId=String(state.cloudId||'').trim();
-  const payload={name,timetable:events,cloudId:examId,status:workflowStatus(),capturedAtMs:Date.now()};
-  try{sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));localStorage.setItem('vkvtt-admit-workflow-last',JSON.stringify(payload))}catch(error){}
-  const qs=new URLSearchParams();
-  if(examId)qs.set('examId',examId);
-  if(name)qs.set('examName',name);
-  location.href='exam-admit-cards.html?v=20260919-explicit-exam-10&'+qs.toString();
+  const invalidName=!name||['new examination schedule','untitled examination schedule'].includes(name.toLowerCase());
+  if(invalidName){alert('Please give this examination a proper title before generating Admit Cards.');return}
+  if(!events.length){alert('Generate the examination timetable first. Admit Cards must inherit dates and subjects from the active timetable.');return}
+  const handoffId='ADM_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  const payload={handoffId,name,timetable:events,cloudId:String(state.cloudId||''),status:workflowStatus(),capturedAtMs:Date.now()};
+  try{sessionStorage.setItem('vkvtt-admit-workflow-active',JSON.stringify(payload))}catch(error){}
+  location.href='exam-admit-cards.html?v=20260919-native-output-11&handoff='+encodeURIComponent(handoffId);
 };
 
 function renderMasterSummary(){
@@ -246,6 +246,8 @@ function changeDutyTeacher(event){const select=event.target.closest('[data-duty-
 
 function renderReview(){
   if(!state.workspace)return;const exam=validateExamTimetable(state.workspace),duty=validateDutyRoster(state.workspace),hasDuty=!!(state.workspace.duties?.invigilation?.length||state.workspace.duties?.relievers?.length||state.workspace.duties?.unfilled?.length);
+  const admitButton=$('bulkAdmitCardsOutput'),examName=String(state.workspace.name||'').trim(),validName=examName&&!['new examination schedule','untitled examination schedule'].includes(examName.toLowerCase()),hasExamEvents=Array.isArray(state.workspace.timetable?.events)&&state.workspace.timetable.events.length>0;
+  if(admitButton){admitButton.disabled=!(validName&&hasExamEvents);admitButton.title=admitButton.disabled?'Give the exam a proper title and generate its timetable first.':'Generate Admit Cards from this active examination workflow.'}
   const cards=[{label:'Exam timetable',value:exam.valid&&exam.scheduled?'Ready':exam.scheduled?'Issues':'Not generated',good:exam.valid&&exam.scheduled},{label:'Papers scheduled',value:exam.scheduled+'/'+exam.total,good:exam.valid&&exam.total>0},{label:'Duty allocation',value:hasDuty?(duty.valid?'Ready':'Issues'):'Not generated',good:hasDuty&&duty.valid},{label:'Unfilled positions',value:duty.unfilled,good:hasDuty&&duty.unfilled===0}];
   $('reviewSummary').innerHTML=cards.map(item=>`<div class="reviewCard ${item.good?'good':'bad'}"><strong>${safe(item.value)}</strong><span>${safe(item.label)}</span></div>`).join('');
 }
@@ -263,5 +265,5 @@ function download(name,rows){const csv='\ufeff'+rows.map(row=>row.map(csvCell).j
 $('downloadExamCsv').onclick=()=>download('exam-timetable.csv',[['Date','Day','Session','Start','End','Class','Subject'],...(state.workspace.timetable?.events||[]).map(item=>{const slot=slotById(item.slotId)||{};return [item.date,item.day,slot.name||item.slotId,slot.startTime||'',slot.endTime||'',item.className,item.subject]})]);
 $('downloadDutyCsv').onclick=()=>download('exam-duty-lists.csv',[['Role','Date','Day','Session','Time','Room / Class','Teacher','Code'],...(state.workspace.duties?.invigilation||[]).map(item=>['Invigilator',item.date,item.day,item.session,'',item.roomId,item.teacherName,item.teacherCode]),...(state.workspace.duties?.relievers||[]).map(item=>['Reliever',item.date,item.day,item.session,item.startTime+'-'+item.endTime,'',item.teacherName,item.teacherCode])]);
 function printPane(name){const pane=document.querySelector(`[data-pane="${name}"]`);document.querySelectorAll('.pane').forEach(item=>item.classList.remove('printing'));pane.classList.add('printing');window.print();setTimeout(()=>pane.classList.remove('printing'),500)}
-$('printExam').onclick=()=>printPane('timetable');$('printDuties').onclick=()=>printPane('duties');window.addEventListener('afterprint',()=>document.querySelectorAll('.pane').forEach(item=>item.classList.remove('printing')));
+$('printExam').onclick=()=>printPane('timetable');$('printDuties').onclick=()=>printPane('duties');$('bulkAdmitCardsOutput').onclick=()=>window.vkvOpenAdmitCards();window.addEventListener('afterprint',()=>document.querySelectorAll('.pane').forEach(item=>item.classList.remove('printing')));
 window.addEventListener('beforeunload',event=>{if(state.dirty){event.preventDefault();event.returnValue=''}});

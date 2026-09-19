@@ -63,37 +63,5 @@
   if(button) button.addEventListener('click',()=>apply(root.dataset.theme==='dark'?'light':'dark',true));
   new MutationObserver(disableLegacyTheme).observe(document.head,{childList:true});
 
-  function openAdmitCards(event){
-    if(event)event.preventDefault();
-    if(typeof window.vkvOpenAdmitCards==='function')return window.vkvOpenAdmitCards();
-    location.href='exam-admit-cards.html?v=20260919-explicit-exam-10';
-  }
 
-  function installAdmitCardEntry(){
-    const nav=document.querySelector('nav[aria-label="Examination Module sections"]');
-    if(nav && !document.getElementById('bulkAdmitCardsNav')){
-      const a=document.createElement('a');
-      a.id='bulkAdmitCardsNav';
-      a.className='navButton';
-      a.href='exam-admit-cards.html?v=20260919-explicit-exam-10';
-      a.innerHTML='<span>8</span> Admit Cards';
-      a.addEventListener('click',openAdmitCards);
-      nav.appendChild(a);
-    }
-
-    const outputs=document.querySelector('[data-pane="outputs"] .buttonRow');
-    if(outputs && !document.getElementById('bulkAdmitCardsOutput')){
-      const a=document.createElement('a');
-      a.id='bulkAdmitCardsOutput';
-      a.className='button primary';
-      a.href='exam-admit-cards.html?v=20260919-explicit-exam-10';
-      a.textContent='Bulk Admit Cards';
-      a.addEventListener('click',openAdmitCards);
-      outputs.appendChild(a);
-    }
-  }
-
-  installAdmitCardEntry();
-  document.addEventListener('DOMContentLoaded',installAdmitCardEntry,{once:true});
-  setTimeout(installAdmitCardEntry,600);
 })();
