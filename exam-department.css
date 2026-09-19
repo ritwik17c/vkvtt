@@ -77,6 +77,8 @@ html[data-theme="light"] :is(.button,.navButton,input,select,textarea):disabled,
 html[data-theme="light"] :is(.button,.navButton)[aria-disabled="true"]{background:#e6edf0!important;color:#526d7d!important;border-color:#bacbd3!important;opacity:1!important;box-shadow:none!important;cursor:not-allowed!important}
 html[data-theme="light"] :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #9b6f00!important;outline-offset:2px!important}
 html[data-theme="light"] a.button:visited{color:inherit!important}
+html[data-theme="light"] .inlineChecks label.examDateBlocked{background:#eef3f5!important;color:#526d7d!important;border:1px dashed #9fb2bc!important;border-radius:8px;padding:5px 8px;opacity:1!important;text-decoration:line-through}
+html[data-theme="dark"] .inlineChecks label.examDateBlocked{background:#10212a!important;color:#b8cbd4!important;border:1px dashed #42606f!important;border-radius:8px;padding:5px 8px;opacity:1!important;text-decoration:line-through}
 html[data-theme="dark"] .seatPlanSummarySheet,
 html[data-theme="dark"] .roomStickerSheet,
 html[data-theme="dark"] .seatPlanSheet{background:#fff;color:#111}
