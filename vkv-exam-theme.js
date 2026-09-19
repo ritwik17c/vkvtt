@@ -72,11 +72,8 @@
       if(workspace && meaningfulName && events.length){
         const payload={name,timetable:events,capturedAtMs:Date.now()};
         sessionStorage.setItem('vkvtt-admit-workflow',JSON.stringify(payload));
-      }else{
-        sessionStorage.removeItem('vkvtt-admit-workflow');
       }
     }catch(error){
-      sessionStorage.removeItem('vkvtt-admit-workflow');
       console.warn('Admit Card workflow handoff:',error)
     }
     return 'exam-admit-cards-v2.html'+(name&&name.toLowerCase()!=='new examination schedule'?'?exam='+encodeURIComponent(name):'');
