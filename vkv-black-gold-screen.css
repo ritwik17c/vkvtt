@@ -209,6 +209,14 @@
   body .toolCard .modeLabel,body .rangeCard .modeLabel,
   body .staggerCard .modeLabel{color:#fffaf0!important}
   body .pendingCard .meta,body .recordCard .meta{color:#a8bdc8!important}
+  body .entryShell,body details.guide,body details.moreTools,
+  body .integrityMetric,body .rangeTotalBox,body .reconcileBar{
+    background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+  }
+  body details.guide summary,body details.moreTools summary,
+  body .integrityMetric b{color:#fffaf0!important}
+  body .integrityMetric span,body .reconcileDetail{color:#a8bdc8!important}
+  body .rangeTotalBox{color:#f2c335!important}
   /* The Question Bank Teacher Guide is a printable paper on screen as well.
      Deep Navy must not leave cream copy on its legacy white sheet or notes. */
   body .paper{
