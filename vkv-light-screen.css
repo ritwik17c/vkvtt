@@ -118,6 +118,14 @@
   html[data-vkv-theme="light"] body .disabledBox label,
   html[data-vkv-theme="light"] body .disabledBox .small,
   html[data-vkv-theme="light"] body .disabledBox .help{color:#526d7d!important}
+  /* Leave Rules marks unavailable categories by fading the whole card.
+     Keep the content readable and use the boundary/surface as the state cue. */
+  html[data-vkv-theme="light"] body .ruleCard.inactive{
+    opacity:1!important;background:#f4f7f8!important;color:#526d7d!important;
+    border-color:#9fb2bc!important;border-style:dashed!important;
+  }
+  html[data-vkv-theme="light"] body .ruleCard.inactive b,
+  html[data-vkv-theme="light"] body .ruleCard.inactive strong{color:#17364f!important}
   /* Admin Dashboard permanent-teacher cards need a retained state after the
      checkbox click, not merely a change in the small native checkbox. */
   html[data-vkv-theme="light"] body .teacherChoice:hover{

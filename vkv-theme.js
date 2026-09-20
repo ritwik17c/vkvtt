@@ -10,8 +10,8 @@
 
   function ensureCss(doc,id,href){let l=doc.getElementById(id);if(!l){l=doc.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;doc.head.appendChild(l)}return l}
   function allThemeLinks(doc=document){
-    const bg=ensureCss(doc,'vkvBlackGoldThemeCss','./vkv-black-gold-screen.css?v=20260920-schedule-profile-states-1');
-    const lt=ensureCss(doc,'vkvLightThemeCss','./vkv-light-screen.css?v=20260920-schedule-profile-states-1');
+    const bg=ensureCss(doc,'vkvBlackGoldThemeCss','./vkv-black-gold-screen.css?v=20260920-leave-rule-inactive-1');
+    const lt=ensureCss(doc,'vkvLightThemeCss','./vkv-light-screen.css?v=20260920-leave-rule-inactive-1');
     return{bg:[...new Set([bg,...doc.querySelectorAll('link[href*="vkv-black-gold-screen.css"]')])],lt:[...new Set([lt,...doc.querySelectorAll('link[href*="vkv-light-screen.css"]')])]};
   }
   function ensureThemeSafetyStyle(doc=document){
