@@ -81,6 +81,17 @@
   html[data-vkv-theme="light"] body .navButton:active{
     background:#cce2ed!important;color:#17364f!important;border-color:#236d99!important;
   }
+  /* Keep coordinator access visibly distinct from ordinary navigation while
+     retaining the established green semantic colour in the Light theme. */
+  html[data-vkv-theme="light"] body .bar a.coord{
+    background:#e7f6ea!important;color:#245c34!important;border-color:#a9d4b2!important;
+  }
+  html[data-vkv-theme="light"] body .bar a.coord:hover{
+    background:#d8efdf!important;color:#245c34!important;border-color:#78b689!important;
+  }
+  html[data-vkv-theme="light"] body .bar a.coord:active{
+    background:#c9e7d2!important;color:#245c34!important;border-color:#57986b!important;
+  }
   html[data-vkv-theme="light"] body button.primary,
   html[data-vkv-theme="light"] body .primary,
   html[data-vkv-theme="light"] body .button.primary,
