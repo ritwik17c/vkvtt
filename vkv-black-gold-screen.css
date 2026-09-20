@@ -106,6 +106,15 @@
   body .workspace{background:transparent!important}
   body .paneHead p,body .sectionTitle p{color:var(--vkv-screen-muted)!important}
   body hr{border-color:#34505d!important}
+  /* Loading overlays are injected by legacy runtime code with pale surfaces.
+     Keep theme transitions inside the approved Deep Navy palette. */
+  body #vkvSlowLoader{background:rgba(12,23,32,.96)!important;color:#e7edf0!important}
+  body #vkvSwamijiLoader{background:rgba(12,23,32,.82)!important}
+  body #vkvSwamijiLoader .vkvLoaderCard{
+    background:#152630!important;border-color:#725d25!important;
+    box-shadow:0 12px 34px rgba(0,0,0,.3)!important;
+  }
+  body #vkvSwamijiLoader .vkvLoaderText{color:#e7edf0!important}
   body .myGrid>button,body .nav>button,body .opsGrid>button{background:#152630!important;color:var(--vkv-screen-cream)!important;border-color:#496675!important;border-left-color:var(--vkv-screen-gold2)!important}
   body .myGrid>button.active,body .nav>button.active,body .opsGrid>button.active{background:#203a47!important;color:#fffaf0!important;border-color:var(--vkv-screen-gold)!important}
   body.adminDashboardPage #dashboardHome{border-top-color:var(--vkv-screen-gold)!important}
