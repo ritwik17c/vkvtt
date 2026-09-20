@@ -156,6 +156,7 @@
   html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton)[aria-disabled="true"]{
     background:#e6edf0!important;color:#526d7d!important;border-color:#bacbd3!important;
     opacity:1!important;box-shadow:none!important;cursor:not-allowed!important;
+    transform:none!important;filter:none!important;
   }
   html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton):disabled *,
   html[data-vkv-theme="light"] body :is(button,.btn,.button,.navButton)[aria-disabled="true"] *{color:#526d7d!important}
