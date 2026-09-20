@@ -131,6 +131,29 @@ html[data-theme="dark"] .seatPlanSheet{background:#fff;color:#111}
   html[data-theme="dark"] #examSavedStartChoices h4{color:#d8edf7!important}
   html[data-theme="dark"] #examFooterSettings>div:last-child,
   html[data-theme="dark"] #examSavedStartChoices p{color:#a8bdc8!important;border-color:#42606f!important}
+
+  /* Live seating status surfaces. Room-sticker and summary sheets deliberately
+     keep their paper-white palette, including when Deep Navy is selected. */
+  html[data-theme="light"] .allocationNotice.good,
+  html[data-theme="light"] #seatingVenueRows .occupancyBadge.full{
+    background:#eaf7ed!important;color:#245f39!important;border:1px solid #b8d9c0!important;
+  }
+  html[data-theme="light"] .allocationNotice.bad{
+    background:#fff0f1!important;color:#9a3038!important;border-color:#e4b7bc!important;
+  }
+  html[data-theme="light"] #seatingVenueRows .occupancyBadge.empty{
+    background:#fff7df!important;color:#825810!important;border:1px solid #e7cc80!important;
+  }
+  html[data-theme="dark"] .allocationNotice.good,
+  html[data-theme="dark"] #seatingVenueRows .occupancyBadge.full{
+    background:#163524!important;color:#b9e5c7!important;border:1px solid #326846!important;
+  }
+  html[data-theme="dark"] .allocationNotice.bad{
+    background:#3a1c22!important;color:#ffb5bd!important;border-color:#713939!important;
+  }
+  html[data-theme="dark"] #seatingVenueRows .occupancyBadge.empty{
+    background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
+  }
 }
 @media print{
   html[data-theme="dark"] body{background:#fff!important;color:#111!important}
