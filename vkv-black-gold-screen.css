@@ -184,6 +184,28 @@
   body #reviewList .note,body #reviewList .ageWatch{
     background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
   }
+  /* Preserve Question Bank workflow meaning as well as contrast. Generic
+     badge/button rules otherwise flatten fresh, watch and overdue states. */
+  body .bar a.coord{
+    background:#163524!important;color:#b9e5c7!important;border-color:#326846!important;
+  }
+  body .bar a.coord:hover{background:#1d4730!important;color:#b9e5c7!important;border-color:#4c855d!important}
+  body .bar a.coord:active{background:#22563a!important;color:#b9e5c7!important;border-color:#62a173!important}
+  body #work #list .ageFresh{
+    background:#163524!important;color:#b9e5c7!important;border:1px solid #326846!important;
+  }
+  body #work #list .ageWatch{
+    background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
+  }
+  body #work #list .ageOld{
+    background:#3a1c22!important;color:#ffb5bd!important;border:1px solid #713939!important;
+  }
+  body #work #list .history{
+    background:#10212a!important;color:#e7edf0!important;border-color:#42606f!important;
+  }
+  body #work #list .history .note{
+    background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
+  }
   body tr.bad td{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
   /* QB subject mapping rows remain legible after exclusion and can still be
      reviewed or re-enabled without relying on low whole-row opacity. */
