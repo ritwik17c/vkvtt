@@ -37,7 +37,7 @@ html[data-qb-theme="light"] a.green,html[data-qb-theme="light"] a.green:visited{
 html[data-qb-theme="light"] a.danger,html[data-qb-theme="light"] a.danger:visited{color:#8b2d2d!important}
 html[data-qb-theme="light"] header a,html[data-qb-theme="light"] header .btn{color:#17364f!important}
 html[data-qb-theme="light"] :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #b45309!important;outline-offset:2px!important}
-html[data-qb-theme="light"] :is(button,.btn,input,select,textarea):disabled{background:#e8eef1!important;color:#596d79!important;border-color:#bdcbd2!important;cursor:not-allowed!important;opacity:1!important}
+html[data-qb-theme="light"] :is(button,.btn,input,select,textarea):disabled{background:#e8eef1!important;color:#596d79!important;border-color:#bdcbd2!important;cursor:not-allowed!important;opacity:1!important;transform:none!important;filter:none!important}
 html[data-qb-theme="dark"]{color-scheme:dark}
 html[data-qb-theme="dark"] body{background:#0c1720!important;color:#e7edf0!important}
 html[data-qb-theme="dark"] .card,html[data-qb-theme="dark"] .panel{background:#152630!important;color:#e7edf0!important;border-color:#3d5967!important;box-shadow:0 4px 16px #07101866!important}
@@ -72,7 +72,7 @@ html[data-qb-theme="dark"] details summary{color:#f2f6f8!important}
 html[data-qb-theme="dark"] #qbMultiSubjects label{background:#10212b!important;color:#e7edf0!important;border-color:#466270!important}
 html[data-qb-theme] input[type="checkbox"],html[data-qb-theme] input[type="radio"]{accent-color:#2f7fae}
 html[data-qb-theme="dark"] :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #f2c335!important;outline-offset:2px!important}
-html[data-qb-theme="dark"] :is(button,.btn,input,select,textarea):disabled{background:#263944!important;color:#9fb0b9!important;border-color:#485f6b!important;cursor:not-allowed!important;opacity:1!important}
+html[data-qb-theme="dark"] :is(button,.btn,input,select,textarea):disabled{background:#263944!important;color:#9fb0b9!important;border-color:#485f6b!important;cursor:not-allowed!important;opacity:1!important;transform:none!important;filter:none!important}
 #qbThemeToggle{min-width:98px}`;
   function installCss(){if(document.getElementById('qbThemeStyles'))return;const s=document.createElement('style');s.id='qbThemeStyles';s.textContent=css;document.head.appendChild(s)}
   function systemDark(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches}
