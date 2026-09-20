@@ -81,6 +81,7 @@
   body :is(button,.btn,.button,.navButton)[aria-disabled="true"]{
     background:#10212a!important;color:#91a6b0!important;border-color:#42606f!important;
     opacity:1!important;box-shadow:none!important;cursor:not-allowed!important;
+    transform:none!important;filter:none!important;
   }
   body :is(button,.btn,.button,.navButton):disabled *,
   body :is(button,.btn,.button,.navButton)[aria-disabled="true"] *{color:#91a6b0!important}
