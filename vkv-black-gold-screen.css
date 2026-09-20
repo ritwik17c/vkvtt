@@ -184,6 +184,20 @@
   body #reviewList .note,body #reviewList .ageWatch{
     background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
   }
+  /* The legacy coordinator queue injects these badges at runtime. Preserve
+     fresh, ageing, overdue and resubmitted meanings after generic badge rules. */
+  body #reviewList .qbAgeBadge{
+    background:#163524!important;color:#b9e5c7!important;border:1px solid #326846!important;
+  }
+  body #reviewList .qbAgeBadge[style*="fff4d6"]{
+    background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important;
+  }
+  body #reviewList .qbAgeBadge[style*="fdeaea"]{
+    background:#3a1c22!important;color:#ffb5bd!important;border-color:#713939!important;
+  }
+  body #reviewList .qbResubmittedBadge{
+    background:#14344a!important;color:#b9dcf0!important;border:1px solid #3e6f8c!important;
+  }
   /* Preserve Question Bank workflow meaning as well as contrast. Generic
      badge/button rules otherwise flatten fresh, watch and overdue states. */
   body .bar a.coord{
