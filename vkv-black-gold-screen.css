@@ -199,6 +199,16 @@
   body .summary>div,body .scores>div,body .feedback>div{
     background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
   }
+  /* Leave Editor generates these nested cards after authentication. Keep
+     their text on an elevated navy surface instead of the legacy near-white. */
+  body .pendingCard,body .recordCard,body .toolCard,
+  body .rangeCard,body .staggerCard{
+    background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+  }
+  body .pendingCard .cardTitle,body .recordCard .cardTitle,
+  body .toolCard .modeLabel,body .rangeCard .modeLabel,
+  body .staggerCard .modeLabel{color:#fffaf0!important}
+  body .pendingCard .meta,body .recordCard .meta{color:#a8bdc8!important}
   body .daychip,body .scorebar span{
     background:#1b303b!important;color:#f6f2e8!important;border-color:#496675!important;
   }
