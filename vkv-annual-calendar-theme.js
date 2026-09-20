@@ -41,6 +41,29 @@
   html[data-vkv-theme] .filter-chip[data-cat="observance"].active{background:#237a62!important}
   html[data-vkv-theme] .filter-chip[data-cat="restricted"].active{background:#8b6e3f!important}
   html[data-vkv-theme] .filter-chip[data-cat="session"].active{background:#306d9a!important}
+  @media screen{
+    html[data-vkv-theme="black-gold"] .toolbar,
+    html[data-vkv-theme="black-gold"] .search{
+      background:rgba(21,38,48,.94)!important;color:#f6f2e8!important;border-color:#496675!important;
+    }
+    html[data-vkv-theme="black-gold"] .stat,
+    html[data-vkv-theme="black-gold"] .notice-card,
+    html[data-vkv-theme="black-gold"] .event-card,
+    html[data-vkv-theme="black-gold"] .day-card,
+    html[data-vkv-theme="black-gold"] .modal-card,
+    html[data-vkv-theme="black-gold"] .access-gate{
+      background:#152630!important;color:#f6f2e8!important;border-color:#42606f!important;
+    }
+    html[data-vkv-theme="black-gold"] .event-card:hover,
+    html[data-vkv-theme="black-gold"] .day-card:hover{background:#1b303b!important;border-color:#607985!important}
+    html[data-vkv-theme="black-gold"] :is(.stat b,.month-title h2,.date-main,.event-card h3,.day-head h2,.day-card h3,.modal h2,.access-gate h1){color:#fff7dc!important}
+    html[data-vkv-theme="black-gold"] :is(.stat span,.date-sub,.event-details,.day-card p,.modal-body,.access-gate p,.footer,.more){color:#a8bdc8!important}
+    html[data-vkv-theme="black-gold"] .month-title .count,
+    html[data-vkv-theme="black-gold"] .meta-pill{background:#1b303b!important;color:#c3d2d9!important;border-color:#496675!important}
+    html[data-vkv-theme="black-gold"] .source-alert{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
+    html[data-vkv-theme="black-gold"] .rail:before{background:#34505d!important}
+    html[data-vkv-theme="black-gold"] .rail:after{box-shadow:0 0 0 4px #152630,0 0 0 5px #607985!important}
+  }
   @media(max-width:900px){#monthView .day-cell{min-height:112px!important}}
   @media(max-width:620px){#monthView .day-cell{min-width:82px!important;min-height:104px!important}#monthView .dow{min-width:82px!important}}
   `;document.head.appendChild(st);
