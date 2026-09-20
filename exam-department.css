@@ -82,6 +82,56 @@ html[data-theme="dark"] .inlineChecks label.examDateBlocked{background:#10212a!i
 html[data-theme="dark"] .seatPlanSummarySheet,
 html[data-theme="dark"] .roomStickerSheet,
 html[data-theme="dark"] .seatPlanSheet{background:#fff;color:#111}
+@media screen{
+  /* Native Exam Module runtime surfaces. The module intentionally owns its
+     theme, so these must not rely on the shared application stylesheet. */
+  html[data-theme="light"] .majorCard{
+    opacity:1!important;background:#fff!important;color:#17364f!important;border-color:#9db3bf!important;
+  }
+  html[data-theme="light"] .majorCard b{color:#17364f!important}
+  html[data-theme="light"] .majorCard small{color:#526d7d!important}
+  html[data-theme="light"] .majorCard:hover{background:#e8f1f4!important;border-color:#6d9db6!important}
+  html[data-theme="light"] .majorCard:focus-within{outline:3px solid #9b6f00!important;outline-offset:2px!important}
+  html[data-theme="light"] .majorCard.off{
+    opacity:1!important;background:#f4f7f8!important;color:#526d7d!important;
+    border-color:#9fb2bc!important;border-style:dashed!important;
+  }
+  html[data-theme="light"] .majorCard.off b,html[data-theme="light"] .majorCard.off small{color:#526d7d!important}
+  html[data-theme="light"] .majorCard:has(input:checked){
+    background:#eef7fb!important;color:#17364f!important;border-color:#236d99!important;
+    outline:2px solid #236d99!important;outline-offset:0!important;
+  }
+  html[data-theme="dark"] .majorCard:hover{background:#244655!important;border-color:#8b7426!important}
+  html[data-theme="dark"] .majorCard:focus-within{outline:3px solid #f2c335!important;outline-offset:2px!important}
+  html[data-theme="dark"] .majorCard.off{
+    opacity:1!important;background:#10212a!important;color:#c3d2d9!important;
+    border-color:#607985!important;border-style:dashed!important;
+  }
+  html[data-theme="dark"] .majorCard.off b,html[data-theme="dark"] .majorCard.off small{color:#c3d2d9!important}
+  html[data-theme="dark"] .majorCard:has(input:checked){
+    background:#203a47!important;color:#fff7dc!important;border-color:#f2c335!important;
+    outline:2px solid #f2c335!important;outline-offset:0!important;
+  }
+  html[data-theme="dark"] .majorCard:has(input:checked) b,
+  html[data-theme="dark"] .majorCard:has(input:checked) small{color:#fff7dc!important}
+
+  html[data-theme="light"] #examFooterSettings,
+  html[data-theme="light"] #examSavedStartChoices>div[style*="grid-template-columns"]>div{
+    background:#fff!important;color:#183447!important;border-color:#d2e1e8!important;
+  }
+  html[data-theme="light"] #examFooterSettings h4,
+  html[data-theme="light"] #examSavedStartChoices h4{color:#123d58!important}
+  html[data-theme="light"] #examFooterSettings>div:last-child,
+  html[data-theme="light"] #examSavedStartChoices p{color:#486577!important;border-color:#d8e5ea!important}
+  html[data-theme="dark"] #examFooterSettings,
+  html[data-theme="dark"] #examSavedStartChoices>div[style*="grid-template-columns"]>div{
+    background:#152630!important;color:#e5f0f5!important;border-color:#42606f!important;
+  }
+  html[data-theme="dark"] #examFooterSettings h4,
+  html[data-theme="dark"] #examSavedStartChoices h4{color:#d8edf7!important}
+  html[data-theme="dark"] #examFooterSettings>div:last-child,
+  html[data-theme="dark"] #examSavedStartChoices p{color:#a8bdc8!important;border-color:#42606f!important}
+}
 @media print{
   html[data-theme="dark"] body{background:#fff!important;color:#111!important}
   html[data-theme="dark"] .seatPlanSummarySheet,
