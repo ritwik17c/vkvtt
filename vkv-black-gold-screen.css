@@ -220,6 +220,25 @@
   body #work #list .history .note{
     background:#392f16!important;color:#f2d88a!important;border:1px solid #725d25!important;
   }
+  /* Exam timetable class/subject choices remain readable when deselected.
+     Selection is conveyed by surface, border and checkbox, not faded text. */
+  body .majorCard{
+    opacity:1!important;background:#152630!important;color:#e7edf0!important;border-color:#496675!important;
+  }
+  body .majorCard b{color:#fff7dc!important}
+  body .majorCard small{color:#a8bdc8!important}
+  body .majorCard:hover{background:#244655!important;border-color:#8b7426!important}
+  body .majorCard:focus-within{outline:3px solid #f2c335!important;outline-offset:2px!important}
+  body .majorCard.off{
+    opacity:1!important;background:#10212a!important;color:#c3d2d9!important;
+    border-color:#607985!important;border-style:dashed!important;
+  }
+  body .majorCard.off b,body .majorCard.off small{color:#c3d2d9!important}
+  body .majorCard:has(input:checked){
+    background:#203a47!important;color:#fff7dc!important;border-color:#f2c335!important;
+    outline:2px solid #f2c335!important;outline-offset:0!important;
+  }
+  body .majorCard:has(input:checked) b,body .majorCard:has(input:checked) small{color:#fff7dc!important}
   body tr.bad td{background:#392f16!important;color:#f2d88a!important;border-color:#725d25!important}
   /* QB subject mapping rows remain legible after exclusion and can still be
      reviewed or re-enabled without relying on low whole-row opacity. */
