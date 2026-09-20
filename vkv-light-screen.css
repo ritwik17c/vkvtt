@@ -106,6 +106,31 @@
   html[data-vkv-theme="light"] body #reviewList .qbResubmittedBadge{
     background:#e9f4ff!important;color:#245a7a!important;border:1px solid #a9cce2!important;
   }
+  /* Exam timetable choices use explicit readable selected/deselected states
+     rather than the legacy 62% whole-card opacity. */
+  html[data-vkv-theme="light"] body .majorCard{
+    opacity:1!important;background:#fff!important;color:#17364f!important;border-color:#9db3bf!important;
+  }
+  html[data-vkv-theme="light"] body .majorCard b{color:#17364f!important}
+  html[data-vkv-theme="light"] body .majorCard small{color:#526d7d!important}
+  html[data-vkv-theme="light"] body .majorCard:hover{
+    background:#e8f1f4!important;color:#17364f!important;border-color:#6d9db6!important;
+  }
+  html[data-vkv-theme="light"] body .majorCard:focus-within{
+    outline:3px solid #9b6f00!important;outline-offset:2px!important;
+  }
+  html[data-vkv-theme="light"] body .majorCard.off{
+    opacity:1!important;background:#f4f7f8!important;color:#526d7d!important;
+    border-color:#9fb2bc!important;border-style:dashed!important;
+  }
+  html[data-vkv-theme="light"] body .majorCard.off b,
+  html[data-vkv-theme="light"] body .majorCard.off small{color:#526d7d!important}
+  html[data-vkv-theme="light"] body .majorCard:has(input:checked){
+    background:#eef7fb!important;color:#17364f!important;border-color:#236d99!important;
+    outline:2px solid #236d99!important;outline-offset:0!important;
+  }
+  html[data-vkv-theme="light"] body .majorCard:has(input:checked) b,
+  html[data-vkv-theme="light"] body .majorCard:has(input:checked) small{color:#17364f!important}
   html[data-vkv-theme="light"] body button.primary,
   html[data-vkv-theme="light"] body .primary,
   html[data-vkv-theme="light"] body .button.primary,
