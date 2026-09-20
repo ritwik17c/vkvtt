@@ -92,6 +92,20 @@
   html[data-vkv-theme="light"] body .bar a.coord:active{
     background:#c9e7d2!important;color:#245c34!important;border-color:#57986b!important;
   }
+  /* Runtime coordinator-queue badges retain their workflow meaning instead
+     of collapsing into the generic Light-theme badge treatment. */
+  html[data-vkv-theme="light"] body #reviewList .qbAgeBadge{
+    background:#e7f6ea!important;color:#245c34!important;border:1px solid #a9d4b2!important;
+  }
+  html[data-vkv-theme="light"] body #reviewList .qbAgeBadge[style*="fff4d6"]{
+    background:#fff7df!important;color:#745917!important;border-color:#e5cd8c!important;
+  }
+  html[data-vkv-theme="light"] body #reviewList .qbAgeBadge[style*="fdeaea"]{
+    background:#fdecec!important;color:#8b2d2d!important;border-color:#e5b7b7!important;
+  }
+  html[data-vkv-theme="light"] body #reviewList .qbResubmittedBadge{
+    background:#e9f4ff!important;color:#245a7a!important;border:1px solid #a9cce2!important;
+  }
   html[data-vkv-theme="light"] body button.primary,
   html[data-vkv-theme="light"] body .primary,
   html[data-vkv-theme="light"] body .button.primary,
