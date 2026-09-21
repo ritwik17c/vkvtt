@@ -22,18 +22,31 @@ function applyImportedPattern(){if(!importedPattern.length)return false;const da
 function movePapersByDate(){
   const from=iso($('movePaperFromDate')?.value||''),to=iso($('movePaperToDate')?.value||''),raw=String($('movePaperClasses')?.value||'').trim();
   if(!from||!to){alert('Select both the original date and the new date.');return}
+  if(from===to){alert('The From date and To date are the same.');return}
   const requested=new Set(raw.split(/[,;\n]+/).map(cls).filter(Boolean));
   const sourceRows=[...pending.values()].filter(x=>x.date===from);
   if(!sourceRows.length){alert('No saved papers were found on '+disp(from)+'.');return}
   const sourceClasses=[...new Set(sourceRows.map(x=>cls(x.className)).filter(Boolean))];
   const wanted=requested.size?requested:new Set(sourceClasses);
-  const dates=selectedDates();if(!dates.includes(to)){alert('The new date '+disp(to)+' is not currently selected as an examination date. First add/select this date in Exam Setup, then use Move Papers.');return}
   let moved=0;const movedRows=[];
-  for(const [k,obj] of pending){const cc=cls(obj.className);if(obj.date!==from||!wanted.has(cc))continue;obj.date=to;pending.set(k,obj);moved++;movedRows.push(cc+' — '+subj(obj.subject))}
+  for(const [k,obj] of pending){
+    const cc=cls(obj.className);
+    if(obj.date!==from||!wanted.has(cc))continue;
+    obj.date=to;pending.set(k,obj);moved++;movedRows.push(cc+' — '+subj(obj.subject));
+  }
   if(!moved){alert('No saved papers matched the selected classes on '+disp(from)+'.');return}
+  const revisedDates=[...new Set([...pending.values()].map(x=>x.date).filter(Boolean))].sort();
+  const startInput=$('startDate'),endInput=$('endDate'),cadenceInput=$('cadence'),customInput=$('customDates');
+  if(revisedDates.length){
+    if(startInput)startInput.value=revisedDates[0];
+    if(endInput)endInput.value=revisedDates[revisedDates.length-1];
+    if(cadenceInput)cadenceInput.value='custom';
+    if(customInput){customInput.value=revisedDates.join(', ');customInput.dispatchEvent(new Event('change',{bubbles:true}))}
+  }
   dirty=true;render();scheduleManualSave(50);
   const summary=[...new Set(movedRows)].join(', ');
-  const msg=$('printableMatrixMsg');if(msg){msg.className='notice success';msg.innerHTML='<b>'+moved+' paper assignment'+(moved===1?'':'s')+' moved successfully.</b> '+esc(disp(from))+' → '+esc(disp(to))+'.<br><small>'+esc(summary)+'</small>'}
+  const msg=$('printableMatrixMsg');
+  if(msg){msg.className='notice success';msg.innerHTML='<b>'+moved+' paper assignment'+(moved===1?'':'s')+' moved successfully.</b> '+esc(disp(from))+' → '+esc(disp(to))+'.<br><small>'+esc(summary)+'</small><br><small>Date range updated automatically to '+esc(disp(revisedDates[0]))+' – '+esc(disp(revisedDates[revisedDates.length-1]))+'.</small>'}
 }
 function localOnlyMessage(){const m=$('printableMatrixMsg');if(m){m.className='notice info';m.innerHTML='<b>Manual timetable kept locally.</b> Press Save Cloud Draft when you want to create the cloud draft; subsequent edits will autosave to that same draft.'}}
 function scheduleManualSave(delay=650){dirty=true;if(!activeDraftId&&!allowNameLookup){localOnlyMessage();return}if(saveTimer)clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=null;saveManual({ensureDraft:true}).catch(showSaveError)},delay)}
