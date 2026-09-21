@@ -172,22 +172,6 @@
       if(replacing){
         const original=records.find(x=>x.id===item.revisionOf);
         const originalRef=a.doc(a.db,'examSchedules',item.revisionOf);
-        if(original){
-          const historyId=item.revisionOf+'_'+now;
-          batch.set(a.doc(a.db,'examScheduleHistory',historyId),{
-            sourceScheduleId:item.revisionOf,
-            revisionDraftId:item.id,
-            name:original.name||item.name||'Examination Schedule',
-            description:original.description||'',
-            status:'superseded',
-            supersededAtMs:now,
-            supersededByUid:user.uid,
-            supersededByEmail:user.email||'',
-            previousApprovedAtMs:Number(original.approvedAtMs||0),
-            workspace:clone(original.workspace||{}),
-            archivedAt:a.serverTimestamp()
-          });
-        }
         const published={schemaVersion:Number(item.schemaVersion||1),scheduleId:item.revisionOf,name:item.name||item.workspace?.name||'Examination Schedule',description:item.description||'',workspace:clone(item.workspace),status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByName:profile?.name||user.displayName||user.email||'Principal',updatedAt:a.serverTimestamp()};
         batch.set(a.doc(a.db,'publishedExam','current'),published);
         batch.set(originalRef,{
@@ -210,7 +194,26 @@
         batch.set(a.doc(a.db,'publishedExam','current'),published);
         batch.set(a.doc(a.db,'examSchedules',item.id),{status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByEmail:user.email||'',updatedAtMs:now,updatedAt:a.serverTimestamp()},{merge:true});
       }
-      await batch.commit();await load();
+      await batch.commit();
+      if(replacing&&original){
+        try{
+          const historyId=item.revisionOf+'_'+now;
+          await a.setDoc(a.doc(a.db,'examScheduleHistory',historyId),{
+            sourceScheduleId:item.revisionOf,
+            revisionDraftId:item.id,
+            name:original.name||item.name||'Examination Schedule',
+            description:original.description||'',
+            status:'superseded',
+            supersededAtMs:now,
+            supersededByUid:user.uid,
+            supersededByEmail:user.email||'',
+            previousApprovedAtMs:Number(original.approvedAtMs||0),
+            workspace:clone(original.workspace||{}),
+            archivedAt:a.serverTimestamp()
+          });
+        }catch(historyError){console.warn('Exam schedule history archive skipped:',historyError)}
+      }
+      await load();
     }catch(e){alert('Could not approve timetable: '+(e?.message||e))}finally{busy=false}
   }
   async function approveTemplate(id){
