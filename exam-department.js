@@ -264,7 +264,27 @@ async function renderDraftList(){
     $('draftList').innerHTML=items.length?items.map(item=>{const status=item.status||'draft',canOpen=state.isAdmin||['draft','returned'].includes(status),revision=status==='published'&&item.ownerUid===state.user.uid;return `<div class="draftCard"><h4>${safe(item.name||'Untitled Examination Schedule')}</h4><p><span class="workflowPill ${safe(status)}">${safe(status==='published'?'Published':status==='submitted'?'Submitted':status==='returned'?'Returned':'Draft')}</span>${new Date(item.updatedAtMs||item.createdAtMs||Date.now()).toLocaleString('en-GB')}</p><p>${item.workspace?.timetable?.events?.length||0} papers · ${item.workspace?.duties?.invigilation?.length||0} invigilation duties</p>${item.reviewNote?`<p><b>Principal note:</b> ${safe(item.reviewNote)}</p>`:''}<div class="buttonRow">${canOpen?`<button class="button" data-open-cloud="${safe(item.id)}">Open</button>`:''}${revision?`<button class="button" data-revise-cloud="${safe(item.id)}">Start Revision</button>`:''}</div></div>`}).join(''):'<div class="empty">No cloud examination workspace has been saved yet.</div>';
   }catch(e){$('draftList').innerHTML='<div class="notice error">Cloud workspaces could not be loaded: '+safe(e.message||e)+'</div>'}
 }
-$('draftList').addEventListener('click',event=>{const open=event.target.closest('[data-open-cloud]'),revise=event.target.closest('[data-revise-cloud]'),id=open?.dataset.openCloud||revise?.dataset.reviseCloud;if(!id)return;const item=state.cloudItems.find(value=>value.id===id);if(!item?.workspace)return;if(state.dirty&&!confirm('Open this cloud workspace and discard the current unsaved changes?'))return;state.workspace=clone(item.workspace);state.cloudId=revise?'':item.id;state.cloudMeta=revise?{status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email,revisionOf:item.id}:clone(item);state.dirty=!!revise;renderAll();setSaveState(revise?'New revision — save before submission':'Cloud workspace opened',!!revise);document.querySelector('[data-pane-target="setup"]').click()});
+$('draftList').addEventListener('click',event=>{const open=event.target.closest('[data-open-cloud]'),revise=event.target.closest('[data-revise-cloud]'),id=open?.dataset.openCloud||revise?.dataset.reviseCloud;if(!id)return;openCloudWorkspaceById(id,{asRevision:!!revise})});
+async function openCloudWorkspaceById(id,{asRevision=false}={}){
+  if(!id||!state.user)return false;
+  try{
+    const snap=await getDoc(doc(db,'examSchedules',id));
+    if(!snap.exists())throw new Error('Cloud examination workspace was not found.');
+    const item={id:snap.id,...(snap.data()||{})};
+    if(!item.workspace)throw new Error('This record does not contain an examination workspace.');
+    if(state.dirty&&!confirm('Open this cloud workspace and discard the current unsaved changes?'))return false;
+    state.workspace=clone(item.workspace);
+    state.cloudId=asRevision?'':item.id;
+    state.cloudMeta=asRevision?{status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email,revisionOf:item.id}:clone(item);
+    state.dirty=!!asRevision;
+    renderAll();
+    setSaveState(asRevision?'New revision — save before submission':'Cloud workspace opened',!!asRevision);
+    document.querySelector('[data-pane-target="timetable"]')?.click();
+    document.dispatchEvent(new CustomEvent('vkv-exam-cloud-opened',{detail:{id:item.id,status:item.status||'draft',revisionOf:item.revisionOf||''}}));
+    return true;
+  }catch(e){alert('Could not open examination workspace: '+(e?.message||e));return false}
+}
+window.vkvExamOpenCloudWorkspace=(id,opts)=>openCloudWorkspaceById(id,opts);
 $('newDraft').onclick=()=>{if(state.dirty&&!confirm('Start a new draft from the active master and discard current unsaved changes?'))return;state.workspace=createFreshExamWorkspace(state.master);state.cloudId='';state.cloudMeta={status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email};state.dirty=true;renderAll();setSaveState('New unsaved cloud draft',true);document.querySelector('[data-pane-target="setup"]').click()};
 
 function csvCell(value){const text=String(value??'');return /[",\n]/.test(text)?'"'+text.replace(/"/g,'""')+'"':text}
