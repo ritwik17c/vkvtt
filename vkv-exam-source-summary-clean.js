@@ -14,7 +14,7 @@
   loadOnce('vkvExamFinalPrintLayout','vkv-exam-final-print-layout.js?v=c3fe9c21');
   // Production consolidation: approved-output cards and shared saved records now live
   // in one authoritative library. Do not load the old duplicate approved-output panel.
-  loadOnce('vkvExamManagerSharedLibrary','vkv-exam-manager-shared-library.js?v=20260921-history-permission-6');
+  loadOnce('vkvExamManagerSharedLibrary','vkv-exam-manager-shared-library.js?v=20260921-original-scope-7');
   // Shared Exam Manager View / Print feeds the saved record into the original
   // majorPrint renderer; it does not construct a second print template.
   loadOnce('vkvExamSharedOfficialPrint','vkv-exam-shared-official-print-adapter.js?v=20260908-approved-renderer-1');
