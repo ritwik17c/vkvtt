@@ -102,6 +102,7 @@
   function renderSchedules(){
     const host=$('examManagerSharedScheduleList');if(!host)return;
     const list=records.filter(isSchedule).sort((a,b)=>Number(b.updatedAtMs||b.createdAtMs||0)-Number(a.updatedAtMs||a.createdAtMs||0));
+    const duplicatePublished=publishedDuplicateIds();
     host.innerHTML=list.length?list.map(x=>{
       const status=String(x.status||'draft').toLowerCase(),own=x.ownerUid===user?.uid,c=scheduleCounts(x),canApprove=isAdmin()&&approvableStatus(x)&&c.papers>0;
       const openButton=isAdmin()?`<button class="button" data-library-open="${safe(x.id)}">Open</button>`:(own&&['draft','returned'].includes(status)?`<button class="button" data-library-open="${safe(x.id)}">Open</button>`:`<button class="button" data-library-view="${safe(x.id)}">View / Print</button>`);
