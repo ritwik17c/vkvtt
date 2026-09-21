@@ -1,5 +1,5 @@
 import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
-import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,setPersistence,browserLocalPersistence}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,onAuthStateChanged,signOut,setPersistence,browserLocalPersistence}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import{getFirestore,doc,getDoc,getDocs,collection}from'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-lite.js';
 const cfg={apiKey:'AIzaSyDheZpyXghd1aQ9_RLhwpacVriG__wNZW4',authDomain:'vkv-nalbari-timetable.firebaseapp.com',projectId:'vkv-nalbari-timetable',storageBucket:'vkv-nalbari-timetable.firebasestorage.app',messagingSenderId:'791432856951',appId:'1:791432856951:web:61324065a54bef30f98d72'};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider(),P2='./',$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
@@ -44,5 +44,37 @@ const TEACH=[['fn','📘 My Timetable',myTimetable],['fn','👥 My Proxy Today',
 function registry(g,items){g.innerHTML='';for(const[t,l,x,c]of items)t==='link'?link(g,l,x,c||''):tile(g,l,x,c||'')}
 function reminder(){if(CAT==='non')return;document.body.classList.remove('vkv-nonteaching');window.dispatchEvent(new Event('vkv-staff-category-ready'));if(!document.querySelector('script[data-period-reminder]')){const s=document.createElement('script');s.src=P2+'period-notifications.js?v=59cd283';s.dataset.periodReminder='1';document.body.appendChild(s)}}
 async function render(){CAT=profileCategory();const tc=teacherCode();if(tc){P.teacherCode=tc;P.teacherShortCode=tc;P.timetableCode=tc}window.VKVHomeEngine.init({data:M,db,profile:P,user:U,staffCategory:CAT==='non'?'non_teaching':'teaching'});$('schedule').innerHTML='<b>🗓 Active Schedule:</b> '+esc(window.VKVHomeEngine.activeScheduleName());$('interface').innerHTML='Interface: <b>'+esc(CAT==='admin'?'Principal / Admin':CAT==='non'?'Non-Teaching Staff':'Teaching Staff')+'</b>. Delegated responsibilities appear at the bottom.';renderNotice();registry($('commonGrid'),COMMON);$('teaching').classList.toggle('hidden',!(CAT==='admin'||CAT==='teaching'));$('nonTeaching').classList.toggle('hidden',!(CAT==='admin'||CAT==='non'));if(CAT==='admin'){$('teachingTitle').textContent='Section 2A · Teaching Staff';$('nonTeachingTitle').textContent='Section 2B · Non-Teaching Operations'}else{$('teachingTitle').textContent='Section 2 · Teaching Staff';$('nonTeachingTitle').textContent='Section 2 · Non-Teaching Staff'}registry($('teachingGrid'),TEACH);const ng=$('nonTeachingGrid');ng.innerHTML='';link(ng,'🏢 Office Duty Schedule','office-duty-schedule.html?v=66.0');if(CAT==='admin'){link(ng,'🗓 Office Duty Scheduler','admin-office-duty-scheduler.html?v=66.0');link(ng,'👥 Staff Management','admin-staff-management.html?v=66.0')}const dg=$('delegatedGrid');dg.innerHTML='';if(hasDuty('proxy'))link(dg,'👥 Proxy Manager','proxy-manager.html?v=66.0');if(hasDuty('leave'))link(dg,'🗂 Leave Manager','leave-manager.html?v=66.0');if(hasDuty('attendance'))link(dg,'🕘 Attendance Manager','admin-attendance.html?v=66.0');if(hasDuty('observation'))link(dg,'📝 Class Observation','class-observation.html?v=20260919-native-home-1','gold');if(isAdmin())link(dg,'⚙ Admin Dashboard','admin-dashboard.html?v=66.0');$('delegated').classList.toggle('hidden',!dg.children.length);document.body.classList.toggle('vkv-nonteaching',CAT==='non');reminder()}
-async function load(){if(auth.authStateReady)await auth.authStateReady().catch(()=>{});U=auth.currentUser;if(!U){$('login').classList.remove('hidden');$('app').classList.add('hidden');return}const [ms,examSnap]=await Promise.all([getDoc(doc(db,'master','current')).catch(()=>null),getDoc(doc(db,'publishedExam','current')).catch(()=>null)]),raw=ms?.exists()?ms.data()||{}:{},data=raw?.data&&typeof raw.data==='object'?raw.data:{};M={...raw,...data,publishedExam:examSnap?.exists()?examSnap.data():null};for(const k of['activeScheduleProfileId','scheduleProfiles','times','patterns','staffDirectory','teachers','nonTeachingStaff','teacherEmailMap','teacherCodeAliases','staffNotices','temporaryReplacements','records','classes'])if(data[k]!=null)M[k]=data[k];else if(raw[k]!=null)M[k]=raw[k];P=await resolveAccess();if(!P){$('loginMsg').innerHTML='<div class="status error">This Google account is not authorised for VKVTT.</div>';$('login').classList.remove('hidden');$('app').classList.add('hidden');return}STAFF=findStaff(P);$('who').textContent=U.email||'';$('switchBtn').classList.remove('hidden');$('signOutBtn').classList.remove('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await render()}
-$('loginBtn').onclick=async()=>{try{provider.setCustomParameters({prompt:'select_account'});await signInWithPopup(auth,provider);if(auth.authStateReady)await auth.authStateReady().catch(()=>{});await load()}catch(e){$('loginMsg').textContent=e.message||e}};$('switchBtn').onclick=async()=>{try{await signOut(auth);provider.setCustomParameters({prompt:'select_account'});await signInWithPopup(auth,provider);await load()}catch(e){alert(e.message||e)}};$('signOutBtn').onclick=async()=>{await signOut(auth);location.reload()};$('resetBtn').onclick=()=>{clearOut();scrollTo({top:0,behavior:'smooth'})};await load();
+async function load(){U=auth.currentUser;if(!U){$('login').classList.remove('hidden');$('app').classList.add('hidden');return}const [ms,examSnap]=await Promise.all([getDoc(doc(db,'master','current')).catch(()=>null),getDoc(doc(db,'publishedExam','current')).catch(()=>null)]),raw=ms?.exists()?ms.data()||{}:{},data=raw?.data&&typeof raw.data==='object'?raw.data:{};M={...raw,...data,publishedExam:examSnap?.exists()?examSnap.data():null};for(const k of['activeScheduleProfileId','scheduleProfiles','times','patterns','staffDirectory','teachers','nonTeachingStaff','teacherEmailMap','teacherCodeAliases','staffNotices','temporaryReplacements','records','classes'])if(data[k]!=null)M[k]=data[k];else if(raw[k]!=null)M[k]=raw[k];P=await resolveAccess();if(!P){$('loginMsg').innerHTML='<div class="status error">This Google account is not authorised for VKVTT.</div>';$('login').classList.remove('hidden');$('app').classList.add('hidden');return}STAFF=findStaff(P);$('who').textContent=U.email||'';$('switchBtn').classList.remove('hidden');$('signOutBtn').classList.remove('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await render()}
+function authMsg(text,bad=false){const el=$('loginMsg');if(!el)return;el.innerHTML='<div class="status '+(bad?'error':'')+'">'+esc(text)+'</div>'}
+async function googleSignIn(){
+  const btn=$('loginBtn');if(btn)btn.disabled=true;
+  provider.setCustomParameters({prompt:'select_account'});
+  authMsg('Opening Google sign-in…');
+  try{
+    await signInWithPopup(auth,provider);
+  }catch(e){
+    const code=String(e?.code||''),message=String(e?.message||e||'');
+    const fallback=['auth/popup-blocked','auth/cancelled-popup-request','auth/web-storage-unsupported','auth/network-request-failed'].includes(code)||/popup blocked|web storage|network-request-failed/i.test(message);
+    if(fallback){
+      authMsg('Popup sign-in could not complete. Switching to Google redirect sign-in…');
+      await signInWithRedirect(auth,provider);
+      return;
+    }
+    if(code==='auth/popup-closed-by-user')authMsg('Google sign-in was closed before completion.',true);
+    else authMsg(message,true);
+  }finally{if(btn)btn.disabled=false}
+}
+$('loginBtn').onclick=googleSignIn;
+$('switchBtn').onclick=async()=>{try{await signOut(auth);await googleSignIn()}catch(e){alert(e.message||e)}};
+$('signOutBtn').onclick=async()=>{await signOut(auth);location.reload()};
+$('resetBtn').onclick=()=>{clearOut();scrollTo({top:0,behavior:'smooth'})};
+try{
+  const rr=await getRedirectResult(auth);
+  if(rr?.user)authMsg('Google sign-in completed.');
+}catch(e){authMsg(String(e?.message||e||'Google redirect sign-in failed.'),true)}
+let firstAuth=true;
+onAuthStateChanged(auth,async user=>{
+  U=user||null;
+  if(firstAuth){firstAuth=false}
+  try{await load()}catch(e){authMsg(String(e?.message||e||'Unable to load VKVTT.'),true)}
+});
