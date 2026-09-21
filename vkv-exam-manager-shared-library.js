@@ -285,7 +285,13 @@
     const isDup=kind==='timetable'&&timetablePublished(item)&&duplicatePublished.has(id);
     const label=isDup?'duplicate published timetable':(kind==='template'?'template':'saved timetable');
     if(!confirm('ADMIN-ONLY ACTION\n\nDelete '+label+' “'+(item.name||id)+'”?\n\n'+(isDup?'Another published timetable with the same title will remain. ':'')+'This is permanent and cannot be undone.'))return;
-    busy=true;try{const a=await api();await a.deleteDoc(a.doc(a.db,'examSchedules',id));await load()}catch(e){alert('Could not delete '+label+': '+(e?.message||e))}finally{busy=false}
+    busy=true;try{
+      window.vkvExamDetachDeletedCloudWorkspace?.(id);
+      document.dispatchEvent(new CustomEvent('vkv-exam-cloud-deleted',{detail:{id}}));
+      const a=await api();
+      await a.deleteDoc(a.doc(a.db,'examSchedules',id));
+      await load();
+    }catch(e){alert('Could not delete '+label+': '+(e?.message||e))}finally{busy=false}
   }
 
   function openCore(id){
