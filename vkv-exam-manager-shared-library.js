@@ -150,15 +150,55 @@
   async function approveTimetable(id){
     if(busy||!isAdmin())return;const item=records.find(x=>x.id===id);if(!item||!isSchedule(item)||!approvableStatus(item))return;
     const counts=scheduleCounts(item);if(!counts.papers){alert('This timetable cannot be approved because it contains no saved timetable assignments.');return}
-    if(!confirm(`Approve and publish “${item.name||'this examination timetable'}”?\n\nAfter approval it becomes read-only output for Exam Managers and the published examination schedule for staff.`))return;
+    const replacing=!!item.revisionOf;
+    const verb=replacing?'Replace the existing published timetable with this revision':'Approve and publish this examination timetable';
+    if(!confirm(verb+' “'+(item.name||'this examination timetable')+'”?\n\n'+(replacing?'The previous published version will be archived for audit, and only the revised timetable will remain in the published library.':'After approval it becomes read-only output for Exam Managers and the published examination schedule for staff.')))return;
     busy=true;try{
-      const a=await api(),now=Date.now(),published={schemaVersion:1,scheduleId:item.id,name:item.name||'Examination Schedule',description:item.description||'',workspace:clone(item.workspace),status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByName:profile?.name||user.displayName||user.email||'Principal',updatedAt:a.serverTimestamp()},batch=a.writeBatch(a.db);
-      batch.set(a.doc(a.db,'publishedExam','current'),published);
-      batch.set(a.doc(a.db,'examSchedules',item.id),{status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByEmail:user.email||'',updatedAtMs:now,updatedAt:a.serverTimestamp()},{merge:true});
+      const a=await api(),now=Date.now(),batch=a.writeBatch(a.db);
+      if(replacing){
+        const original=records.find(x=>x.id===item.revisionOf);
+        const originalRef=a.doc(a.db,'examSchedules',item.revisionOf);
+        if(original){
+          const historyId=item.revisionOf+'_'+now;
+          batch.set(a.doc(a.db,'examScheduleHistory',historyId),{
+            sourceScheduleId:item.revisionOf,
+            revisionDraftId:item.id,
+            name:original.name||item.name||'Examination Schedule',
+            description:original.description||'',
+            status:'superseded',
+            supersededAtMs:now,
+            supersededByUid:user.uid,
+            supersededByEmail:user.email||'',
+            previousApprovedAtMs:Number(original.approvedAtMs||0),
+            workspace:clone(original.workspace||{}),
+            archivedAt:a.serverTimestamp()
+          });
+        }
+        const published={schemaVersion:Number(item.schemaVersion||1),scheduleId:item.revisionOf,name:item.name||item.workspace?.name||'Examination Schedule',description:item.description||'',workspace:clone(item.workspace),status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByName:profile?.name||user.displayName||user.email||'Principal',updatedAt:a.serverTimestamp()};
+        batch.set(a.doc(a.db,'publishedExam','current'),published);
+        batch.set(originalRef,{
+          schemaVersion:Number(item.schemaVersion||1),
+          name:item.name||item.workspace?.name||'Examination Schedule',
+          description:item.description||'',
+          status:'published',
+          workspace:clone(item.workspace),
+          approvedAtMs:now,
+          approvedByUid:user.uid,
+          approvedByEmail:user.email||'',
+          revisedFromDraftId:item.id,
+          revisedAtMs:now,
+          updatedAtMs:now,
+          updatedAt:a.serverTimestamp()
+        },{merge:true});
+        batch.delete(a.doc(a.db,'examSchedules',item.id));
+      }else{
+        const published={schemaVersion:1,scheduleId:item.id,name:item.name||'Examination Schedule',description:item.description||'',workspace:clone(item.workspace),status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByName:profile?.name||user.displayName||user.email||'Principal',updatedAt:a.serverTimestamp()};
+        batch.set(a.doc(a.db,'publishedExam','current'),published);
+        batch.set(a.doc(a.db,'examSchedules',item.id),{status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByEmail:user.email||'',updatedAtMs:now,updatedAt:a.serverTimestamp()},{merge:true});
+      }
       await batch.commit();await load();
     }catch(e){alert('Could not approve timetable: '+(e?.message||e))}finally{busy=false}
   }
-
   async function approveTemplate(id){
     if(busy||!isAdmin())return;const item=records.find(x=>x.id===id);if(!item||!isTemplate(item)||templateApproved(item))return;
     const c=templateCounts(item);if(!c.classes&&!c.subjects){alert('This template cannot be approved because it contains no reusable class/subject structure.');return}
