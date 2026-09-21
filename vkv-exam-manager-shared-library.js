@@ -81,6 +81,24 @@
   }
   function statusClass(x){return isTemplate(x)&&templateApproved(x)?'published':String(x?.status||'draft').toLowerCase()}
 
+  function publishedDuplicateIds(){
+    const groups=new Map();
+    for(const x of records){
+      if(!timetablePublished(x))continue;
+      const key=String(x.name||'').trim().toLowerCase();
+      if(!key)continue;
+      if(!groups.has(key))groups.set(key,[]);
+      groups.get(key).push(x);
+    }
+    const ids=new Set();
+    for(const list of groups.values()){
+      if(list.length<2)continue;
+      const sorted=[...list].sort((a,b)=>Number(b.approvedAtMs||b.updatedAtMs||0)-Number(a.approvedAtMs||a.updatedAtMs||0));
+      for(const x of sorted.slice(1))ids.add(x.id);
+    }
+    return ids;
+  }
+
   function renderSchedules(){
     const host=$('examManagerSharedScheduleList');if(!host)return;
     const list=records.filter(isSchedule).sort((a,b)=>Number(b.updatedAtMs||b.createdAtMs||0)-Number(a.updatedAtMs||a.createdAtMs||0));
@@ -88,7 +106,7 @@
       const status=String(x.status||'draft').toLowerCase(),own=x.ownerUid===user?.uid,c=scheduleCounts(x),canApprove=isAdmin()&&approvableStatus(x)&&c.papers>0;
       const openButton=isAdmin()?`<button class="button" data-library-open="${safe(x.id)}">Open</button>`:(own&&['draft','returned'].includes(status)?`<button class="button" data-library-open="${safe(x.id)}">Open</button>`:`<button class="button" data-library-view="${safe(x.id)}">View / Print</button>`);
       const approve=canApprove?`<button class="button primary" data-approve-timetable="${safe(x.id)}">Approve & Publish</button>`:'';
-      const amend=isAdmin()&&timetablePublished(x)?`<button class="button" data-amend-timetable="${safe(x.id)}">Amend Published Timetable</button>`:'';const del=isAdmin()&&!timetablePublished(x)?`<button class="button" style="border-color:#d99;color:#8f2525" data-library-delete="${safe(x.id)}" data-library-kind="timetable">Delete</button>`:'';
+      const amend=isAdmin()&&timetablePublished(x)?`<button class="button" data-amend-timetable="${safe(x.id)}">Amend Published Timetable</button>`:'';const del=isAdmin()&&(!timetablePublished(x)||duplicatePublished.has(x.id))?`<button class="button" style="border-color:#d99;color:#8f2525" data-library-delete="${safe(x.id)}" data-library-kind="timetable">${timetablePublished(x)?'Delete Duplicate':'Delete'}</button>`:'';
       return `<div class="draftCard"><h4>${safe(x.name||'Untitled Examination Schedule')}</h4><p><span class="workflowPill ${safe(statusClass(x))}">${safe(statusLabel(x))}</span>${safe(fmtMs(x.updatedAtMs||x.createdAtMs))}</p><p>${c.papers} timetable assignment${c.papers===1?'':'s'} · ${c.duties} invigilation dut${c.duties===1?'y':'ies'}</p><p><small>Prepared by: ${safe(x.ownerName||x.ownerEmail||'Exam Manager')}${own?' · Your timetable':''}</small></p>${isAdmin()&&approvableStatus(x)&&!c.papers?'<div class="notice warn"><b>Approval unavailable:</b> no saved timetable assignments are present.</div>':''}<div class="buttonRow">${openButton}${timetablePublished(x)?`<button class="button primary" data-library-view="${safe(x.id)}">Print / View</button>`:''}${amend}${approve}${del}</div></div>`;
     }).join(''):'<div class="notice info">No saved examination timetable found.</div>';
   }
@@ -259,8 +277,13 @@
     finally{busy=false}
   }
   async function removeRecord(id,kind){
-    if(busy||!isAdmin())return;const item=records.find(x=>x.id===id);if(!item)return;if(kind==='timetable'&&timetablePublished(item)){alert('Published timetables are protected from deletion in the production interface.');return}
-    const label=kind==='template'?'template':'saved timetable';if(!confirm(`ADMIN-ONLY ACTION\n\nDelete ${label} “${item.name||id}”?\n\nThis is permanent and cannot be undone.`))return;
+    if(busy||!isAdmin())return;
+    const item=records.find(x=>x.id===id);if(!item)return;
+    const duplicatePublished=publishedDuplicateIds();
+    if(kind==='timetable'&&timetablePublished(item)&&!duplicatePublished.has(id)){alert('The only/current published timetable is protected from deletion.');return}
+    const isDup=kind==='timetable'&&timetablePublished(item)&&duplicatePublished.has(id);
+    const label=isDup?'duplicate published timetable':(kind==='template'?'template':'saved timetable');
+    if(!confirm('ADMIN-ONLY ACTION\n\nDelete '+label+' “'+(item.name||id)+'”?\n\n'+(isDup?'Another published timetable with the same title will remain. ':'')+'This is permanent and cannot be undone.'))return;
     busy=true;try{const a=await api();await a.deleteDoc(a.doc(a.db,'examSchedules',id));await load()}catch(e){alert('Could not delete '+label+': '+(e?.message||e))}finally{busy=false}
   }
 
