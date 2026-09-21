@@ -17,19 +17,19 @@ window.vkvAdmitFetchExam=async examId=>{
     try{
       const exact=await getDoc(doc(db,'examSchedules',examId));
       if(exact.exists()){
-        const x=exact.data()||{},events=x.workspace?.timetable?.events||[];
-        if(events.length)return{id:exact.id,...x,source:'examSchedules/'+exact.id};
+        const x=exact.data()||{},events=x.workspace?.timetable?.events||[],manual=x.workspace?.manualTimetable?.assignments||x.manualTimetable?.assignments||[];
+        if(events.length||manual.length)return{id:exact.id,...x,source:'examSchedules/'+exact.id};
       }
     }catch(error){console.warn('Exact exam lookup failed:',error)}
   }
   try{
     const s=await getDoc(doc(db,'publishedExam','current'));
     const p=s.exists()?s.data():null;
-    if(p?.workspace?.timetable?.events?.length)return{...p,source:'publishedExam/current'};
+    if(p&&(p?.workspace?.timetable?.events?.length||p?.workspace?.manualTimetable?.assignments?.length||p?.manualTimetable?.assignments?.length))return{...p,source:'publishedExam/current'};
   }catch(error){}
   try{
     const snap=await getDocs(collection(db,'examSchedules')),items=[];
-    snap.forEach(d=>{const x=d.data()||{},events=x.workspace?.timetable?.events||[],name=String(x.name||x.workspace?.name||'').trim();if(d.id!=='EXAM_SUBJECT_MASTER'&&name&&name.toLowerCase()!=='new examination schedule'&&events.length)items.push({id:d.id,...x})});
+    snap.forEach(d=>{const x=d.data()||{},events=x.workspace?.timetable?.events||[],manual=x.workspace?.manualTimetable?.assignments||x.manualTimetable?.assignments||[],name=String(x.name||x.workspace?.name||'').trim();if(d.id!=='EXAM_SUBJECT_MASTER'&&name&&name.toLowerCase()!=='new examination schedule'&&(events.length||manual.length))items.push({id:d.id,...x})});
     items.sort((a,b)=>Number(b.approvedAtMs||b.submittedAtMs||b.updatedAtMs||b.createdAtMs||0)-Number(a.approvedAtMs||a.submittedAtMs||a.updatedAtMs||a.createdAtMs||0));
     return items[0]||null;
   }catch(error){return null}
@@ -42,8 +42,8 @@ window.vkvAdmitFetchPublishedIds=async ids=>{
     try{
       const s=await getDoc(doc(db,'examSchedules',id));
       if(!s.exists())continue;
-      const x=s.data()||{},events=x.workspace?.timetable?.events||[],name=String(x.name||x.workspace?.name||'').trim();
-      if(name&&events.length)out.push({id:s.id,name,workspace:x.workspace,status:x.status||'',approvedAtMs:Number(x.approvedAtMs||0),updatedAtMs:Number(x.updatedAtMs||x.createdAtMs||0)});
+      const x=s.data()||{},events=x.workspace?.timetable?.events||[],manual=x.workspace?.manualTimetable?.assignments||x.manualTimetable?.assignments||[],name=String(x.name||x.workspace?.name||'').trim();
+      if(name&&(events.length||manual.length))out.push({id:s.id,name,workspace:x.workspace,manualTimetable:x.manualTimetable,status:x.status||'',approvedAtMs:Number(x.approvedAtMs||0),updatedAtMs:Number(x.updatedAtMs||x.createdAtMs||0)});
     }catch(error){console.warn('Admit timetable fetch failed for',id,error)}
   }
   return out;
@@ -52,9 +52,9 @@ window.vkvAdmitListPublished=async()=>{
   if(auth.authStateReady)await auth.authStateReady().catch(()=>{});
   const snap=await getDocs(collection(db,'examSchedules')),items=[];
   snap.forEach(d=>{
-    const x=d.data()||{},events=x.workspace?.timetable?.events||[],name=String(x.name||x.workspace?.name||'').trim();
-    if(d.id!=='EXAM_SUBJECT_MASTER'&&x.status==='published'&&name&&events.length){
-      items.push({id:d.id,name,workspace:x.workspace,status:x.status,approvedAtMs:Number(x.approvedAtMs||0),updatedAtMs:Number(x.updatedAtMs||0)})
+    const x=d.data()||{},events=x.workspace?.timetable?.events||[],manual=x.workspace?.manualTimetable?.assignments||x.manualTimetable?.assignments||[],name=String(x.name||x.workspace?.name||'').trim();
+    if(d.id!=='EXAM_SUBJECT_MASTER'&&x.status==='published'&&name&&(events.length||manual.length)){
+      items.push({id:d.id,name,workspace:x.workspace,manualTimetable:x.manualTimetable,status:x.status,approvedAtMs:Number(x.approvedAtMs||0),updatedAtMs:Number(x.updatedAtMs||0)})
     }
   });
   items.sort((a,b)=>(b.approvedAtMs||b.updatedAtMs)-(a.approvedAtMs||a.updatedAtMs));
