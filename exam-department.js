@@ -79,24 +79,10 @@ $('approvePublish').onclick=async()=>{try{
   $('approvePublish').disabled=true;
   const now=Date.now(),batch=writeBatch(db);
   const targetId=isRevision?revisionOf:state.cloudId;
+  let originalForHistory=null;
   if(isRevision){
     const originalSnap=await getDoc(doc(db,'examSchedules',revisionOf));
-    if(originalSnap.exists()){
-      const original=originalSnap.data()||{};
-      batch.set(doc(db,'examScheduleHistory',revisionOf+'_'+now),{
-        sourceScheduleId:revisionOf,
-        revisionDraftId:state.cloudId,
-        name:original.name||state.workspace.name||'Examination Schedule',
-        description:original.description||'',
-        status:'superseded',
-        supersededAtMs:now,
-        supersededByUid:state.user.uid,
-        supersededByEmail:state.user.email||'',
-        previousApprovedAtMs:Number(original.approvedAtMs||0),
-        workspace:clone(original.workspace||{}),
-        archivedAt:serverTimestamp()
-      });
-    }
+    if(originalSnap.exists())originalForHistory=originalSnap.data()||{};
   }
   const published={schemaVersion:1,scheduleId:targetId,name:state.workspace.name,description:state.workspace.description||'',workspace:clone(state.workspace),status:'published',approvedAtMs:now,approvedByUid:state.user.uid,approvedByName:state.profile?.name||state.user.displayName||'Principal',updatedAt:serverTimestamp()};
   batch.set(doc(db,'publishedExam','current'),published);
@@ -116,6 +102,23 @@ $('approvePublish').onclick=async()=>{try{
   },{merge:true});
   if(isRevision&&state.cloudId&&state.cloudId!==targetId)batch.delete(doc(db,'examSchedules',state.cloudId));
   await batch.commit();
+  if(isRevision&&originalForHistory){
+    try{
+      await setDoc(doc(db,'examScheduleHistory',revisionOf+'_'+now),{
+        sourceScheduleId:revisionOf,
+        revisionDraftId:state.cloudId,
+        name:originalForHistory.name||state.workspace.name||'Examination Schedule',
+        description:originalForHistory.description||'',
+        status:'superseded',
+        supersededAtMs:now,
+        supersededByUid:state.user.uid,
+        supersededByEmail:state.user.email||'',
+        previousApprovedAtMs:Number(originalForHistory.approvedAtMs||0),
+        workspace:clone(originalForHistory.workspace||{}),
+        archivedAt:serverTimestamp()
+      });
+    }catch(historyError){console.warn('Exam schedule history archive skipped:',historyError)}
+  }
   state.cloudId=targetId;
   state.cloudMeta={...state.cloudMeta,...published,status:'published',revisionOf:''};
   state.dirty=false;setSaveState(isRevision?'Revision published — original timetable replaced':'Approved and published',false);renderWorkflow();await renderDraftList();
