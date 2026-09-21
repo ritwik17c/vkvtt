@@ -107,14 +107,15 @@ function installExaminationSubjectCatalogue(classes){
 }
 window.vkvExamWorkspace={applySubjectMaster:applyExaminationSubjectMaster,installSubjectCatalogue:installExaminationSubjectCatalogue,undoTimetable:undoGeneratedTimetable,getWorkspace:()=>state.workspace,getMaster:()=>state.master,markDirty:message=>markDirty(message),renderReview:()=>renderReview()};
 window.vkvOpenAdmitCards=()=>{
-  const published=(state.cloudItems||[]).filter(item=>item?.status==='published'&&Array.isArray(item?.workspace?.timetable?.events)&&item.workspace.timetable.events.length).map(item=>({
+  const source=(window.vkvExamSharedPublishedSchedules?.length?window.vkvExamSharedPublishedSchedules:(state.cloudItems||[]));
+  const published=source.filter(item=>String(item?.status||'').toLowerCase()==='published'&&item?.workspace).map(item=>({
     id:item.id,
     name:String(item.name||item.workspace?.name||'').trim(),
     status:item.status,
     approvedAtMs:Number(item.approvedAtMs||0),
     updatedAtMs:Number(item.updatedAtMs||item.createdAtMs||0),
     workspace:clone(item.workspace)
-  }));
+  })).filter(item=>(item.workspace?.timetable?.events?.length||item.workspace?.manualTimetable?.assignments?.length||0)>0);
   const ids=published.map(x=>x.id).filter(Boolean);
   try{
     sessionStorage.setItem('vkvtt-admit-published-catalog',JSON.stringify(published));
@@ -122,7 +123,8 @@ window.vkvOpenAdmitCards=()=>{
   }catch(error){}
   const qs=new URLSearchParams();
   if(ids.length)qs.set('publishedIds',ids.join(','));
-  location.href='exam-admit-cards.html?v=20260921-published-ids-15&'+qs.toString();
+  qs.set('catalogCount',String(published.length));
+  location.href='exam-admit-cards.html?v=20260921-shared-library-16&'+qs.toString();
 };
 
 function renderMasterSummary(){
