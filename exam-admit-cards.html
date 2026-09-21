@@ -184,12 +184,21 @@ async function loadScheduleSources(){
   }catch(error){
     try{state.publishedSchedules=await window.vkvAdmitListPublished()}catch(e){state.publishedSchedules=[]}
   }
+  const coveredClasses=s=>{
+    const seen=[];
+    for(const e of scheduleEvents(s)){const k=classKey(e.className);if(k&&!seen.includes(k))seen.push(k)}
+    return seen.sort((a,b)=>cRank(a)-cRank(b)).join(', ');
+  };
   for(const band of ['junior','senior']){
-    const select=$(band==='junior'?'juniorSchedule':'seniorSchedule'),matches=state.publishedSchedules.filter(s=>scheduleCovers(s,band));
-    select.innerHTML='<option value="">Select published timetable…</option>'+matches.map(s=>'<option value="'+s.id+'">'+safe(s.name)+'</option>').join('');
-    if(matches.length===1){select.value=matches[0].id;state.sources[band].schedule=matches[0]}
+    const select=$(band==='junior'?'juniorSchedule':'seniorSchedule');
+    const matches=state.publishedSchedules;
+    select.innerHTML='<option value="">Select published timetable…</option>'+matches.map(s=>'<option value="'+s.id+'">'+safe(s.name)+' · '+coveredClasses(s)+'</option>').join('');
+    const preferred=matches.find(s=>scheduleCovers(s,band))||matches.find(s=>band==='junior'?/III\s*[-–—]\s*V|III.*V/i.test(s.name):/VI\s*[-–—]\s*XII|VI.*XII/i.test(s.name));
+    if(preferred){select.value=preferred.id;state.sources[band].schedule=preferred}
     const status=$(band==='junior'?'juniorSourceStatus':'seniorSourceStatus');
-    status.textContent=matches.length?matches.length+' published timetable option(s) found.':'No published timetable containing this class band was found. Return to Examination Module and ensure the timetable is Approved & Published.';
+    status.textContent=matches.length
+      ? matches.length+' published timetable(s) available. '+(preferred?'A likely match was selected automatically.':'Please choose the relevant timetable.')
+      : 'No published timetable was received. Return to Examination Module and open Generate Admit Cards again.';
   }
 }
 function cRank(v){const r=safe(v).toUpperCase().replace(/\s+/g,''),m={B1:1,'BALVATIKA-1':1,BALVATIKA1:1,B2:2,'BALVATIKA-2':2,BALVATIKA2:2,B3:3,'BALVATIKA-3':3,BALVATIKA3:3,I:4,II:5,III:6,IV:7,V:8,VI:9,VII:10,VIII:11,IX:12,X:13,XI:14,XISCIENCE:14,XIARTS:14,XII:15,XIISCIENCE:15,XIIARTS:15};return m[r]??999}function sRank(v){const x=safe(v).toUpperCase(),m={A:1,B:2,C:3,D:4,E:5,ANAND:20,VIVEK:21};return m[x]??50}function sorted(a){return[...a].sort((x,y)=>cRank(x.className)-cRank(y.className)||sRank(x.section)-sRank(y.section)||safe(x.section).localeCompare(safe(y.section))||(parseInt(x.roll)||9999)-(parseInt(y.roll)||9999)||x.name.localeCompare(y.name))}
