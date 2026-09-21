@@ -70,7 +70,56 @@ async function saveCloudDraft({quiet=false}={}){
 }
 $('saveDraft').onclick=async()=>{try{$('saveDraft').disabled=true;await saveCloudDraft()}catch(e){alert('Could not save cloud draft: '+(e.message||e))}finally{$('saveDraft').disabled=false}};
 $('submitDraft').onclick=async()=>{try{const exam=validateExamTimetable(state.workspace),duty=validateDutyRoster(state.workspace);if(!exam.valid||!exam.scheduled)throw new Error('Generate a complete valid examination timetable before submission.');if(!state.workspace.duties?.invigilation?.length||!duty.valid)throw new Error('Generate a complete valid duty allocation before submission.');$('submitDraft').disabled=true;await saveCloudDraft({quiet:true});const meta={...state.cloudMeta,status:'submitted',submittedAtMs:Date.now(),submittedByUid:state.user.uid,submittedByEmail:state.user.email||''};await setDoc(doc(db,'examSchedules',state.cloudId),{status:'submitted',submittedAtMs:meta.submittedAtMs,submittedByUid:meta.submittedByUid,submittedByEmail:meta.submittedByEmail,updatedAt:serverTimestamp()},{merge:true});state.cloudMeta=meta;state.dirty=false;setSaveState('Submitted to Principal',false);renderWorkflow();await renderDraftList()}catch(e){alert('Could not submit: '+(e.message||e))}finally{$('submitDraft').disabled=false}};
-$('approvePublish').onclick=async()=>{try{if(!state.isAdmin||workflowStatus()!=='submitted')return;const exam=validateExamTimetable(state.workspace),duty=validateDutyRoster(state.workspace);if(!exam.valid||!exam.scheduled||!duty.valid||!state.workspace.duties?.invigilation?.length)throw new Error('The timetable and duty allocation must pass all hard-rule checks.');if(!confirm('Approve and publish this examination schedule to all staff?'))return;$('approvePublish').disabled=true;const now=Date.now(),published={schemaVersion:1,scheduleId:state.cloudId,name:state.workspace.name,description:state.workspace.description||'',workspace:clone(state.workspace),status:'published',approvedAtMs:now,approvedByUid:state.user.uid,approvedByName:state.profile?.name||state.user.displayName||'Principal',updatedAt:serverTimestamp()},batch=writeBatch(db);batch.set(doc(db,'publishedExam','current'),published);batch.set(doc(db,'examSchedules',state.cloudId),{status:'published',approvedAtMs:now,approvedByUid:state.user.uid,approvedByEmail:state.user.email||'',updatedAt:serverTimestamp()},{merge:true});await batch.commit();state.cloudMeta={...state.cloudMeta,...published,status:'published'};state.dirty=false;setSaveState('Approved and published',false);renderWorkflow();await renderDraftList()}catch(e){alert('Could not approve and publish: '+(e.message||e))}finally{$('approvePublish').disabled=false}};
+$('approvePublish').onclick=async()=>{try{
+  if(!state.isAdmin||workflowStatus()!=='submitted')return;
+  const exam=validateExamTimetable(state.workspace),duty=validateDutyRoster(state.workspace);
+  if(!exam.valid||!exam.scheduled||!duty.valid||!state.workspace.duties?.invigilation?.length)throw new Error('The timetable and duty allocation must pass all hard-rule checks.');
+  const revisionOf=String(state.cloudMeta?.revisionOf||'').trim(),isRevision=!!revisionOf;
+  if(!confirm(isRevision?'Approve this revision and replace the existing published timetable?':'Approve and publish this examination schedule to all staff?'))return;
+  $('approvePublish').disabled=true;
+  const now=Date.now(),batch=writeBatch(db);
+  const targetId=isRevision?revisionOf:state.cloudId;
+  if(isRevision){
+    const originalSnap=await getDoc(doc(db,'examSchedules',revisionOf));
+    if(originalSnap.exists()){
+      const original=originalSnap.data()||{};
+      batch.set(doc(db,'examScheduleHistory',revisionOf+'_'+now),{
+        sourceScheduleId:revisionOf,
+        revisionDraftId:state.cloudId,
+        name:original.name||state.workspace.name||'Examination Schedule',
+        description:original.description||'',
+        status:'superseded',
+        supersededAtMs:now,
+        supersededByUid:state.user.uid,
+        supersededByEmail:state.user.email||'',
+        previousApprovedAtMs:Number(original.approvedAtMs||0),
+        workspace:clone(original.workspace||{}),
+        archivedAt:serverTimestamp()
+      });
+    }
+  }
+  const published={schemaVersion:1,scheduleId:targetId,name:state.workspace.name,description:state.workspace.description||'',workspace:clone(state.workspace),status:'published',approvedAtMs:now,approvedByUid:state.user.uid,approvedByName:state.profile?.name||state.user.displayName||'Principal',updatedAt:serverTimestamp()};
+  batch.set(doc(db,'publishedExam','current'),published);
+  batch.set(doc(db,'examSchedules',targetId),{
+    schemaVersion:1,
+    name:state.workspace.name,
+    description:state.workspace.description||'',
+    workspace:clone(state.workspace),
+    status:'published',
+    approvedAtMs:now,
+    approvedByUid:state.user.uid,
+    approvedByEmail:state.user.email||'',
+    revisedFromDraftId:isRevision?state.cloudId:'',
+    revisedAtMs:isRevision?now:0,
+    updatedAtMs:now,
+    updatedAt:serverTimestamp()
+  },{merge:true});
+  if(isRevision&&state.cloudId&&state.cloudId!==targetId)batch.delete(doc(db,'examSchedules',state.cloudId));
+  await batch.commit();
+  state.cloudId=targetId;
+  state.cloudMeta={...state.cloudMeta,...published,status:'published',revisionOf:''};
+  state.dirty=false;setSaveState(isRevision?'Revision published — original timetable replaced':'Approved and published',false);renderWorkflow();await renderDraftList();
+}catch(e){alert('Could not approve and publish: '+(e.message||e))}finally{$('approvePublish').disabled=false}};
 $('returnDraft').onclick=async()=>{try{if(!state.isAdmin||workflowStatus()!=='submitted')return;const note=prompt('Correction note for the Exam Manager:','Please review and resubmit.');if(note===null)return;await setDoc(doc(db,'examSchedules',state.cloudId),{status:'returned',reviewNote:note.trim(),returnedAtMs:Date.now(),returnedByUid:state.user.uid,updatedAt:serverTimestamp()},{merge:true});state.cloudMeta={...state.cloudMeta,status:'returned',reviewNote:note.trim()};setSaveState('Returned for correction',false);renderWorkflow();await renderDraftList()}catch(e){alert('Could not return the draft: '+(e.message||e))}};
 
 function renderAll(){
