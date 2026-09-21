@@ -88,8 +88,8 @@
       const status=String(x.status||'draft').toLowerCase(),own=x.ownerUid===user?.uid,c=scheduleCounts(x),canApprove=isAdmin()&&approvableStatus(x)&&c.papers>0;
       const openButton=isAdmin()?`<button class="button" data-library-open="${safe(x.id)}">Open</button>`:(own&&['draft','returned'].includes(status)?`<button class="button" data-library-open="${safe(x.id)}">Open</button>`:`<button class="button" data-library-view="${safe(x.id)}">View / Print</button>`);
       const approve=canApprove?`<button class="button primary" data-approve-timetable="${safe(x.id)}">Approve & Publish</button>`:'';
-      const del=isAdmin()&&!timetablePublished(x)?`<button class="button" style="border-color:#d99;color:#8f2525" data-library-delete="${safe(x.id)}" data-library-kind="timetable">Delete</button>`:'';
-      return `<div class="draftCard"><h4>${safe(x.name||'Untitled Examination Schedule')}</h4><p><span class="workflowPill ${safe(statusClass(x))}">${safe(statusLabel(x))}</span>${safe(fmtMs(x.updatedAtMs||x.createdAtMs))}</p><p>${c.papers} timetable assignment${c.papers===1?'':'s'} · ${c.duties} invigilation dut${c.duties===1?'y':'ies'}</p><p><small>Prepared by: ${safe(x.ownerName||x.ownerEmail||'Exam Manager')}${own?' · Your timetable':''}</small></p>${isAdmin()&&approvableStatus(x)&&!c.papers?'<div class="notice warn"><b>Approval unavailable:</b> no saved timetable assignments are present.</div>':''}<div class="buttonRow">${openButton}${timetablePublished(x)?`<button class="button primary" data-library-view="${safe(x.id)}">Print / View</button>`:''}${approve}${del}</div></div>`;
+      const amend=isAdmin()&&timetablePublished(x)?`<button class="button" data-amend-timetable="${safe(x.id)}">Amend Published Timetable</button>`:'';const del=isAdmin()&&!timetablePublished(x)?`<button class="button" style="border-color:#d99;color:#8f2525" data-library-delete="${safe(x.id)}" data-library-kind="timetable">Delete</button>`:'';
+      return `<div class="draftCard"><h4>${safe(x.name||'Untitled Examination Schedule')}</h4><p><span class="workflowPill ${safe(statusClass(x))}">${safe(statusLabel(x))}</span>${safe(fmtMs(x.updatedAtMs||x.createdAtMs))}</p><p>${c.papers} timetable assignment${c.papers===1?'':'s'} · ${c.duties} invigilation dut${c.duties===1?'y':'ies'}</p><p><small>Prepared by: ${safe(x.ownerName||x.ownerEmail||'Exam Manager')}${own?' · Your timetable':''}</small></p>${isAdmin()&&approvableStatus(x)&&!c.papers?'<div class="notice warn"><b>Approval unavailable:</b> no saved timetable assignments are present.</div>':''}<div class="buttonRow">${openButton}${timetablePublished(x)?`<button class="button primary" data-library-view="${safe(x.id)}">Print / View</button>`:''}${amend}${approve}${del}</div></div>`;
     }).join(''):'<div class="notice info">No saved examination timetable found.</div>';
   }
 
@@ -166,6 +166,35 @@
     busy=true;try{const a=await api(),now=Date.now();await a.setDoc(a.doc(a.db,'examSchedules',item.id),{status:'approved',templateApproved:true,approvedAtMs:now,approvedByUid:user.uid,approvedByEmail:user.email||'',updatedAtMs:now,updatedAt:a.serverTimestamp()},{merge:true});await load()}catch(e){alert('Could not approve template: '+(e?.message||e))}finally{busy=false}
   }
 
+  async function startPublishedRevision(id){
+    if(busy||!isAdmin())return;
+    const item=records.find(x=>x.id===id);if(!item||!timetablePublished(item))return;
+    if(!confirm('Create an editable revision of “'+(item.name||'this published timetable')+'”?\n\nThe published original will remain unchanged until the revision is reviewed and published.'))return;
+    busy=true;
+    try{
+      const a=await api(),now=Date.now(),revisionId='REV_'+String(id).replace(/[^A-Za-z0-9_-]+/g,'_')+'_'+now;
+      const workspace=JSON.parse(JSON.stringify(item.workspace||{}));
+      await a.setDoc(a.doc(a.db,'examSchedules',revisionId),{
+        schemaVersion:Number(item.schemaVersion||1),
+        name:item.name||workspace.name||'Examination Schedule',
+        description:item.description||workspace.description||'',
+        status:'draft',
+        revisionOf:id,
+        revisionOfPublishedAtMs:Number(item.approvedAtMs||0),
+        revisionReason:'Published timetable amendment',
+        workspace,
+        ownerUid:user.uid,
+        ownerName:profile?.name||user.displayName||user.email||'Principal',
+        ownerEmail:user.email||'',
+        createdAtMs:now,
+        updatedAtMs:now,
+        updatedAt:a.serverTimestamp()
+      });
+      await load();
+      setTimeout(()=>openCore(revisionId),120);
+    }catch(e){alert('Could not create timetable revision: '+(e?.message||e))}
+    finally{busy=false}
+  }
   async function removeRecord(id,kind){
     if(busy||!isAdmin())return;const item=records.find(x=>x.id===id);if(!item)return;if(kind==='timetable'&&timetablePublished(item)){alert('Published timetables are protected from deletion in the production interface.');return}
     const label=kind==='template'?'template':'saved timetable';if(!confirm(`ADMIN-ONLY ACTION\n\nDelete ${label} “${item.name||id}”?\n\nThis is permanent and cannot be undone.`))return;
@@ -181,6 +210,7 @@
     if(e.target.closest?.('#refreshExamManagerSharedLibrary')){load();return}
     let b=e.target.closest?.('[data-library-open]');if(b){openCore(b.dataset.libraryOpen);return}
     b=e.target.closest?.('[data-library-view]');if(b){viewPrint(records.find(x=>x.id===b.dataset.libraryView));return}
+    b=e.target.closest?.('[data-amend-timetable]');if(b){startPublishedRevision(b.dataset.amendTimetable);return}
     b=e.target.closest?.('[data-approve-timetable]');if(b){approveTimetable(b.dataset.approveTimetable);return}
     b=e.target.closest?.('[data-approve-template]');if(b){approveTemplate(b.dataset.approveTemplate);return}
     b=e.target.closest?.('[data-library-delete]');if(b){removeRecord(b.dataset.libraryDelete,b.dataset.libraryKind);return}
