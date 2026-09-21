@@ -117,6 +117,8 @@
     try{
       const a=await api(),snap=await a.getDocs(a.collection(a.db,'examSchedules'));
       records=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.id!=='EXAM_SUBJECT_MASTER'&&x.configOnly!==true);
+      window.vkvExamSharedPublishedSchedules=records.filter(x=>String(x?.status||'').toLowerCase()==='published'&&x?.workspace&&((x.workspace?.timetable?.events?.length||0)||(x.workspace?.manualTimetable?.assignments?.length||x.manualTimetable?.assignments?.length||0)));
+      window.dispatchEvent(new CustomEvent('vkv-exam-shared-library-loaded',{detail:{publishedCount:window.vkvExamSharedPublishedSchedules.length}}));
       renderSchedules();renderTemplates();cleanupLegacyPanels();
     }catch(e){
       const sh=$('examManagerSharedScheduleList'),th=$('examTemplateApprovalList');

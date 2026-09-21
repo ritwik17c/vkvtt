@@ -170,7 +170,13 @@ function renderAssessmentEditor(){
   const options=v=>ASSESSMENT_SUBJECTS.map(s=>'<option value="'+s+'" '+(s===v?'selected':'')+'>'+ (s||'—') +'</option>').join('');
   $('assessmentEditor').innerHTML='<table><thead><tr><th>Use</th><th>Date</th><th>B1</th><th>B2</th><th>B3</th><th>I</th><th>II</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-assess-use="'+i+'" '+(r.enabled!==false?'checked':'')+'></td><td><input type="date" data-assess-date="'+i+'" value="'+r.date+'"></td>'+['B1','B2','B3','I','II'].map(k=>'<td><select data-assess-subject="'+i+'" data-class="'+k+'">'+options(r[k]||'')+'</select></td>').join('')+'</tr>').join('')+'</tbody></table>';
 }
-function scheduleEvents(schedule){return Array.isArray(schedule?.workspace?.timetable?.events)?schedule.workspace.timetable.events:[]}
+function scheduleEvents(schedule){
+  const generated=schedule?.workspace?.timetable?.events;
+  if(Array.isArray(generated)&&generated.length)return generated;
+  const manual=schedule?.workspace?.manualTimetable?.assignments||schedule?.manualTimetable?.assignments;
+  if(Array.isArray(manual)&&manual.length)return manual.map(x=>({date:x.date||x.examDate||'',className:x.className||x.class||'',subject:x.subject||x.subjectName||'',slotId:x.slotId||x.sessionId||''}));
+  return[];
+}
 function scheduleCovers(schedule,band){return scheduleEvents(schedule).some(e=>classBand(e.className)===band)}
 function selectedSchedule(band){return state.sources[band]?.schedule||null}
 function scheduleNameForStudent(s){if(classBand(s.className)==='assessment')return'';const sch=selectedSchedule(classBand(s.className));return safe(sch?.name||sch?.workspace?.name||'')}
