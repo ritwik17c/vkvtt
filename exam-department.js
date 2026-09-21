@@ -115,8 +115,14 @@ window.vkvOpenAdmitCards=()=>{
     updatedAtMs:Number(item.updatedAtMs||item.createdAtMs||0),
     workspace:clone(item.workspace)
   }));
-  try{sessionStorage.setItem('vkvtt-admit-published-catalog',JSON.stringify(published))}catch(error){}
-  location.href='exam-admit-cards.html?v=20260921-published-catalog-13';
+  const ids=published.map(x=>x.id).filter(Boolean);
+  try{
+    sessionStorage.setItem('vkvtt-admit-published-catalog',JSON.stringify(published));
+    localStorage.setItem('vkvtt-admit-published-catalog-last',JSON.stringify(published));
+  }catch(error){}
+  const qs=new URLSearchParams();
+  if(ids.length)qs.set('publishedIds',ids.join(','));
+  location.href='exam-admit-cards.html?v=20260921-published-ids-15&'+qs.toString();
 };
 
 function renderMasterSummary(){
