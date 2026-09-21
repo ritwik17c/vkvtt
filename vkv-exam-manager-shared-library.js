@@ -191,7 +191,7 @@
         updatedAt:a.serverTimestamp()
       });
       await load();
-      setTimeout(()=>openCore(revisionId),120);
+      if(window.vkvExamOpenCloudWorkspace)await window.vkvExamOpenCloudWorkspace(revisionId);else setTimeout(()=>openCore(revisionId),120);
     }catch(e){alert('Could not create timetable revision: '+(e?.message||e))}
     finally{busy=false}
   }
