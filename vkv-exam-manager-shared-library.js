@@ -117,6 +117,20 @@
     try{
       const a=await api(),snap=await a.getDocs(a.collection(a.db,'examSchedules'));
       records=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.id!=='EXAM_SUBJECT_MASTER'&&x.configOnly!==true);
+      const publishedNames=new Set(records.filter(x=>String(x.status||'').toLowerCase()==='published').map(x=>String(x.name||'').trim().toLowerCase()).filter(Boolean));
+      const revisionNewest=new Map();
+      for(const x of records){
+        const key=String(x.revisionOf||'');
+        if(!key)continue;
+        const prev=revisionNewest.get(key);
+        if(!prev||Number(x.updatedAtMs||x.createdAtMs||0)>Number(prev.updatedAtMs||prev.createdAtMs||0))revisionNewest.set(key,x);
+      }
+      records=records.filter(x=>{
+        const status=String(x.status||'draft').toLowerCase(),name=String(x.name||'').trim().toLowerCase();
+        if(x.revisionOf)return revisionNewest.get(String(x.revisionOf))?.id===x.id;
+        if(status==='draft'&&publishedNames.has(name))return false;
+        return true;
+      });
       window.vkvExamSharedPublishedSchedules=records.filter(x=>String(x?.status||'').toLowerCase()==='published'&&x?.workspace&&((x.workspace?.timetable?.events?.length||0)||(x.workspace?.manualTimetable?.assignments?.length||x.manualTimetable?.assignments?.length||0)));
       window.dispatchEvent(new CustomEvent('vkv-exam-shared-library-loaded',{detail:{publishedCount:window.vkvExamSharedPublishedSchedules.length}}));
       renderSchedules();renderTemplates();cleanupLegacyPanels();
