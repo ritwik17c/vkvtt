@@ -212,6 +212,11 @@
     if(!confirm('Create an editable revision of “'+(item.name||'this published timetable')+'”?\n\nThe published original will remain unchanged until the revision is reviewed and published.'))return;
     busy=true;
     try{
+      const existing=records.filter(x=>String(x.revisionOf||'')===String(id)&&['draft','returned','submitted'].includes(String(x.status||'draft').toLowerCase())).sort((a,b)=>Number(b.updatedAtMs||b.createdAtMs||0)-Number(a.updatedAtMs||a.createdAtMs||0))[0];
+      if(existing){
+        if(window.vkvExamOpenCloudWorkspace)await window.vkvExamOpenCloudWorkspace(existing.id);else openCore(existing.id);
+        return;
+      }
       const a=await api(),now=Date.now(),revisionId='REV_'+String(id).replace(/[^A-Za-z0-9_-]+/g,'_')+'_'+now;
       const workspace=JSON.parse(JSON.stringify(item.workspace||{}));
       await a.setDoc(a.doc(a.db,'examSchedules',revisionId),{
