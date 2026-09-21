@@ -61,6 +61,18 @@ function ensure(){const pane=document.querySelector('[data-pane="timetable"]');i
 let n=0,t=setInterval(()=>{if(ensure()){render();clearInterval(t)}else if(++n>50)clearInterval(t)},200);
 window.addEventListener('load',()=>setTimeout(()=>{ensure();render()},500));
 document.addEventListener('click',e=>{const open=e.target.closest?.('[data-open-cloud]'),revise=e.target.closest?.('[data-revise-cloud]'),save=e.target.closest?.('#saveDraft');if(open){activeDraftId=String(open.dataset.openCloud||'');allowNameLookup=true;importedPattern=[]}if(revise){activeDraftId='';allowNameLookup=false;importedPattern=[]}if(open||revise)setTimeout(()=>loadManual().catch(showSaveError),750);if(save&&e.isTrusted){allowNameLookup=true;setTimeout(()=>saveManual({ensureDraft:true,force:true}).catch(showSaveError),900)}},true);
+document.addEventListener('vkv-exam-cloud-deleted',e=>{
+  const id=String(e.detail?.id||'');
+  if(id&&activeDraftId===id){
+    if(saveTimer){clearTimeout(saveTimer);saveTimer=null}
+    activeDraftId='';
+    allowNameLookup=false;
+    dirty=false;
+    lastSavedSignature=signature();
+    const msg=$('printableMatrixMsg');
+    if(msg){msg.className='notice info';msg.textContent='Deleted cloud draft detached. Further edits will stay local until you explicitly save a new cloud draft.'}
+  }
+});
 document.addEventListener('vkv-exam-cloud-opened',e=>{activeDraftId=String(e.detail?.id||'');allowNameLookup=true;importedPattern=[];setTimeout(()=>loadManual().catch(showSaveError),180)});
 document.addEventListener('vkv-exam-template-fresh-draft',e=>{activeDraftId='';allowNameLookup=false;pending.clear();dirty=false;lastSavedSignature='';importedPattern=Array.isArray(e.detail?.timetablePattern)?e.detail.timetablePattern.map(x=>({...x})):[];setTimeout(()=>{applyImportedPattern()||render()},120)});
 document.addEventListener('change',e=>{if(e.target.matches?.('[data-exam-date]'))setTimeout(()=>{if(importedPattern.length)applyImportedPattern();else render()},80);else if(e.target.matches?.('#allowDoubleBooking,[data-major-class],[data-major-subject]'))setTimeout(render,80)});
