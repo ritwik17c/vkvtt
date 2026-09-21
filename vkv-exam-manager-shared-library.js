@@ -169,8 +169,9 @@
     if(!confirm(verb+' “'+(item.name||'this examination timetable')+'”?\n\n'+(replacing?'The previous published version will be archived for audit, and only the revised timetable will remain in the published library.':'After approval it becomes read-only output for Exam Managers and the published examination schedule for staff.')))return;
     busy=true;try{
       const a=await api(),now=Date.now(),batch=a.writeBatch(a.db);
+      let original=null;
       if(replacing){
-        const original=records.find(x=>x.id===item.revisionOf);
+        original=records.find(x=>x.id===item.revisionOf)||null;
         const originalRef=a.doc(a.db,'examSchedules',item.revisionOf);
         const published={schemaVersion:Number(item.schemaVersion||1),scheduleId:item.revisionOf,name:item.name||item.workspace?.name||'Examination Schedule',description:item.description||'',workspace:clone(item.workspace),status:'published',approvedAtMs:now,approvedByUid:user.uid,approvedByName:profile?.name||user.displayName||user.email||'Principal',updatedAt:a.serverTimestamp()};
         batch.set(a.doc(a.db,'publishedExam','current'),published);
