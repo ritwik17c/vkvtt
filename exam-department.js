@@ -337,6 +337,15 @@ async function openCloudWorkspaceById(id,{asRevision=false}={}){
   }catch(e){alert('Could not open examination workspace: '+(e?.message||e));return false}
 }
 window.vkvExamOpenCloudWorkspace=(id,opts)=>openCloudWorkspaceById(id,opts);
+window.vkvExamDetachDeletedCloudWorkspace=id=>{
+  if(!id||state.cloudId!==id)return false;
+  state.cloudId='';
+  state.cloudMeta={status:'draft',ownerUid:state.user?.uid||'',ownerName:state.profile?.name||state.user?.displayName||state.user?.email||'',ownerEmail:state.user?.email||''};
+  state.dirty=false;
+  setSaveState('Deleted cloud draft detached',false);
+  document.dispatchEvent(new CustomEvent('vkv-exam-cloud-deleted',{detail:{id}}));
+  return true;
+};
 $('newDraft').onclick=()=>{if(state.dirty&&!confirm('Start a new draft from the active master and discard current unsaved changes?'))return;state.workspace=createFreshExamWorkspace(state.master);state.cloudId='';state.cloudMeta={status:'draft',ownerUid:state.user.uid,ownerName:state.profile?.name||state.user.displayName||state.user.email,ownerEmail:state.user.email};state.dirty=true;renderAll();setSaveState('New unsaved cloud draft',true);document.querySelector('[data-pane-target="setup"]').click()};
 
 function csvCell(value){const text=String(value??'');return /[",\n]/.test(text)?'"'+text.replace(/"/g,'""')+'"':text}
