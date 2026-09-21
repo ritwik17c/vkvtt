@@ -35,6 +35,19 @@ window.vkvAdmitFetchExam=async examId=>{
   }catch(error){return null}
 };
 
+window.vkvAdmitFetchPublishedIds=async ids=>{
+  if(auth.authStateReady)await auth.authStateReady().catch(()=>{});
+  const out=[];
+  for(const id of ids||[]){
+    try{
+      const s=await getDoc(doc(db,'examSchedules',id));
+      if(!s.exists())continue;
+      const x=s.data()||{},events=x.workspace?.timetable?.events||[],name=String(x.name||x.workspace?.name||'').trim();
+      if(name&&events.length)out.push({id:s.id,name,workspace:x.workspace,status:x.status||'',approvedAtMs:Number(x.approvedAtMs||0),updatedAtMs:Number(x.updatedAtMs||x.createdAtMs||0)});
+    }catch(error){console.warn('Admit timetable fetch failed for',id,error)}
+  }
+  return out;
+};
 window.vkvAdmitListPublished=async()=>{
   if(auth.authStateReady)await auth.authStateReady().catch(()=>{});
   const snap=await getDocs(collection(db,'examSchedules')),items=[];
@@ -178,9 +191,16 @@ async function loadScheduleSources(){
   state.sources.assessment.rows=ASSESSMENT_PRESET.map(x=>({...x,enabled:true}));
   renderAssessmentEditor();
   try{
-    const raw=sessionStorage.getItem('vkvtt-admit-published-catalog');
-    const catalog=raw?JSON.parse(raw):[];
-    state.publishedSchedules=Array.isArray(catalog)&&catalog.length?catalog:await window.vkvAdmitListPublished();
+    const params=new URLSearchParams(location.search);
+    const ids=(params.get('publishedIds')||'').split(',').map(x=>x.trim()).filter(Boolean);
+    let catalog=[];
+    if(ids.length)catalog=await window.vkvAdmitFetchPublishedIds(ids);
+    if(!catalog.length){
+      const raw=sessionStorage.getItem('vkvtt-admit-published-catalog')||localStorage.getItem('vkvtt-admit-published-catalog-last');
+      catalog=raw?JSON.parse(raw):[];
+    }
+    if(!Array.isArray(catalog)||!catalog.length)catalog=await window.vkvAdmitListPublished();
+    state.publishedSchedules=Array.isArray(catalog)?catalog:[];
   }catch(error){
     try{state.publishedSchedules=await window.vkvAdmitListPublished()}catch(e){state.publishedSchedules=[]}
   }
