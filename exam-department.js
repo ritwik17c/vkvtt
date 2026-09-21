@@ -107,17 +107,16 @@ function installExaminationSubjectCatalogue(classes){
 }
 window.vkvExamWorkspace={applySubjectMaster:applyExaminationSubjectMaster,installSubjectCatalogue:installExaminationSubjectCatalogue,undoTimetable:undoGeneratedTimetable,getWorkspace:()=>state.workspace,getMaster:()=>state.master,markDirty:message=>markDirty(message),renderReview:()=>renderReview()};
 window.vkvOpenAdmitCards=()=>{
-  syncSetup();
-  const workspace=state.workspace;
-  const events=Array.isArray(workspace?.timetable?.events)?clone(workspace.timetable.events):[];
-  const name=String(workspace?.name||'').trim();
-  const invalidName=!name||['new examination schedule','untitled examination schedule'].includes(name.toLowerCase());
-  if(invalidName){alert('Please give this examination a proper title before generating Admit Cards.');return}
-  if(!events.length){alert('Generate the examination timetable first. Admit Cards must inherit dates and subjects from the active timetable.');return}
-  const handoffId='ADM_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
-  const payload={handoffId,name,timetable:events,cloudId:String(state.cloudId||''),status:workflowStatus(),capturedAtMs:Date.now()};
-  try{sessionStorage.setItem('vkvtt-admit-workflow-active',JSON.stringify(payload))}catch(error){}
-  location.href='exam-admit-cards.html?v=20260919-native-output-11&handoff='+encodeURIComponent(handoffId);
+  const published=(state.cloudItems||[]).filter(item=>item?.status==='published'&&Array.isArray(item?.workspace?.timetable?.events)&&item.workspace.timetable.events.length).map(item=>({
+    id:item.id,
+    name:String(item.name||item.workspace?.name||'').trim(),
+    status:item.status,
+    approvedAtMs:Number(item.approvedAtMs||0),
+    updatedAtMs:Number(item.updatedAtMs||item.createdAtMs||0),
+    workspace:clone(item.workspace)
+  }));
+  try{sessionStorage.setItem('vkvtt-admit-published-catalog',JSON.stringify(published))}catch(error){}
+  location.href='exam-admit-cards.html?v=20260921-published-catalog-13';
 };
 
 function renderMasterSummary(){
@@ -246,8 +245,8 @@ function changeDutyTeacher(event){const select=event.target.closest('[data-duty-
 
 function renderReview(){
   if(!state.workspace)return;const exam=validateExamTimetable(state.workspace),duty=validateDutyRoster(state.workspace),hasDuty=!!(state.workspace.duties?.invigilation?.length||state.workspace.duties?.relievers?.length||state.workspace.duties?.unfilled?.length);
-  const admitButton=$('bulkAdmitCardsOutput'),examName=String(state.workspace.name||'').trim(),validName=examName&&!['new examination schedule','untitled examination schedule'].includes(examName.toLowerCase()),hasExamEvents=Array.isArray(state.workspace.timetable?.events)&&state.workspace.timetable.events.length>0;
-  if(admitButton){admitButton.disabled=!(validName&&hasExamEvents);admitButton.title=admitButton.disabled?'Give the exam a proper title and generate its timetable first.':'Generate Admit Cards from this active examination workflow.'}
+  const admitButton=$('bulkAdmitCardsOutput');
+  if(admitButton){admitButton.disabled=false;admitButton.title='Open Assessment Ticket / Admit Card generator and choose published schedule sources.'}
   const cards=[{label:'Exam timetable',value:exam.valid&&exam.scheduled?'Ready':exam.scheduled?'Issues':'Not generated',good:exam.valid&&exam.scheduled},{label:'Papers scheduled',value:exam.scheduled+'/'+exam.total,good:exam.valid&&exam.total>0},{label:'Duty allocation',value:hasDuty?(duty.valid?'Ready':'Issues'):'Not generated',good:hasDuty&&duty.valid},{label:'Unfilled positions',value:duty.unfilled,good:hasDuty&&duty.unfilled===0}];
   $('reviewSummary').innerHTML=cards.map(item=>`<div class="reviewCard ${item.good?'good':'bad'}"><strong>${safe(item.value)}</strong><span>${safe(item.label)}</span></div>`).join('');
 }
