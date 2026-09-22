@@ -178,8 +178,9 @@ function scheduleEvents(schedule){
   return[];
 }
 function scheduleCovers(schedule,band){return scheduleEvents(schedule).some(e=>classBand(e.className)===band)}
+function examTitleOf(schedule){return safe(schedule?.name||schedule?.title||schedule?.examTitle||schedule?.workspace?.name||schedule?.workspace?.title||schedule?.workspace?.examTitle||schedule?.workspace?.exam?.name||schedule?.workspace?.exam?.title||'')}
 function selectedSchedule(band){return state.sources[band]?.schedule||null}
-function scheduleNameForStudent(s){if(classBand(s.className)==='assessment')return'';const sch=selectedSchedule(classBand(s.className));return safe(sch?.name||sch?.workspace?.name||'')}
+function scheduleNameForStudent(s){if(classBand(s.className)==='assessment')return'';return examTitleOf(selectedSchedule(classBand(s.className)))}
 function scheduleFor(s){
   const band=classBand(s.className),key=classKey(s.className),seen=new Set(),out=[];
   if(band==='assessment'){
