@@ -219,8 +219,8 @@ async function loadScheduleSources(){
   for(const band of ['junior','senior']){
     const select=$(band==='junior'?'juniorSchedule':'seniorSchedule');
     const matches=state.publishedSchedules;
-    select.innerHTML='<option value="">Select published timetable…</option>'+matches.map(s=>'<option value="'+s.id+'">'+safe(s.name)+' · '+coveredClasses(s)+'</option>').join('');
-    const preferred=matches.find(s=>scheduleCovers(s,band))||matches.find(s=>band==='junior'?/III\s*[-–—]\s*V|III.*V/i.test(s.name):/VI\s*[-–—]\s*XII|VI.*XII/i.test(s.name));
+    select.innerHTML='<option value="">Select published timetable…</option>'+matches.map(s=>'<option value="'+s.id+'">'+examTitleOf(s)+' · '+coveredClasses(s)+'</option>').join('');
+    const preferred=matches.find(s=>scheduleCovers(s,band))||matches.find(s=>band==='junior'?/III\s*[-–—]\s*V|III.*V/i.test(examTitleOf(s)):/VI\s*[-–—]\s*XII|VI.*XII/i.test(examTitleOf(s)));
     if(preferred){select.value=preferred.id;state.sources[band].schedule=preferred}
     const status=$(band==='junior'?'juniorSourceStatus':'seniorSourceStatus');
     status.textContent=matches.length
