@@ -31,8 +31,23 @@ const $=id=>document.getElementById(id),safe=v=>String(v??'').replace(/[&<>"']/g
 let user=null,masterDoc=null,master=null;
 $('signInBtn').onclick=()=>signInWithPopup(auth,provider);
 onAuthStateChanged(auth,async u=>{user=u;if(!u){$('gateMsg').textContent='Sign in with the Admin Google account.';$('signInBtn').style.display='inline-block';return}$('signInBtn').style.display='none';try{const ps=await getDoc(doc(db,'authorizedUsers',u.uid));if(!ps.exists()||ps.data().active!==true||ps.data().role!=='admin'){throw new Error('Admin access is required.')}const ms=await getDoc(doc(db,'master','current'));if(!ms.exists())throw new Error('Master timetable not found.');masterDoc=ms.data();master=structuredClone(masterDoc.data||masterDoc);if(!Array.isArray(master.records)||!Array.isArray(master.classes)||!Array.isArray(master.teachers))throw new Error('Master timetable structure is incomplete.');$('gateMsg').className='status ok';$('gateMsg').textContent='Admin verified: '+(u.displayName||u.email||'Admin');$('app').style.display='block';render()}catch(e){$('gateMsg').className='status error';$('gateMsg').textContent=e.message||String(e)}});
-function codesOf(r){if(Array.isArray(r.codes))return r.codes.filter(Boolean);return[]}
-function teacherName(c){return master.teachers.find(t=>String(t.code)===String(c))?.name||c}
+function codesOf(r){
+ const exact=[],seen=new Set();
+ const add=c=>{c=String(c||'').trim();if(c&&!seen.has(c)&&master.teachers.some(t=>String(t.code||'').trim()===c)){seen.add(c);exact.push(c)}};
+ const entry=String(r.entry||'');
+ const rosterCodes=master.teachers.map(t=>String(t.code||'').trim()).filter(Boolean).sort((a,b)=>b.length-a.length);
+ for(const code of rosterCodes){
+  const q=code.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\function codesOf(r){if(Array.isArray(r.codes))return r.codes.filter(Boolean);return[]}
+function teacherName(c){return master.teachers.find(t=>String(t.code)===String(c))?.name||c}');
+  if(new RegExp('(^|[^A-Za-z0-9])'+q+'(?=$|[^A-Za-z0-9])').test(entry))add(code);
+ }
+ if(exact.length)return exact;
+ if(Array.isArray(r.codes))r.codes.forEach(add);
+ if(Array.isArray(r.teacherCodes))r.teacherCodes.forEach(add);
+ [r.teacherCode,r.code].forEach(add);
+ return exact;
+}
+function teacherName(c){return master.teachers.find(t=>String(t.code||'').trim()===String(c||'').trim())?.name||c}
 function rows(){return master.records.map(r=>({Day:r.day||'',Period:Number(r.period)||'',Class:r.class||'',Assignment:r.entry||'',TeacherCodes:codesOf(r).join(', '),TeacherNames:codesOf(r).map(teacherName).join(', ')})).sort((a,b)=>String(a.Day).localeCompare(String(b.Day))||a.Period-b.Period||String(a.Class).localeCompare(String(b.Class)))}
 function render(){const a=rows();$('summary').innerHTML='<b>Session:</b> '+safe(masterDoc.session||master.session||'—')+' · <b>Teachers:</b> '+master.teachers.length+' · <b>Classes/Sections:</b> '+master.classes.length+' · <b>Timetable entries:</b> '+a.length;const cols=['Day','Period','Class','Assignment','TeacherCodes','TeacherNames'];$('preview').innerHTML='<table><thead><tr>'+cols.map(c=>'<th>'+safe(c)+'</th>').join('')+'</tr></thead><tbody>'+a.slice(0,150).map(r=>'<tr>'+cols.map(c=>'<td>'+safe(r[c])+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
 function msg(t,k='ok'){$('exportMsg').style.display='block';$('exportMsg').className='status '+k;$('exportMsg').textContent=t}
