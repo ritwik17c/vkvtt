@@ -37,8 +37,7 @@ function codesOf(r){
  const entry=String(r.entry||'');
  const rosterCodes=master.teachers.map(t=>String(t.code||'').trim()).filter(Boolean).sort((a,b)=>b.length-a.length);
  for(const code of rosterCodes){
-  const q=code.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\function codesOf(r){if(Array.isArray(r.codes))return r.codes.filter(Boolean);return[]}
-function teacherName(c){return master.teachers.find(t=>String(t.code)===String(c))?.name||c}');
+  const q=code.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   if(new RegExp('(^|[^A-Za-z0-9])'+q+'(?=$|[^A-Za-z0-9])').test(entry))add(code);
  }
  if(exact.length)return exact;
