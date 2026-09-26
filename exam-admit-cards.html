@@ -149,7 +149,7 @@ $('studentFile').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[
 $('feeFile').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[0].arrayBuffer(),{type:'array'}),m=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});state.feeRows=feeRows(m);matchFees();$('matchSummary').textContent=`Matched ${state.feeRows.length} due-fee rows by GR No. against ${state.students.length} students.`;render()}catch(err){ask('Fee file error',err.message)}};
 $('modeFee').onclick=()=>{state.mode='fee';$('modeFee').className='primary';$('modeDirect').className='ghost';if(state.feeRows.length)matchFees();render()};$('modeDirect').onclick=()=>{state.mode='direct';$('modeDirect').className='primary';$('modeFee').className='ghost';render()};$('rows').onchange=e=>{const s=state.students.find(x=>x.id===e.target.dataset.id);if(s){s.selected=e.target.checked;render()}};$('checkAll').onchange=e=>{state.students.forEach(x=>x.selected=e.target.checked);render()};$('selectAll').onclick=()=>{state.students.forEach(x=>x.selected=true);render()};$('selectPending').onclick=()=>{state.students.forEach(x=>x.selected=!isClear(x.fee)&&!x.override);render()};$('selectEligible').onclick=()=>{state.students.forEach(x=>x.selected=eligible(x));render()};$('clearSelection').onclick=()=>{state.students.forEach(x=>x.selected=false);render()};
 $('overridePending').onclick=()=>{const a=state.students.filter(x=>!isClear(x.fee)&&!x.override);ask('Override all pending?',`Principal override will be applied to ${a.length} pending student(s).`,()=>{a.forEach(x=>x.override=true);render()})};$('overrideSelected').onclick=()=>{const a=state.students.filter(x=>x.selected&&!isClear(x.fee)&&!x.override);ask('Override selected pending students?',`Principal override will be applied to ${a.length} selected student(s).`,()=>{a.forEach(x=>x.override=true);render()})};
-function classKey(v){let x=safe(v).toUpperCase().replace(/[_–—]/g,'-').replace(/\s+/g,' ').trim();if(/^BALVATIKA\s*-?\s*1$/.test(x)||x==='B1')return'B1';if(/^BALVATIKA\s*-?\s*2$/.test(x)||x==='B2')return'B2';if(/^BALVATIKA\s*-?\s*3$/.test(x)||x==='B3')return'B3';x=x.replace(/\b(SCIENCE|SCI|ARTS?|HUMANITIES|HUM)\b/g,'').replace(/\bSECTION\s*[A-Z]+\b/g,'').replace(/\b(ANAND|VIVEK)\b/g,'').replace(/[()]/g,'').replace(/[- ]+/g,'').trim();return x}
+function classKey(v){let x=safe(v).toUpperCase().replace(/[_–—]/g,'-').replace(/\s+/g,' ').trim();if(/^BALVATIKA\s*-?\s*1$/.test(x)||x==='B1')return'B1';if(/^BALVATIKA\s*-?\s*2$/.test(x)||x==='B2')return'B2';if(/^BALVATIKA\s*-?\s*3$/.test(x)||x==='B3')return'B3';x=x.replace(/^CLASS\s*/,'').replace(/\b(SCIENCE|SCI|ARTS?|HUMANITIES|HUM)\b/g,'').replace(/\bSECTION\s*[A-Z]+\b/g,'').replace(/\b(ANAND|VIVEK)\b/g,'').replace(/\s*\([^)]*\)\s*$/,'').replace(/[()]/g,'').replace(/[- ]+/g,'').trim();return x}
 function classBand(v){const k=classKey(v);if(['B1','B2','B3','I','II','1','2'].includes(k))return'assessment';if(['III','IV','V','3','4','5'].includes(k))return'junior';return'senior'}
 function isAssessmentClass(v){return classBand(v)==='assessment'}
 function shortSubject(v){const raw=safe(v),k=raw.toUpperCase().replace(/[^A-Z0-9/]+/g,' ');const map=[[/ASSAMESE.*HINDI|HINDI.*ASSAMESE/,'ASS/HIN'],[/^ASSAMESE$|^AS$/,'ASS'],[/^HINDI$/,'HIN'],[/^ENGLISH$|^ENG$/,'ENG'],[/^MATHEMATICS$|^MATHS?$|^MAT$/,'MAT'],[/^EVS$|^ENVIRONMENTAL STUDIES$/,'EVS'],[/^SCIENCE$|^SCI$/,'SCI'],[/^SOCIAL SCIENCE$|^SOCIAL STUDIES$|^SST$|^SSC$/,'SST'],[/^PHYSICS$|^PHY$/,'PHY'],[/^CHEMISTRY$|^CHEM$/,'CHE'],[/^BIOLOGY$|^BIO$/,'BIO'],[/^COMPUTER SCIENCE$|^CS$/,'CS'],[/^INFORMATION TECHNOLOGY$|^IT$/,'IT'],[/^POLITICAL SCIENCE$/,'POL'],[/^HISTORY$/,'HIS'],[/^GEOGRAPHY$/,'GEO'],[/^ECONOMICS$/,'ECO'],[/^SANSKRIT$/,'SAN'],[/^DRAWING$/,'DRW'],[/^RHYMES?$/,'RHY'],[/^GK$|^GENERAL KNOWLEDGE$/,'GK']];for(const[r,code]of map)if(r.test(k.trim()))return code;const words=raw.replace(/[^A-Za-z0-9 ]+/g,' ').trim().split(/\s+/).filter(Boolean);return(words.length>1?words.map(w=>w[0]).join(''):raw.slice(0,4)).toUpperCase()}
@@ -172,9 +172,9 @@ function renderAssessmentEditor(){
 }
 function scheduleEvents(schedule){
   const generated=schedule?.workspace?.timetable?.events;
-  if(Array.isArray(generated)&&generated.length)return generated;
+  if(Array.isArray(generated)&&generated.length)return generated.map(x=>({date:x.date||x.examDate||x.examDateTime||'',className:x.className||x.class||x.classId||'',subject:x.subject||x.subjectName||x.paperSubject||'',slotId:x.slotId||x.sessionId||''}));
   const manual=schedule?.workspace?.manualTimetable?.assignments||schedule?.manualTimetable?.assignments;
-  if(Array.isArray(manual)&&manual.length)return manual.map(x=>({date:x.date||x.examDate||'',className:x.className||x.class||'',subject:x.subject||x.subjectName||'',slotId:x.slotId||x.sessionId||''}));
+  if(Array.isArray(manual)&&manual.length)return manual.map(x=>({date:x.date||x.examDate||'',className:x.className||x.class||x.classId||'',subject:x.subject||x.subjectName||x.paperSubject||'',slotId:x.slotId||x.sessionId||''}));
   return[];
 }
 function scheduleCovers(schedule,band){return scheduleEvents(schedule).some(e=>classBand(e.className)===band)}
@@ -191,7 +191,8 @@ function scheduleFor(s){
   }
   const source=selectedSchedule(band);
   if(!state.sources[band].enabled||!source)return[];
-  for(const e of scheduleEvents(source).filter(x=>classKey(x.className)===key).sort((a,b)=>safe(a.date).localeCompare(safe(b.date)))){const date=safe(e.date),subject=safe(e.subject);if(!date||!subject)continue;const id=date+'|'+subject.toUpperCase();if(seen.has(id))continue;seen.add(id);out.push({date,code:shortSubject(subject)})}
+  const events=scheduleEvents(source);
+  for(const e of events.filter(x=>classKey(x.className)===key).sort((a,b)=>safe(a.date).localeCompare(safe(b.date)))){const date=safe(e.date),subject=safe(e.subject);if(!date||!subject)continue;const id=date+'|'+subject.toUpperCase();if(seen.has(id))continue;seen.add(id);out.push({date,code:shortSubject(subject)})}
   return out;
 }
 async function loadScheduleSources(){
