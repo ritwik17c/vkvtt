@@ -179,10 +179,19 @@ function scheduleEvents(schedule){
 }
 function scheduleCovers(schedule,band){return scheduleEvents(schedule).some(e=>classBand(e.className)===band)}
 function examTitleOf(schedule){return safe(schedule?.name||schedule?.title||schedule?.examTitle||schedule?.workspace?.name||schedule?.workspace?.title||schedule?.workspace?.examTitle||schedule?.workspace?.exam?.name||schedule?.workspace?.exam?.title||'')}
-function selectedSchedule(band){return state.sources[band]?.schedule||null}
-function scheduleNameForStudent(s){if(classBand(s.className)==='assessment')return'';return examTitleOf(selectedSchedule(classBand(s.className)))}
+function selectedSchedule(band){
+  const current=state.sources[band]?.schedule;
+  if(current)return current;
+  const list=Array.isArray(state.publishedSchedules)?state.publishedSchedules:[];
+  return list.find(x=>scheduleCovers(x,band))||null;
+}
+function scheduleNameForStudent(s){
+  const band=classBand(s.className);
+  if(band==='assessment')return'';
+  return examTitleOf(selectedSchedule(band));
+}
 function scheduleFor(s){
-  const band=classBand(s.className),key=classKey(s.className),sectionKey=classKey(s.section),seen=new Set(),out=[];
+  const band=classBand(s.className),key=classKey(s.className),seen=new Set(),out=[];
   if(band==='assessment'){
     if(!state.sources.assessment.enabled)return[];
     const col=assessmentClassColumn(s.className);
@@ -192,14 +201,9 @@ function scheduleFor(s){
   const source=selectedSchedule(band);
   if(!state.sources[band].enabled||!source)return[];
   const events=scheduleEvents(source);
-  const matches=events.filter(e=>{
-    if(classKey(e.className)!==key)return false;
-    const eventSection=classKey(e.section||e.division||e.stream||e.sectionName||'');
-    if(!eventSection||!sectionKey)return true;
-    return eventSection===sectionKey;
-  }).sort((a,b)=>safe(a.date).localeCompare(safe(b.date)));
-  const fallback=matches.length?matches:events.filter(e=>classKey(e.className)===key).sort((a,b)=>safe(a.date).localeCompare(safe(b.date)));
-  for(const e of fallback){const date=safe(e.date),subject=safe(e.subject);if(!date||!subject)continue;const id=date+'|'+subject.toUpperCase();if(seen.has(id))continue;seen.add(id);out.push({date,code:shortSubject(subject)})}
+  const matches=events.filter(e=>classKey(e.className)===key)
+    .sort((a,b)=>safe(a.date).localeCompare(safe(b.date)));
+  for(const e of matches){const date=safe(e.date),subject=safe(e.subject);if(!date||!subject)continue;const id=date+'|'+subject.toUpperCase();if(seen.has(id))continue;seen.add(id);out.push({date,code:shortSubject(subject)})}
   return out;
 }
 async function loadScheduleSources(){
