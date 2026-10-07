@@ -181,8 +181,18 @@ function renderAssessmentEditor(){
     }
     rows=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
   }
+  if(source){
+    const fmtDate=v=>{
+      const m=safe(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m?m[3]+'/'+m[2]+'/'+m[1]:safe(v);
+    };
+    $('assessmentEditor').innerHTML='<table><thead><tr><th>Date</th><th>B1</th><th>B2</th><th>B3</th><th>I</th><th>II</th></tr></thead><tbody>'+
+      rows.map(r=>'<tr><td>'+fmtDate(r.date)+'</td>'+['B1','B2','B3','I','II'].map(k=>'<td>'+safe(r[k])+'</td>').join('')+'</tr>').join('')+
+      '</tbody></table>';
+    return;
+  }
   const options=v=>ASSESSMENT_SUBJECTS.map(s=>'<option value="'+s+'" '+(s===v?'selected':'')+'>'+ (s||'—') +'</option>').join('');
-  $('assessmentEditor').innerHTML='<table><thead><tr><th>Use</th><th>Date</th><th>B1</th><th>B2</th><th>B3</th><th>I</th><th>II</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-assess-use="'+i+'" '+(r.enabled!==false?'checked':'')+' '+(source?'disabled':'')+'></td><td><input type="date" data-assess-date="'+i+'" value="'+r.date+'" '+(source?'disabled':'')+'></td>'+['B1','B2','B3','I','II'].map(k=>'<td><select data-assess-subject="'+i+'" data-class="'+k+'" '+(source?'disabled':'')+'>'+options(r[k]||'')+'</select></td>').join('')+'</tr>').join('')+'</tbody></table>';
+  $('assessmentEditor').innerHTML='<table><thead><tr><th>Use</th><th>Date</th><th>B1</th><th>B2</th><th>B3</th><th>I</th><th>II</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-assess-use="'+i+'" checked></td><td><input type="date" data-assess-date="'+i+'" value="'+r.date+'"></td>'+['B1','B2','B3','I','II'].map(k=>'<td><select data-assess-subject="'+i+'" data-class="'+k+'">'+options(r[k]||'')+'</select></td>').join('')+'</tr>').join('')+'</tbody></table>';
 }
 function scheduleEvents(schedule){
   const generated=schedule?.workspace?.timetable?.events;
