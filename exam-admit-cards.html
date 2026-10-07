@@ -106,6 +106,8 @@ html[data-theme="dark"] .ghost:hover,html[data-theme="dark"] .ghost:active,html[
       <option value="terminal1-2026">Terminal 1 · Worksheet-based Assessment · Sep 2026</option>
       <option value="custom">Custom dates & subjects</option>
     </select>
+    <label style="margin-top:8px">Published Assessment Schedule</label>
+    <select id="assessmentSchedule"><option value="">Use preset / custom assessment schedule</option></select>
     <div class="source-status">Assessment Tickets never print an exam-name line. Selected dates and subjects can still appear on the ticket.</div>
   </div>
   <div class="sourcecard">
@@ -137,7 +139,7 @@ html[data-theme="dark"] .ghost:hover,html[data-theme="dark"] .ghost:active,html[
 </main>
 <div id="modal" class="modalback hidden"><div class="modal"><h3 id="modalTitle">Confirm</h3><p id="modalText"></p><div class="btns" style="justify-content:flex-end"><button id="modalCancel" class="secondary">Cancel</button><button id="modalOk" class="primary">Continue</button></div></div></div>
 <script>
-const DEFAULT_EXAM_SIG='assets/admit-card/exam-incharge-signature.svg?v=20260922-sig4',DEFAULT_PRINCIPAL_SIG='assets/admit-card/principal-signature.svg?v=20260922-sig4';const $=id=>document.getElementById(id),state={students:[],feeRows:[],mode:'fee',examSig:DEFAULT_EXAM_SIG,principalSig:DEFAULT_PRINCIPAL_SIG,generated:[],publishedSchedules:[],sources:{assessment:{enabled:true,rows:[]},junior:{enabled:true,schedule:null},senior:{enabled:true,schedule:null}}};const safe=v=>String(v??'').trim(),norm=s=>safe(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+const DEFAULT_EXAM_SIG='assets/admit-card/exam-incharge-signature.svg?v=20260922-sig4',DEFAULT_PRINCIPAL_SIG='assets/admit-card/principal-signature.svg?v=20260922-sig4';const $=id=>document.getElementById(id),state={students:[],feeRows:[],mode:'fee',examSig:DEFAULT_EXAM_SIG,principalSig:DEFAULT_PRINCIPAL_SIG,generated:[],publishedSchedules:[],sources:{assessment:{enabled:true,rows:[],schedule:null},junior:{enabled:true,schedule:null},senior:{enabled:true,schedule:null}}};const safe=v=>String(v??'').trim(),norm=s=>safe(s).toLowerCase().replace(/[^a-z0-9]/g,'');
 function pick(o,a){const k=Object.keys(o);for(const x of a){const f=k.find(y=>norm(y)===norm(x));if(f!==undefined)return o[f]}return''}function isClear(v){return['clear','paid','eligible','yes','ok','cleared','no dues','nodues'].includes(safe(v).toLowerCase())}function eligible(s){return state.mode==='direct'||isClear(s.fee)||s.override}
 function mapStudent(r,i){return{id:'s'+i+'_'+Date.now(),gr:safe(pick(r,['GR No.','GR No','Gr No','Admission No'])),name:safe(pick(r,['Student Name','Name','Student'])),className:safe(pick(r,['Standard','Class','Grade'])),section:safe(pick(r,['Division','Section','Sec'])),roll:safe(pick(r,['RollNo','Roll No.','Roll No','Roll'])),fee:'Not Matched',due:0,override:false,selected:false}}
 function locateHeader(m){for(let i=0;i<Math.min(m.length,30);i++){const r=(m[i]||[]).map(norm);if(r.some(x=>x==='grno')&&r.some(x=>x==='studentname'||x==='name')&&r.some(x=>x==='dueamount'||x==='due'))return i}return-1}function feeRows(m){const h=locateHeader(m);if(h<0)throw Error('Could not locate GR No., Student Name and Due Amount headings.');const heads=(m[h]||[]).map(safe),out=[];for(let i=h+1;i<m.length;i++){const o={};heads.forEach((x,c)=>{if(x)o[x]=(m[i]||[])[c]});const gr=safe(pick(o,['GR No.','GR No','Admission No'])),name=safe(pick(o,['Student Name','Name'])),due=Number(String(pick(o,['Due Amount','Due'])||0).replace(/,/g,''))||0;if(gr&&name&&/^\d+$/.test(gr))out.push({gr,name,due})}return out}
@@ -194,6 +196,14 @@ function scheduleFor(s){
   const band=classBand(s.className),key=classKey(s.className),seen=new Set(),out=[];
   if(band==='assessment'){
     if(!state.sources.assessment.enabled)return[];
+    const source=state.sources.assessment.schedule;
+    if(source){
+      for(const e of scheduleEvents(source).filter(e=>classKey(e.className)===key).sort((a,b)=>safe(a.date).localeCompare(safe(b.date)))){
+        const date=safe(e.date),subject=safe(e.subject);if(!date||!subject)continue;
+        const id=date+'|'+subject.toUpperCase();if(seen.has(id))continue;seen.add(id);out.push({date,code:shortSubject(subject)})
+      }
+      return out;
+    }
     const col=assessmentClassColumn(s.className);
     for(const r of state.sources.assessment.rows){if(r.enabled===false)continue;const subject=safe(r[col]);if(!r.date||!subject)continue;out.push({date:r.date,code:shortSubject(subject)})}
     return out;
@@ -223,6 +233,11 @@ async function loadScheduleSources(){
   }catch(error){
     try{state.publishedSchedules=await window.vkvAdmitListPublished()}catch(e){state.publishedSchedules=[]}
   }
+  const assessmentSelect=$('assessmentSchedule');
+  const assessmentMatches=state.publishedSchedules.filter(s=>scheduleEvents(s).some(e=>classBand(e.className)==='assessment'));
+  assessmentSelect.innerHTML='<option value="">Use preset / custom assessment schedule</option>'+assessmentMatches.map(s=>'<option value="'+s.id+'">'+examTitleOf(s)+'</option>').join('');
+  const assessmentPreferred=assessmentMatches[0];
+  if(assessmentPreferred){assessmentSelect.value=assessmentPreferred.id;state.sources.assessment.schedule=assessmentPreferred}
   const coveredClasses=s=>{
     const seen=[];
     for(const e of scheduleEvents(s)){const k=classKey(e.className);if(k&&!seen.includes(k))seen.push(k)}
@@ -251,7 +266,8 @@ $('useJuniorExam').onchange=e=>state.sources.junior.enabled=e.target.checked;
 $('useSeniorExam').onchange=e=>state.sources.senior.enabled=e.target.checked;
 $('juniorSchedule').onchange=e=>state.sources.junior.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null;
 $('seniorSchedule').onchange=e=>state.sources.senior.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null;
-$('assessmentPreset').onchange=e=>{if(e.target.value==='terminal1-2026'){state.sources.assessment.rows=ASSESSMENT_PRESET.map(x=>({...x,enabled:true}));renderAssessmentEditor()}};
-$('assessmentEditor').addEventListener('change',e=>{const i=Number(e.target.dataset.assessUse??e.target.dataset.assessDate??e.target.dataset.assessSubject);if(!Number.isInteger(i)||!state.sources.assessment.rows[i])return;if(e.target.dataset.assessUse!==undefined)state.sources.assessment.rows[i].enabled=e.target.checked;if(e.target.dataset.assessDate!==undefined)state.sources.assessment.rows[i].date=e.target.value;if(e.target.dataset.assessSubject!==undefined)state.sources.assessment.rows[i][e.target.dataset.class]=e.target.value;$('assessmentPreset').value='custom'});
+$('assessmentPreset').onchange=e=>{if(e.target.value==='terminal1-2026'){state.sources.assessment.schedule=null;$('assessmentSchedule').value='';state.sources.assessment.rows=ASSESSMENT_PRESET.map(x=>({...x,enabled:true}));renderAssessmentEditor()}};
+$('assessmentSchedule').onchange=e=>{state.sources.assessment.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null};
+$('assessmentEditor').addEventListener('change',e=>{state.sources.assessment.schedule=null;$('assessmentSchedule').value='';const i=Number(e.target.dataset.assessUse??e.target.dataset.assessDate??e.target.dataset.assessSubject);if(!Number.isInteger(i)||!state.sources.assessment.rows[i])return;if(e.target.dataset.assessUse!==undefined)state.sources.assessment.rows[i].enabled=e.target.checked;if(e.target.dataset.assessDate!==undefined)state.sources.assessment.rows[i].date=e.target.value;if(e.target.dataset.assessSubject!==undefined)state.sources.assessment.rows[i][e.target.dataset.class]=e.target.value;$('assessmentPreset').value='custom'});
 </script>
 </body></html>
