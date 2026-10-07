@@ -58,7 +58,7 @@ function startEditGroup(ids){
  all.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  const seen=new Set(),items=all.filter(x=>!seen.has(x.date)&&seen.add(x.date));
  editorState={mode:'edit-group',originalIds:ps.map(p=>p.id),manualOriginal:null,pendingId:'',expectedUnits:null};
- $('dateRows').innerHTML='';resetTools();$('editTeacher').value=code||'';$('editReason').value='';
+ $('dateRows').innerHTML='';resetTools();$('editTeacher').value=code||'';if($('filterTeacher')){$('filterTeacher').value=code||'';renderRecords()}$('editReason').value='';
  for(const x of items){const p=x.p,each=p.type==='half'?0.5:(p.type==='full'?Number(p.leaveUnits||1):0);addDateRow({date:x.date,type:p.type,category:p.leaveCategory||'',units:each,from:p.from||0,to:p.to||0,note:p.note||'',part:p.type==='half'?(Number(p.from||5)<=4?'am':'pm'):(p.duration==='custom'?'custom':(Number(p.from||0)===1&&Number(p.to||0)===4?'am':Number(p.from||0)===5&&Number(p.to||0)===8?'pm':'full'))})}
  $('editorWarning').className='status warn';$('editorWarning').innerHTML='<b>Editing one continuous approved leave/duty block.</b> All dates in this block are loaded together. You may add/remove individual dates, use Date-Range Rows, change status/category, day coverage, periods and remarks before saving.';
  $('archiveBtn').classList.add('hide');openEditor('Edit approved leave/duty block · '+t.name,items.length+' date'+(items.length===1?'':'s')+' loaded together');updateReconcile();
