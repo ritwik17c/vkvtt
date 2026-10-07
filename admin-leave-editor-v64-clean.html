@@ -344,9 +344,13 @@ async function syncMyAreaHistories(){
  finally{if(btn)btn.disabled=false}
 }
 function populateSelectors(){
+ const filterCode=$('filterTeacher')?.value||'';
+ const editCode=$('editTeacher')?.value||'';
  const opts=teachers.map(t=>`<option value="${safe(t.code)}">${safe(t.name)} (${safe(t.code)})</option>`).join('');
  $('filterTeacher').innerHTML='<option value="">All teachers</option>'+opts;
  $('editTeacher').innerHTML='<option value="">Select teacher…</option>'+opts;
+ if(filterCode&&teachers.some(t=>String(t.code)===String(filterCode)))$('filterTeacher').value=filterCode;
+ if(editCode&&teachers.some(t=>String(t.code)===String(editCode)))$('editTeacher').value=editCode;
 }
 function renderControl(){
  const p=pendingItems().length,visible=p===0;
