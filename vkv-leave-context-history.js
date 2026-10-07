@@ -32,9 +32,32 @@ function coverage(p){
 }
 function historyFor(code){return approved.filter(p=>p&&p.active!==false&&String(p.code||p.teacherCode||'')===String(code||'')).sort((a,b)=>String(datesOf(b).at(-1)||'').localeCompare(String(datesOf(a).at(-1)||'')))}
 function pendingFor(code){return requests.filter(r=>r&&String(r.code||r.teacherCode||'')===String(code||'')&&['provisional','returned'].includes(String(r.approvalStatus||'provisional').toLowerCase())).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))}
-function categorySummary(rows){
+function unitValue(p){
+ const t=String(p?.type||p?.statusType||'').toLowerCase();
+ if(t==='od'||t==='special')return 0;
+ const ds=datesOf(p);if(!ds.length)return 0;
+ const half=t==='half'||String(p?.duration||'').toLowerCase()==='half'||String(p?.coverage||'').toLowerCase().startsWith('half-');
+ return ds.length*(half?0.5:1);
+}
+function entryRows(r){return Array.isArray(r?.entries)&&r.entries.length?r.entries:[r]}
+function duplicateKey(code,e,date){
+ const cat=String(e?.leaveCategory||e?.category||'Regular Leave').trim().toUpperCase();
+ const t=String(e?.type||e?.statusType||'leave').toLowerCase();
+ const from=Number(e?.from||0),to=Number(e?.to||0),ps=Array.isArray(e?.periods)?[...new Set(e.periods.map(Number).filter(Boolean))].sort((a,b)=>a-b).join(','):'';
+ return [String(code||''),date,t,cat,from,to,ps].join('|');
+}
+function duplicateRecords(code,approvedRows,pendingRows){
+ const seen=new Map(),dupes=[];
+ const add=(source,id,e)=>{for(const date of datesOf(e)){const k=duplicateKey(code,e,date);if(seen.has(k)){dupes.push({date,first:seen.get(k),second:{source,id,e}})}else seen.set(k,{source,id,e})}};
+ approvedRows.forEach(p=>add('approved',p.id,p));
+ pendingRows.forEach(r=>entryRows(r).forEach((e,i)=>add('provisional',r.id+'#'+i,e)));
+ return dupes;
+}
+function categorySummary(rows,pending){
  const map=new Map();
- for(const p of rows){const t=String(p?.type||p?.statusType||'').toLowerCase();if(t==='od'||t==='special')continue;const k=String(p?.leaveCategory||p?.category||'Regular Leave').trim()||'Regular Leave',u=Number(p?.leaveUnits);map.set(k,(map.get(k)||0)+(Number.isFinite(u)&&u>0?u:datesOf(p).length||1))}
+ const add=p=>{const t=String(p?.type||p?.statusType||'').toLowerCase();if(t==='od'||t==='special')return;const k=String(p?.leaveCategory||p?.category||'Regular Leave').trim()||'Regular Leave';map.set(k,(map.get(k)||0)+unitValue(p))};
+ rows.forEach(add);
+ pending.forEach(r=>entryRows(r).forEach(add));
  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
 }
 function pendingSummary(rows){
@@ -43,13 +66,14 @@ function pendingSummary(rows){
 function historyHtml(code,compact=false){
  if(!code)return'<div class="vkh-empty">Select a staff member first. Their approved and pending leave context will appear here before you choose the new leave category.</div>';
  if(loadError)return`<div class="vkh-warn">Approved leave history could not be loaded for this account. ${safe(loadError)}</div>`;
- const rows=historyFor(code),pending=pendingFor(code),shown=rows.slice(0,compact?6:12),summary=categorySummary(rows);
+ const rows=historyFor(code),pending=pendingFor(code),shown=rows.slice(0,compact?6:12),summary=categorySummary(rows,pending),dupes=duplicateRecords(code,rows,pending);
  let html='';
  if(summary.length)html+=`<div class="vkh-usage"><div class="vkh-usage-title">Category-wise approved usage</div><div class="vkh-chips">${summary.map(([k,v])=>`<span class="vkh-chip"><b>${safe(k)}</b> ${safe(v)}</span>`).join('')}</div></div>`;
  else html+='<div class="vkh-empty">No approved Regular Leave usage found for this staff member yet.</div>';
+ if(dupes.length)html+=`<div class="vkh-pending"><div class="vkh-pending-title">⚠ Duplicate leave record detected</div><div class="vkh-help">${dupes.length} duplicate occurrence${dupes.length===1?'':'s'} found. Please review the correction window; duplicates are not silently ignored.</div><div style="margin-top:8px"><a class="btn" href="./admin-leave-full-edit.html?teacher=${encodeURIComponent(code)}">Open correction window</a> <a class="btn" href="./leave-manager-approvals.html">Review provisional records</a></div></div>`;
  if(pending.length)html+=`<div class="vkh-pending"><div class="vkh-pending-title">⚠ Pending / returned request${pending.length===1?'':'s'} already exist</div>${pendingSummary(pending.slice(0,4))}<div class="vkh-help">Check these before creating another request to avoid duplication or selecting the wrong category.</div></div>`;
  if(!rows.length)return html+'<div class="vkh-empty">No approved Leave / OD / Special Assignment history found for this staff member.</div>';
- html+=`<div class="vkh-summary"><b>${rows.length}</b> approved record${rows.length===1?'':'s'} found${rows.length>shown.length?` · showing latest ${shown.length}`:''}</div><div class="vkh-list">${shown.map(p=>{const ds=datesOf(p),dateText=ds.length>1?`${fmt(ds[0])} → ${fmt(ds.at(-1))} · ${ds.length} day${ds.length===1?'':'s'}`:fmt(ds[0]);const units=Number(p.leaveUnits)>0?` · ${Number(p.leaveUnits)} unit${Number(p.leaveUnits)===1?'':'s'}`:'';return`<div class="vkh-row"><div><b>${safe(label(p))}</b><span>${safe(dateText)}</span></div><small>${safe(coverage(p))}${safe(units)}${p.note||p.remarks?` · ${safe(p.note||p.remarks)}`:''}</small></div>`}).join('')}</div>`;
+ html+=`<div class="vkh-summary"><b>${rows.length}</b> approved record${rows.length===1?'':'s'} found${rows.length>shown.length?` · showing latest ${shown.length}`:''}</div><div class="vkh-list">${shown.map(p=>{const ds=datesOf(p),dateText=ds.length>1?`${fmt(ds[0])} → ${fmt(ds.at(-1))} · ${ds.length} day${ds.length===1?'':'s'}`:fmt(ds[0]);const units=unitValue(p)>0?` · ${unitValue(p)} unit${unitValue(p)===1?'':'s'}`:'';return`<div class="vkh-row"><div><b>${safe(label(p))}</b><span>${safe(dateText)}</span></div><small>${safe(coverage(p))}${safe(units)}${p.note||p.remarks?` · ${safe(p.note||p.remarks)}`:''}</small></div>`}).join('')}</div>`;
  return html;
 }
 function ensureStyle(){if(document.getElementById('vkh-style'))return;const s=document.createElement('style');s.id='vkh-style';s.textContent=`.vkh-panel{border:1px solid #bcd5df;border-radius:14px;background:#f7fbfd;padding:13px;margin:12px 0}.vkh-title{font-weight:850;color:#17364f;margin-bottom:3px}.vkh-help,.vkh-empty{font-size:.83rem;color:#617685;line-height:1.45}.vkh-summary{font-size:.82rem;color:#476575;margin:8px 0}.vkh-list{display:grid;gap:7px}.vkh-row{border:1px solid #dce8ed;border-radius:10px;background:#fff;padding:9px 10px}.vkh-row>div{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.vkh-row b{color:#17364f;font-size:.87rem}.vkh-row span,.vkh-row small{color:#617685;font-size:.8rem}.vkh-row small{display:block;margin-top:3px}.vkh-warn{font-size:.82rem;color:#76570f;background:#fff7df;border:1px solid #e4c873;border-radius:9px;padding:9px}.vkh-usage{margin:9px 0 10px}.vkh-usage-title{font-size:.78rem;font-weight:800;color:#476575;margin-bottom:6px}.vkh-chips{display:flex;gap:6px;flex-wrap:wrap}.vkh-chip{padding:5px 8px;border-radius:999px;background:#e9f3f7;border:1px solid #c9dfe9;color:#294f68;font-size:.78rem}.vkh-pending{margin:10px 0;padding:10px;border:1px solid #e4c873;background:#fff7df;border-radius:10px}.vkh-pending-title{font-weight:850;color:#76570f;font-size:.84rem;margin-bottom:6px}.vkh-pending-row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:5px 0;border-bottom:1px dashed #dfc879;font-size:.8rem}.vkh-pending-row:last-of-type{border-bottom:0}.vkh-pending-row span{font-weight:800;color:#76570f}`;document.head.appendChild(s)}
