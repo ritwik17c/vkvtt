@@ -168,9 +168,21 @@ const ASSESSMENT_PRESET=[
 ];
 function assessmentClassColumn(v){const k=classKey(v);return k==='1'?'I':k==='2'?'II':k}
 function renderAssessmentEditor(){
-  const rows=state.sources.assessment.rows;
+  const source=state.sources.assessment.schedule;
+  let rows=state.sources.assessment.rows;
+  if(source){
+    const byDate=new Map();
+    for(const e of scheduleEvents(source)){
+      const key=classKey(e.className),date=safe(e.date),subject=safe(e.subject);
+      if(!['B1','B2','B3','I','II'].includes(key)||!date||!subject)continue;
+      if(!byDate.has(date))byDate.set(date,{date,enabled:true,B1:'',B2:'',B3:'',I:'',II:''});
+      const row=byDate.get(date);
+      if(!row[key])row[key]=subject;
+    }
+    rows=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+  }
   const options=v=>ASSESSMENT_SUBJECTS.map(s=>'<option value="'+s+'" '+(s===v?'selected':'')+'>'+ (s||'—') +'</option>').join('');
-  $('assessmentEditor').innerHTML='<table><thead><tr><th>Use</th><th>Date</th><th>B1</th><th>B2</th><th>B3</th><th>I</th><th>II</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-assess-use="'+i+'" '+(r.enabled!==false?'checked':'')+'></td><td><input type="date" data-assess-date="'+i+'" value="'+r.date+'"></td>'+['B1','B2','B3','I','II'].map(k=>'<td><select data-assess-subject="'+i+'" data-class="'+k+'">'+options(r[k]||'')+'</select></td>').join('')+'</tr>').join('')+'</tbody></table>';
+  $('assessmentEditor').innerHTML='<table><thead><tr><th>Use</th><th>Date</th><th>B1</th><th>B2</th><th>B3</th><th>I</th><th>II</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td><input type="checkbox" data-assess-use="'+i+'" '+(r.enabled!==false?'checked':'')+' '+(source?'disabled':'')+'></td><td><input type="date" data-assess-date="'+i+'" value="'+r.date+'" '+(source?'disabled':'')+'></td>'+['B1','B2','B3','I','II'].map(k=>'<td><select data-assess-subject="'+i+'" data-class="'+k+'" '+(source?'disabled':'')+'>'+options(r[k]||'')+'</select></td>').join('')+'</tr>').join('')+'</tbody></table>';
 }
 function scheduleEvents(schedule){
   const generated=schedule?.workspace?.timetable?.events;
@@ -237,7 +249,7 @@ async function loadScheduleSources(){
   const assessmentMatches=state.publishedSchedules.filter(s=>scheduleEvents(s).some(e=>classBand(e.className)==='assessment'));
   assessmentSelect.innerHTML='<option value="">Use preset / custom assessment schedule</option>'+assessmentMatches.map(s=>'<option value="'+s.id+'">'+examTitleOf(s)+'</option>').join('');
   const assessmentPreferred=assessmentMatches[0];
-  if(assessmentPreferred){assessmentSelect.value=assessmentPreferred.id;state.sources.assessment.schedule=assessmentPreferred}
+  if(assessmentPreferred){assessmentSelect.value=assessmentPreferred.id;state.sources.assessment.schedule=assessmentPreferred;renderAssessmentEditor()}
   const coveredClasses=s=>{
     const seen=[];
     for(const e of scheduleEvents(s)){const k=classKey(e.className);if(k&&!seen.includes(k))seen.push(k)}
@@ -267,7 +279,7 @@ $('useSeniorExam').onchange=e=>state.sources.senior.enabled=e.target.checked;
 $('juniorSchedule').onchange=e=>state.sources.junior.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null;
 $('seniorSchedule').onchange=e=>state.sources.senior.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null;
 $('assessmentPreset').onchange=e=>{if(e.target.value==='terminal1-2026'){state.sources.assessment.schedule=null;$('assessmentSchedule').value='';state.sources.assessment.rows=ASSESSMENT_PRESET.map(x=>({...x,enabled:true}));renderAssessmentEditor()}};
-$('assessmentSchedule').onchange=e=>{state.sources.assessment.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null};
+$('assessmentSchedule').onchange=e=>{state.sources.assessment.schedule=state.publishedSchedules.find(x=>x.id===e.target.value)||null;renderAssessmentEditor()};
 $('assessmentEditor').addEventListener('change',e=>{state.sources.assessment.schedule=null;$('assessmentSchedule').value='';const i=Number(e.target.dataset.assessUse??e.target.dataset.assessDate??e.target.dataset.assessSubject);if(!Number.isInteger(i)||!state.sources.assessment.rows[i])return;if(e.target.dataset.assessUse!==undefined)state.sources.assessment.rows[i].enabled=e.target.checked;if(e.target.dataset.assessDate!==undefined)state.sources.assessment.rows[i].date=e.target.value;if(e.target.dataset.assessSubject!==undefined)state.sources.assessment.rows[i][e.target.dataset.class]=e.target.value;$('assessmentPreset').value='custom'});
 </script>
 </body></html>
