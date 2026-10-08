@@ -152,10 +152,10 @@ body.quick-mode .wrap{max-width:none}
 <section class="card quick-hide">
   <div class="sectionTitle"><div><h2>🛠 Leave Editor Master Template</h2><div class="help">Edit approved Leave / OD / Special records across past, present or future dates.</div></div><button id="newBtn" class="green">＋ New Approved Record</button></div>
   <div class="grid4">
-    <div><label>Teacher</label><select id="filterTeacher"><option value="">All teachers</option></select></div>
+    <div><label>Employee</label><select id="filterTeacher"><option value="">All employees</option></select></div>
     <div><label>Category / status</label><select id="filterType"><option value="">All</option><option>VL</option><option>EL</option><option>CL</option><option>SEL</option><option>EOL</option><option value="MATERNITY">Maternity Leave</option><option value="od">OD</option><option value="special">Special Assignment</option></select></div>
     <div><label>From date (DD/MM/YYYY)</label><input id="filterFrom" class="dateInput" placeholder="DD/MM/YYYY" inputmode="numeric"></div>
-    <div><label>Search</label><input id="filterSearch" placeholder="Teacher, remarks, source…"></div>
+    <div><label>Search</label><input id="filterSearch" placeholder="Employee, remarks, source…"></div>
   </div>
   <div id="recordList" style="margin-top:12px"></div>
 </section>
@@ -164,7 +164,7 @@ body.quick-mode .wrap{max-width:none}
   <div class="sectionTitle"><div><h2 id="editorTitle">Edit leave</h2><div id="editorSource" class="help"></div></div><button id="cancelBtn">✕ Close editor</button></div>
   <div id="editorWarning" class="status warn hide"></div>
   <div class="grid2">
-    <div><label>Teacher</label><select id="editTeacher"></select></div>
+    <div><label>Employee</label><select id="editTeacher"></select></div>
     <div><label>Audit / correction reason <span style="color:#8b2d2d">*</span></label><input id="editReason" placeholder="e.g. Verified against leave application dated …"></div>
   </div>
 
@@ -199,7 +199,7 @@ body.quick-mode .wrap{max-width:none}
 
   <div class="reconcileBar"><span id="reconcileText" class="pill"></span><span id="reconcileBreakdown" class="reconcileDetail"></span></div>
 
-  <div class="actions"><button id="saveBtn" class="primary">💾 Save Approved Record</button><button id="archiveBtn" class="danger hide">Archive original record</button></div>
+  <div class="actions"><button id="saveBtn" class="primary">💾 Save Approved Record</button><button id="archiveBtn" class="danger hide">Delete Erroneous Record</button></div>
   <div id="saveMsg" class="status info hide"></div>
 </section>
 
@@ -289,7 +289,16 @@ async function verify(u){
  const p=await getDoc(doc(db,'authorizedUsers',u.uid));
  if(!p.exists()||p.data().active!==true||String(p.data().role||'')!=='admin')throw new Error('Only the Principal/Admin account can open the Leave Master Editor.');
  const m=await getDoc(doc(db,'master','current'));if(!m.exists())throw new Error('Master timetable is not available.');
- master=m.data().data||m.data();teachers=(master.teachers||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+ master=m.data().data||m.data();
+ const map=new Map();
+ for(const x of [...(master.teachers||[]),...(master.nonTeachingStaff||[]),...(master.staffDirectory||[]),...(master.nonTeaching||[]),...(master.staff||[])]){
+  if(!x||x.active===false)continue;
+  const raw=String(x.code||x.shortCode||x.teacherShortCode||x.timetableCode||x.employeeCode||x.staffCode||x.staffId||'').trim(),code=raw;
+  if(!code)continue;
+  const name=String(x.name||x.fullName||x.staffName||x.employeeName||code);
+  if(!map.has(code)||String(map.get(code).name||'').length<name.length)map.set(code,{...x,code,name});
+ }
+ teachers=[...map.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 async function loadAll(){
  const results=await Promise.allSettled([
@@ -347,8 +356,8 @@ function populateSelectors(){
  const filterCode=$('filterTeacher')?.value||'';
  const editCode=$('editTeacher')?.value||'';
  const opts=teachers.map(t=>`<option value="${safe(t.code)}">${safe(t.name)} (${safe(t.code)})</option>`).join('');
- $('filterTeacher').innerHTML='<option value="">All teachers</option>'+opts;
- $('editTeacher').innerHTML='<option value="">Select teacher…</option>'+opts;
+ $('filterTeacher').innerHTML='<option value="">All employees</option>'+opts;
+ $('editTeacher').innerHTML='<option value="">Select employee…</option>'+opts;
  if(filterCode&&teachers.some(t=>String(t.code)===String(filterCode)))$('filterTeacher').value=filterCode;
  if(editCode&&teachers.some(t=>String(t.code)===String(editCode)))$('editTeacher').value=editCode;
 }
