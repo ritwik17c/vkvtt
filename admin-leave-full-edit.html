@@ -33,7 +33,7 @@ const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getF
 let M={},aliases={},rows=[],blocks=[],user=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=s=>{const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(s||'—')};
-function canonical(c){c=String(c||'').trim();const seen=new Set();while(c&&aliases[c]&&!seen.has(c)){seen.add(c);c=String(aliases[c]||'').trim()}return c}
+const LEAVE_CODE_ALIASES={RC2:'RC'};function canonical(c){c=String(c||'').trim();const seen=new Set();while(c&&((aliases[c]||LEAVE_CODE_ALIASES[c]))&&!seen.has(c)){seen.add(c);c=String(aliases[c]||LEAVE_CODE_ALIASES[c]||'').trim()}return c}
 function datesOf(p){if(Array.isArray(p.dates)&&p.dates.length)return[...new Set(p.dates.filter(Boolean))].sort();const a=p.startDate||p.date||p.fromDate||'',b=p.endDate||p.toDate||a;if(!a)return[];if(!b||a===b)return[a];const out=[],d=new Date(a+'T00:00:00'),z=new Date(b+'T00:00:00');for(let i=0;d<=z&&i<370;i++,d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out}
 function typeOf(x){let t=String(x.type||x.statusType||'').toLowerCase();if(['leave','regularleave','regular leave'].includes(t))t=String(x.coverage||x.duration||'').toLowerCase().includes('half')?'half':'full';if(['on duty','duty','duty leave'].includes(t))t='od';if(['special assignment','assignment'].includes(t))t='special';return t}
 function label(r){return r.type==='od'?'On Duty (OD)':r.type==='special'?'Special Assignment':r.type==='half'?'Half Leave':r.cat||'Full Leave'}
