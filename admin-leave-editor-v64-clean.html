@@ -405,7 +405,7 @@ function renderRecords(){
   return `<div class="recordCard"><div class="cardTop"><div><div class="cardTitle">${safe(tt.name)} <span class="pill">${safe(p.code)}</span></div><div class="meta">${safe(statusText(p))}${p.leaveCategory?' · '+safe(catLabel(p.leaveCategory)):''}${p.leaveUnits?` · ${safe(p.leaveUnits)} leave unit${Number(p.leaveUnits)===1?'':'s'}`:''}<br><b>${safe(dateText)}</b>${p.note?'<br>'+safe(p.note):''}<br><span class="small">Source: ${safe(source)}</span></div></div><div>${past?'<span class="pill">Past</span>':''}${future?'<span class="pill warn">Future</span>':''}${p._kind==='manual'?'<span class="pill violet">Daily record</span>':''}</div></div><div class="actions"><button class="primary" data-edit-kind="${p._kind}" data-edit-key="${safe(key)}">Edit</button><button class="danger" data-delete-kind="${p._kind}" data-delete-key="${safe(key)}">Delete Erroneous Record</button></div></div>`
  }).join('');
  document.querySelectorAll('[data-edit-key]').forEach(b=>b.onclick=()=>b.dataset.editKind==='manual'?startEditManual(b.dataset.editKey):startEditPlan(b.dataset.editKey));
- document.querySelectorAll('[data-delete-key]').forEach(b=>b.onclick=()=>b.dataset.deleteKind==='manual'?deleteManual(b.dataset.archiveKey):deletePlan(b.dataset.archiveKey));
+ document.querySelectorAll('[data-delete-key]').forEach(b=>b.onclick=()=>b.dataset.deleteKind==='manual'?deleteManual(b.dataset.deleteKey):deletePlan(b.dataset.deleteKey));
 }
 function renderAudit(){
  const rows=audit.slice().sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0)).slice(0,30);
