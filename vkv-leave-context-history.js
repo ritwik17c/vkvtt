@@ -10,6 +10,8 @@ await setPersistence(auth,browserLocalPersistence).catch(()=>{});if(auth.authSta
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=s=>{const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:String(s||'—')};
 let approved=[],requests=[],loadError='';
+const LEAVE_CODE_ALIASES={RC2:'RC'};
+function canonicalLeaveCode(code){code=String(code||'').trim();return LEAVE_CODE_ALIASES[code]||code;}
 
 function datesOf(p){
  if(Array.isArray(p?.dates)&&p.dates.length)return[...new Set(p.dates.filter(Boolean))].sort();
