@@ -33,7 +33,7 @@ function coverage(p){
  if(p?.from&&p?.to)return`P${p.from}–P${p.to}`;return'Full day';
 }
 function historyFor(code){const target=canonicalLeaveCode(code);return approved.filter(p=>p&&p.active!==false&&canonicalLeaveCode(p.code||p.teacherCode||'')===target).sort((a,b)=>String(datesOf(b).at(-1)||'').localeCompare(String(datesOf(a).at(-1)||'')))}
-function pendingFor(code){return requests.filter(r=>r&&String(r.code||r.teacherCode||'')===String(code||'')&&['provisional','returned'].includes(String(r.approvalStatus||'provisional').toLowerCase())).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))}
+function pendingFor(code){const target=canonicalLeaveCode(code);return requests.filter(r=>r&&canonicalLeaveCode(r.code||r.teacherCode||'')===target&&['provisional','returned'].includes(String(r.approvalStatus||'provisional').toLowerCase())).sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))}
 function unitValue(p){
  const t=String(p?.type||p?.statusType||'').toLowerCase();
  if(t==='od'||t==='special')return 0;
