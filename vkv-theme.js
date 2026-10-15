@@ -58,7 +58,7 @@
   }
   function syncEmbeddedFrames(next=theme){if(window.self!==window.top)return;document.querySelectorAll('iframe').forEach(frame=>{if(!frame.dataset.vkvThemeSync){frame.dataset.vkvThemeSync='1';frame.addEventListener('load',()=>syncEmbeddedFrame(frame,theme))}syncEmbeddedFrame(frame,next)})}
   function syncEmbeddedFrame(frame,next){try{const doc=frame.contentDocument;if(doc&&doc.documentElement)apply(next,doc,false)}catch(error){console.info('[VKVTT theme] Cross-origin frame left unchanged:',error?.message||error)}}
-  function registerThemeShell(){if(!('serviceWorker' in navigator)||location.protocol==='file:')return;navigator.serviceWorker.register('./sw.js?v=20260915-theme-consistency-1',{scope:'./'}).catch(e=>console.info('[VKVTT theme] shell registration skipped:',e?.message||e))}
+  function registerThemeShell(){if(!('serviceWorker' in navigator)||location.protocol==='file:')return;navigator.serviceWorker.register('./sw.js?v=20261015-response-fallback-1',{scope:'./'}).catch(e=>console.info('[VKVTT theme] shell registration skipped:',e?.message||e))}
   function findThemeHost(){
     const direct=document.querySelector('header .headActions,header .toolbar-actions,header .actions,header .account,.bar .actions,.topbar .actions,.headActions,.toolbar-actions');
     if(direct)return direct;
