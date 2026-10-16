@@ -240,7 +240,7 @@ async function loadLeavePlansOnce(){
 }
 async function loadProvisionalProxyStatusesOnce(){
  const refreshButton=document.getElementById('refreshProvisionalProxyBtn');
- if(refreshButton)refreshButton.style.display=currentUser&&currentProfile&&canManageProxy()?'':'none';
+ if(refreshButton)refreshButton.style.display='inline-block';
  if(!currentUser||!currentProfile||!canManageProxy()){
    window.__vkvProvisionalProxyStatuses=[];
    return;
@@ -497,7 +497,7 @@ function applyRoleUI(){
  const statusAllowed=canEditStatus();
  const proxyAllowed=canManageProxy();
  const refreshProvisionalProxyBtn=document.getElementById('refreshProvisionalProxyBtn');
- if(refreshProvisionalProxyBtn)refreshProvisionalProxyBtn.style.display=proxyAllowed?'inline-block':'none';
+ if(refreshProvisionalProxyBtn)refreshProvisionalProxyBtn.style.display='inline-block';
 
  // Leave/OD/Vacant form is editable only by Admin/Manager.
  const leaveControls=[
