@@ -243,7 +243,7 @@ async function loadProvisionalProxyStatusesOnce(){
  if(refreshButton)refreshButton.style.display='inline-block';
  if(!currentUser||!currentProfile||!canManageProxy()){
    window.__vkvProvisionalProxyStatuses=[];
-   return;
+   return {ok:false,reason:'permission',count:0};
  }
  try{
    const snap=await getDocs(collection(db,'provisionalProxyStatuses'));
@@ -257,15 +257,34 @@ async function loadProvisionalProxyStatusesOnce(){
        if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();
      }catch(e){console.warn('Provisional proxy status render:',e)}
    }
+   return {ok:true,count:window.__vkvProvisionalProxyStatuses.length};
  }catch(e){
    console.warn('Provisional proxy status sync:',e);
+   return {ok:false,reason:'error',message:String(e&&e.message||e),count:0};
  }
 }
 window.refreshProvisionalProxyStatuses=async function(){
  const button=document.getElementById('refreshProvisionalProxyBtn');
+ const status=document.getElementById('proxyRefreshStatus');
  if(button){button.disabled=true;button.textContent='↻ Refreshing…'}
+ if(status){status.textContent='Checking for the latest provisional records…';status.style.color='#664d03'}
  try{
-   await loadProvisionalProxyStatusesOnce();
+   const result=await loadProvisionalProxyStatusesOnce();
+   if(status){
+     if(result&&result.ok){
+       status.textContent='Refresh successful: '+result.count+' active provisional record'+(result.count===1?'':'s')+' loaded.';
+       status.style.color='#176534';
+     }else if(result&&result.reason==='permission'){
+       status.textContent='Refresh not performed: this account does not have Proxy Manager access.';
+       status.style.color='#a12622';
+     }else{
+       status.textContent='Refresh failed: '+((result&&result.message)||'Could not load provisional records. Check access and connection.');
+       status.style.color='#a12622';
+     }
+   }
+ }catch(e){
+   console.warn('Provisional proxy refresh:',e);
+   if(status){status.textContent='Refresh failed: '+String(e&&e.message||e);status.style.color='#a12622'}
  }finally{
    if(button){button.disabled=false;button.textContent='↻ Refresh Provisional Records'}
  }
