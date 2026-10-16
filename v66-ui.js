@@ -216,7 +216,7 @@
     const candidates=['authMessage','gateMsg','activeScheduleStatus','activeScheduleBanner'].map(id=>document.getElementById(id)).filter(Boolean);
     return candidates.some(el=>visible(el)&&/(checking|verifying|loading|connecting|opening|please wait)/i.test(String(el.textContent||'')));
   }
-  function tick(){if(manual)return;const b=autoBusy(),now=Date.now();if(b){if(!busySince)busySince=now;const elapsed=now-busySince,e=get();if(elapsed>650&&elapsed<12000){build();const box=get();box.classList.add('show');box.setAttribute('aria-hidden','false')}else if(elapsed>=12000&&e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}else{busySince=0;const e=get();if(e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}}
+  function tick(){if(manual)return;const b=autoBusy(),now=Date.now();if(b){if(!busySince)busySince=now;const elapsed=now-busySince,e=get();if(elapsed>650&&elapsed<3000){build();const box=get();box.classList.add('show');box.setAttribute('aria-hidden','false')}else if(elapsed>=3000&&e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}else{busySince=0;const e=get();if(e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}}
   window.VKVLoader={show,hide:()=>hide(false),forceHide:()=>hide(true)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();
   setInterval(tick,240);
