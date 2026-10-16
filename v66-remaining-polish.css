@@ -56,16 +56,25 @@ body.adminDashboardPage .tile{
 }
 body.adminDashboardPage .tile:nth-child(3n+2){border-left-color:#247548!important}
 body.adminDashboardPage .tile:nth-child(3n){border-left-color:#c88a18!important}
-/* Compact tile decoration: the previous 82px grid and 78px circle overlapped descriptions. */
+/* Keep the coloured module balls visible, but compact so they never dominate the tile text. */
 body.adminDashboardPage .tile::after{
   content:""!important;position:absolute!important;right:13px!important;top:12px!important;bottom:auto!important;
-  width:18px!important;height:18px!important;opacity:.28!important;border:1px solid rgba(31,102,140,.18)!important;
-  border-radius:50%!important;background:radial-gradient(circle,rgba(200,138,24,.10),transparent 68%)!important;
-  background-image:none!important;transform:none!important;pointer-events:none!important;
+  width:18px!important;height:18px!important;opacity:1!important;border:1px solid rgba(31,102,140,.28)!important;
+  border-radius:50%!important;
+  background:radial-gradient(circle at 32% 28%,#ffffff 0%,#8ec5df 18%,#2479a6 62%,#174d70 100%)!important;
+  box-shadow:0 1px 5px rgba(23,77,112,.22)!important;transform:none!important;pointer-events:none!important;
 }
-body.adminDashboardPage .tile::before{
-  content:none!important;display:none!important;
+body.adminDashboardPage .tile:nth-child(3n+2)::after{
+  border-color:rgba(36,117,72,.30)!important;
+  background:radial-gradient(circle at 32% 28%,#ffffff 0%,#a8ddb7 18%,#39945a 62%,#21683c 100%)!important;
+  box-shadow:0 1px 5px rgba(33,104,60,.20)!important;
 }
+body.adminDashboardPage .tile:nth-child(3n)::after{
+  border-color:rgba(200,138,24,.32)!important;
+  background:radial-gradient(circle at 32% 28%,#ffffff 0%,#f6dda0 18%,#d39a2c 62%,#936514 100%)!important;
+  box-shadow:0 1px 5px rgba(147,101,20,.20)!important;
+}
+body.adminDashboardPage .tile::before{content:none!important;display:none!important}
 html.v66-ui body[data-page="admin-dashboard"] .v66-tile-motif{
   right:13px!important;top:12px!important;bottom:auto!important;width:18px!important;height:18px!important;
   opacity:.18!important;transform:none!important;
