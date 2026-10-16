@@ -259,13 +259,21 @@ async function loadProvisionalProxyStatusesOnce(){
    console.warn('Provisional proxy status sync:',e);
  }
 }
+window.refreshProvisionalProxyStatuses=async function(){
+ const button=document.getElementById('refreshProvisionalProxyBtn');
+ if(button){button.disabled=true;button.textContent='↻ Refreshing…'}
+ try{
+   await loadProvisionalProxyStatusesOnce();
+ }finally{
+   if(button){button.disabled=false;button.textContent='↻ Refresh Provisional Records'}
+ }
+};
 async function loadLeavePlansAndPoll(){
  await loadLeavePlansOnce();
  await loadProvisionalProxyStatusesOnce();
  if(leavePlanPollTimer){clearInterval(leavePlanPollTimer);leavePlanPollTimer=null}
  leavePlanPollTimer=setInterval(()=>{
    loadLeavePlansOnce().catch(e=>console.error('Scheduled leave sync:',e));
-   loadProvisionalProxyStatusesOnce().catch(e=>console.error('Provisional proxy status sync:',e));
  },10000);
 }
 window.saveScheduledStatusPlan=async function(plan){
