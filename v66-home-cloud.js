@@ -238,10 +238,35 @@ async function loadLeavePlansOnce(){
  const snap=await getDoc(doc(db,'dailyRecords',LEAVE_PLAN_DOC));
  cacheLeavePlans(snap.exists()?(snap.data().plans||{}):{});
 }
+async function loadProvisionalProxyStatusesOnce(){
+ if(!currentUser||!currentProfile||!canManageProxy()){
+   window.__vkvProvisionalProxyStatuses=[];
+   return;
+ }
+ try{
+   const snap=await getDocs(collection(db,'provisionalProxyStatuses'));
+   window.__vkvProvisionalProxyStatuses=snap.docs
+     .map(d=>({...d.data(),_projectionId:d.id}))
+     .filter(p=>p&&p.active===true&&p.provisional===true);
+   if(window.__vkvCoreInitialized){
+     try{
+       renderLeave();
+       renderActiveProxyView(true);
+       if(window.renderTodayProxyStatusSummary)window.renderTodayProxyStatusSummary();
+     }catch(e){console.warn('Provisional proxy status render:',e)}
+   }
+ }catch(e){
+   console.warn('Provisional proxy status sync:',e);
+ }
+}
 async function loadLeavePlansAndPoll(){
  await loadLeavePlansOnce();
+ await loadProvisionalProxyStatusesOnce();
  if(leavePlanPollTimer){clearInterval(leavePlanPollTimer);leavePlanPollTimer=null}
- leavePlanPollTimer=setInterval(()=>loadLeavePlansOnce().catch(e=>console.error('Scheduled leave sync:',e)),10000);
+ leavePlanPollTimer=setInterval(()=>{
+   loadLeavePlansOnce().catch(e=>console.error('Scheduled leave sync:',e));
+   loadProvisionalProxyStatusesOnce().catch(e=>console.error('Provisional proxy status sync:',e));
+ },10000);
 }
 window.saveScheduledStatusPlan=async function(plan){
  if(!currentUser||!canEditStatus())throw new Error('Admin or Manager access is required.');
