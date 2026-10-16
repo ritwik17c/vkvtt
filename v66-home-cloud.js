@@ -496,6 +496,8 @@ function applyRoleUI(){
  const role=window.__vkvRole;
  const statusAllowed=canEditStatus();
  const proxyAllowed=canManageProxy();
+ const refreshProvisionalProxyBtn=document.getElementById('refreshProvisionalProxyBtn');
+ if(refreshProvisionalProxyBtn)refreshProvisionalProxyBtn.style.display=proxyAllowed?'inline-block':'none';
 
  // Leave/OD/Vacant form is editable only by Admin/Manager.
  const leaveControls=[
