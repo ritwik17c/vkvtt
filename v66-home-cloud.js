@@ -239,6 +239,8 @@ async function loadLeavePlansOnce(){
  cacheLeavePlans(snap.exists()?(snap.data().plans||{}):{});
 }
 async function loadProvisionalProxyStatusesOnce(){
+ const refreshButton=document.getElementById('refreshProvisionalProxyBtn');
+ if(refreshButton)refreshButton.style.display=currentUser&&currentProfile&&canManageProxy()?'':'none';
  if(!currentUser||!currentProfile||!canManageProxy()){
    window.__vkvProvisionalProxyStatuses=[];
    return;
