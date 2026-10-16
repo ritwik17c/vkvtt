@@ -11,6 +11,7 @@ function build(){const home=$('#dashboardHome');if(!home||$('#vkvAdminArchitectu
  const setup=section('vkvAdminSetup','1 · School Setup, People & Access','Maintain the school structure, people and permissions first.');const g1=setup.querySelector('.tiles');
  g1.append(tile('openStaffManagement','👥','Staff Management','Add/edit teaching and non-teaching staff, employee codes, categories, designations and active status. This does not alter the timetable.',P2+'admin-staff-management.html?v=p2'));
   g1.append(tile('openQuarterAllotment','🏠','Quarter Allotment','Set up staff quarters, allot or vacate quarters, and review availability and history.',P2+'quarter-allotment.html?v=1.0'));
+ g1.append(tile('openCertificatesDocuments','📄','Certificates & Document Formats','Generate student and employee certificates, student and all-employee I-Cards, parent fee undertakings, and other official documents.',P2+'admin-certificates.html?v=1.0'));
  g1.append(tile('openClassesManager','🏫','Classes & Sections Manager','Add future classes/sections safely. Empty classes can be removed; structural timetable changes are protected.',P2+'admin-classes-manager.html?v=1'));
  const cal=move(g1,{id:'openAnnualCalendar'});relabel(cal,'🗓 Annual Calendar Manager','Add, edit and remove school calendar events.');
  const sch=move(g1,{id:'openSchedules'});relabel(sch,'🕒 Schedule Profiles Manager','Create and edit normal, heat-wave and other timing profiles.');
