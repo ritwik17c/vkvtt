@@ -95,11 +95,17 @@
   }
 
   function schoolIllustration() {
-    return '<svg class="v66-school-illustration v66-school-dots" viewBox="0 0 460 142" role="img" aria-label="Small school-blue, green and gold decorative dots">' +
-      '<g stroke="none">' +
-      '<circle cx="350" cy="71" r="8" fill="#1f668c"/>' +
-      '<circle cx="378" cy="71" r="8" fill="#247548"/>' +
-      '<circle cx="406" cy="71" r="8" fill="#c88a18"/>' +
+    return '<svg class="v66-school-illustration" viewBox="0 0 460 142" role="img" aria-label="Line illustration of a school, timetable, clock and open book">' +
+      '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M14 119h430" opacity=".32"/>' +
+      '<path class="v66-soft-fill" d="M31 119V58h118v61M21 58l69-41 69 41M63 119V91h54v28"/>' +
+      '<path d="M31 119V58h118v61M21 58l69-41 69 41M63 119V91h54v28M52 70h17v16H52zM111 70h17v16h-17z"/>' +
+      '<path class="v66-gold-line" d="M90 17v19M80 27h20"/>' +
+      '<rect class="v66-soft-fill" x="190" y="30" width="105" height="77" rx="5"/>' +
+      '<path d="M190 30h105v77H190zM205 49h75M205 66h75M205 83h75M225 30v77M258 30v77"/>' +
+      '<circle class="v66-gold-fill" cx="349" cy="59" r="31"/><circle cx="349" cy="59" r="31"/><path class="v66-gold-line" d="M349 42v18l13 8"/>' +
+      '<path class="v66-gold-fill" d="M372 101c17-10 34-10 51 0v25c-17-10-34-10-51 0-17-10-34-10-51 0v-25c17-10 34-10 51 0Z"/>' +
+      '<path d="M372 101c17-10 34-10 51 0v25c-17-10-34-10-51 0-17-10-34-10-51 0v-25c17-10 34-10 51 0ZM372 101v25"/>' +
       '</g></svg>';
   }
 
