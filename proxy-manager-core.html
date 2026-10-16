@@ -71,9 +71,11 @@
 <div class="opsGrid">
 <button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / Duty Leave / Vacant</button>
 <button id="proxyWorkBtn" onclick="openProxyAllotment(this)">👥 Proxy Allotment</button>
-<div id="proxyRefreshInstruction" style="grid-column:1/-1;background:#fff3cd;border:2px solid #d39e00;color:#664d03;padding:10px 14px;border-radius:8px;font-weight:800;text-align:center;">⚠️ IMPORTANT: Before starting Proxy Allotment, refresh this page to load the latest leave records.</div>
 <button id="publishedProxyBtn" onclick="openPublishedProxy(this)">✅ Today’s Proxy Allotment (All Teachers)</button>
+<div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:0;">
 <button id="refreshProvisionalProxyBtn" onclick="refreshProvisionalProxyStatuses()">↻ Refresh Provisional Records</button>
+<div id="proxyRefreshInstruction" style="background:#fff3cd;border:2px solid #d39e00;color:#664d03;padding:8px 10px;border-radius:8px;font-weight:800;text-align:center;font-size:0.92em;">⚠️ Before proxy allotment, refresh this page to load the latest leave records.</div>
+</div>
 <button onclick="show('free',this)">🕐 Free Teachers</button>
 <button onclick="show('now',this)">📍 Where Now?</button>
 </div>
