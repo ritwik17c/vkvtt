@@ -71,6 +71,7 @@
 <div class="opsGrid">
 <button id="leaveOpsBtn" onclick="show('leave',this)">📝 Leave / Duty Leave / Vacant</button>
 <button id="proxyWorkBtn" onclick="openProxyAllotment(this)">👥 Proxy Allotment</button>
+<button id="refreshProvisionalProxyBtn" onclick="refreshProvisionalProxyStatuses()">↻ Refresh Provisional Records</button>
 <button id="publishedProxyBtn" onclick="openPublishedProxy(this)">✅ Today’s Proxy Allotment (All Teachers)</button>
 <button onclick="show('free',this)">🕐 Free Teachers</button>
 <button onclick="show('now',this)">📍 Where Now?</button>
@@ -241,7 +242,7 @@
 <div class="actions"><button onclick="copyHistory()">📋 Copy</button><button onclick="shareHistory()">↗ Share</button><button class="dangerBtn" onclick="deleteAllHistory()">🗑 Delete All History</button><span id="historyResultMsg" class="copymsg"></span></div>
 <div id="historyResult" class="result">Select a date.</div></section>
 </main>
-<script src="v66-home.js?v=20261016-provisional-proxy-1"></script><script type="module" src="v66-home-cloud.js?v=20261016-provisional-proxy-1"></script>
+<script src="v66-home.js?v=20261016-manual-provisional-refresh-1"></script><script type="module" src="v66-home-cloud.js?v=20261016-manual-provisional-refresh-1"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
