@@ -1,10 +1,10 @@
-const CACHE_NAME='vkvtt-shell-2026-10-16-quiet-loader-1';
+const CACHE_NAME='vkvtt-shell-2026-10-16-motif-restored-compact-balls-1';
 const REMOVED_THEME_ASSET='./vkv-theme-contrast-hardening.css';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./vkv-campus-header.jpg','./vkv-theme.js','./vkv-theme-contrast-fixes.css','./vkv-theme-contrast-hardening.css','./vkv-home-header-typography.css','./vkv-home-card-cleanup.js','./vkv-annual-calendar-theme.js','./vkv-light-screen.css','./vkv-black-gold-screen.css','./class-observation-admin-bridge.js','./class-observation-teacher-bridge.js','./v66-home.css','./v66-design-system.css','./v66-home.js','./v66-home-cloud.js','./v66-ui.js','./period-notifications.js','./v66-home-shell-v662.css','./v66-home-shell-v662.js','./v66-premium-unified.css','./qb-module-v2.html','./qb-module-v2.js','./qb-module-v3.js','./vkv-qb-paper-scoring.js','./vkv-qb-paper-subquestion-marks.js','./vkv-qb-admin-production-tools.js','./admin-qb-live-teacher-audit.html','./admin-qb-source-reconcile.html','./admin-qb-submission-integrity-summary.html'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL.filter(path=>path!==REMOVED_THEME_ASSET))));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim();});
 function injectControllers(html,url){
-  html=html.replace(/v66-ui\.js(?:\?v=[^\"']*)?/gi,'v66-ui.js?v=20261016-quiet-loader-small-dots-1');
+  html=html.replace(/v66-ui\.js(?:\?v=[^\"']*)?/gi,'v66-ui.js?v=20261016-motif-restored-compact-balls-1');
   const tags=[];const path=new URL(url).pathname;const isHome=/\/index\.html$/i.test(path)||/\/(?:vkvtt-preview-2|vkvtt)\/?$/i.test(path);const isAdmin=/admin-dashboard\.html$/i.test(path);
   if(isAdmin){
     html=html
