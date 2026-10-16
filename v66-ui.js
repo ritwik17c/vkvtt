@@ -198,18 +198,18 @@
 }());
 
 
-/* v66.2 delayed Swamiji loader */
+/* Quiet VKVTT loading indicator: retain loading hooks, remove the full-screen splash. */
 (function(){
   function build(){
     if(document.getElementById('vkvSwamijiLoader'))return;
-    const box=document.createElement('div');box.id='vkvSwamijiLoader';box.setAttribute('aria-live','polite');box.setAttribute('aria-hidden','true');
-    box.innerHTML='<div class="vkvLoaderCard"><img src="swamiji-loader.svg?v=66.2" alt=""><div class="vkvLoaderText">Loading school workspace…</div></div>';
+    const box=document.createElement('div');box.id='vkvSwamijiLoader';box.setAttribute('aria-live','polite');box.setAttribute('aria-label','Loading');box.setAttribute('aria-hidden','true');
+    box.innerHTML='<div class="vkvLoaderDots" aria-hidden="true"><i></i><i></i><i></i></div>';
     document.body.appendChild(box);
-    if(!document.getElementById('vkvSwamijiLoaderStyle')){const st=document.createElement('style');st.id='vkvSwamijiLoaderStyle';st.textContent='#vkvSwamijiLoader{position:fixed;inset:0;z-index:99999;display:none;place-items:center;background:rgba(246,250,248,.72);backdrop-filter:blur(1.5px);pointer-events:none}#vkvSwamijiLoader.show{display:grid}.vkvLoaderCard{width:min(190px,44vw);padding:14px 14px 12px;border:1px solid #d7c28e;border-radius:22px;background:#fbfaf6;box-shadow:0 12px 34px rgba(14,48,70,.13);text-align:center}.vkvLoaderCard img{display:block;width:100%;height:auto;max-height:150px;object-fit:contain}.vkvLoaderText{margin-top:-4px;font-size:.82rem;font-weight:750;color:#31526a;letter-spacing:.02em}';document.head.appendChild(st)}
+    if(!document.getElementById('vkvSwamijiLoaderStyle')){const st=document.createElement('style');st.id='vkvSwamijiLoaderStyle';st.textContent='#vkvSwamijiLoader{position:fixed;top:12px;right:14px;z-index:99999;display:none;place-items:center;pointer-events:none;background:transparent}#vkvSwamijiLoader.show{display:grid}.vkvLoaderDots{display:flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid rgba(49,82,106,.16);border-radius:999px;background:rgba(255,255,255,.9);box-shadow:0 3px 10px rgba(14,48,70,.10)}.vkvLoaderDots i{display:block;width:7px;height:7px;border-radius:50%;animation:vkvLoaderPulse .9s ease-in-out infinite;opacity:.45}.vkvLoaderDots i:nth-child(1){background:#1f668c;animation-delay:0s}.vkvLoaderDots i:nth-child(2){background:#247548;animation-delay:.15s}.vkvLoaderDots i:nth-child(3){background:#c88a18;animation-delay:.3s}@keyframes vkvLoaderPulse{0%,80%,100%{transform:scale(.72);opacity:.45}40%{transform:scale(1);opacity:1}}@media(prefers-reduced-motion:reduce){.vkvLoaderDots i{animation:none;opacity:.85}}';document.head.appendChild(st)}
   }
   let manual=0,busySince=0;
   const get=()=>document.getElementById('vkvSwamijiLoader');
-  function show(text){build();manual++;const e=get();if(text){const t=e.querySelector('.vkvLoaderText');if(t)t.textContent=text}e.classList.add('show');e.setAttribute('aria-hidden','false')}
+  function show(){build();manual++;const e=get();e.classList.add('show');e.setAttribute('aria-hidden','false')}
   function hide(force){manual=force?0:Math.max(0,manual-1);if(manual)return;const e=get();if(e){e.classList.remove('show');e.setAttribute('aria-hidden','true')}}
   function visible(el){if(!el||el.hidden)return false;const cs=getComputedStyle(el);return cs.display!=='none'&&cs.visibility!=='hidden'&&cs.opacity!=='0'}
   function autoBusy(){
