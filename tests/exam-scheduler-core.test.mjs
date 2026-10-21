@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {candidateExamDates,createWorkspaceFromMaster,deriveExamModel,generateDutyRoster,generateExamTimetable,validateDutyRoster,validateExamTimetable} from './exam-scheduler-core.js';
+import {candidateExamDates,createWorkspaceFromMaster,deriveExamModel,generateDutyRoster,generateExamTimetable,validateDutyRoster,validateExamTimetable} from '../exam-scheduler-core.js';
 
 const master={
   classes:['X A','X B'],

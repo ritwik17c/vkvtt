@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {defaultSectionsForClass,deriveMasterVenues,logicalClassName,reconcileSeating,seatingSummary} from './exam-seating-core.js';
+import {defaultSectionsForClass,deriveMasterVenues,logicalClassName,reconcileSeating,seatingSummary} from '../exam-seating-core.js';
 
 assert.equal(logicalClassName('XI Science'),'XI');
 assert.equal(logicalClassName('XII – Humanities'),'XII');
